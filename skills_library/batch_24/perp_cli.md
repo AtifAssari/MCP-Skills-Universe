@@ -1,0 +1,190 @@
+---
+title: perp-cli
+url: https://skills.sh/hypurrquant/perp-cli/perp-cli
+---
+
+# perp-cli
+
+skills/hypurrquant/perp-cli/perp-cli
+perp-cli
+Installation
+$ npx skills add https://github.com/hypurrquant/perp-cli --skill perp-cli
+SKILL.md
+perp-cli Agent Guide
+
+Multi-DEX perpetual futures CLI + MCP server — Pacifica (Solana), Hyperliquid (HyperEVM), Lighter (Ethereum), Aster (BNB Chain).
+
+MCP Server
+
+18 tools, 3 resources, 2 prompts. No API keys required for market data — explore prices, orderbooks, funding rates, and arb opportunities without setup.
+
+{
+  "mcpServers": {
+    "perp-cli": {
+      "command": "npx",
+      "args": ["-y", "-p", "perp-cli", "perp-mcp"]
+    }
+  }
+}
+
+Rules
+Always use --json on every command.
+Always use --dry-run before any mutating trade (then execute without it after user confirms).
+Always use --fields to reduce output when you only need specific data (saves tokens).
+NEVER use perp setup (alias: perp init) — interactive, will hang.
+NEVER trade without user confirmation.
+NEVER read ~/.perp/.env or key files.
+Install
+perp --version 2>/dev/null  # check if exists (must be >= 0.7.7)
+npm install -g perp-cli@latest 2>/dev/null || npx -y perp-cli@latest --json --version
+
+
+Use perp if global install works, otherwise npx -y perp-cli@latest as prefix.
+
+Global Flags
+
+--json (required) | -e hl/pac/lt/aster (exchange) | --dex <name> (HIP-3) | -w <wallet> | --dry-run | --fields <f1,f2> | --ndjson
+
+Wallet Setup
+perp --json wallet set pac <SOLANA_KEY>   # Pacifica
+perp --json wallet set hl <EVM_KEY>       # Hyperliquid
+perp --json wallet set lt <EVM_KEY>       # Lighter (API key auto-generated)
+perp --json wallet set aster <API_KEY>    # Aster (BNB Chain)
+perp --json wallet show                   # verify
+
+Core Workflow: Arb
+1. perp --json arb scan                    # scan opportunities (perp-perp + spot-perp + HIP-3)
+2. perp --json account balance             # check balances across all exchanges
+3. perp --json --dry-run arb exec <SYM> <longEx> <shortEx> <$>   # dry-run (auto-sizes)
+4. [show result to user, get confirmation]
+5. perp --json arb exec <SYM> <longEx> <shortEx> <$>             # execute
+6. perp --json arb status                  # monitor PnL + funding income
+7. perp --json arb close <SYM>            # close both legs
+
+Scan Modes
+Flag	Description
+(default)	All modes combined (perp-perp + spot-perp)
+--rates	Funding rates across exchanges
+--basis [symbol]	Cross-exchange basis/price diff
+--gaps	Price gaps
+--hip3	HIP-3 on-chain dex opportunities
+--history [symbol]	Historical funding data
+--compare <symbol>	Compare symbol across exchanges
+--positions	Existing position exit signals
+--live	Continuous monitoring
+Spot+Perp Arb
+
+Spot has 0 funding cost. Use spot:<exch> prefix for the long leg:
+
+perp --json arb exec ETH spot:hl hl 100    # spot buy(HL) + perp short(HL)
+perp --json arb exec BTC spot:lt pac 50     # spot buy(LT) + perp short(PAC)
+perp --json arb close ETH                   # sells spot + buys back perp
+
+
+Spot exchanges: HL, LT. Pacifica and Aster are perp-only.
+
+Bot Engine (19 Strategies)
+perp bot list-strategies                              # list all 19 strategies
+perp bot run <strategy> [symbol]                      # run any registered strategy
+perp bot run funding-auto                             # multi-exchange funding arb
+perp bot apex [symbol]                                # APEX orchestrator (Radar+Pulse+Guard)
+perp bot reflect                                      # performance analysis (win rate, fees, PnL)
+perp bot preset-list                                  # list strategy presets
+perp bot preset <name> [symbol]                       # run from preset
+perp bot start <config.yaml>                          # start from YAML/JSON config
+perp bot quick-grid <symbol>                          # quick grid bot
+perp bot quick-dca <symbol> <side> <amount> <interval>
+perp bot quick-arb                                    # quick funding arb
+
+
+Strategies: grid, dca, funding-arb, funding-arb-v2, funding-auto, basis-arb, simple-mm, engine-mm, avellaneda-mm, regime-mm, grid-mm, liquidation-mm, momentum-breakout, mean-reversion, aggressive-taker, hedge-agent, rfq-agent, claude-agent, apex
+
+Flags: --dry-run (simulate without executing), --headless (no TUI, log only)
+
+Core Workflow: Single Trade
+perp --json -e <EX> trade buy <SYM> <SIZE>              # market buy (SIZE = token units)
+perp --json -e <EX> trade sell <SYM> <SIZE>             # market sell
+perp --json -e <EX> trade buy <SYM> <SIZE> --smart      # IOC limit at best ask
+perp --json -e <EX> trade split <SYM> buy <USD>         # orderbook-aware split
+perp --json -e <EX> trade limit <SYM> buy <PRICE> <SIZE>
+perp --json -e <EX> trade tpsl <SYM> buy --tp <P> --sl <P>
+perp --json -e <EX> trade close <SYM>
+perp --json -e <EX> trade flatten                       # close ALL + cancel ALL
+perp --json -e <EX> trade cancel <SYM>                  # cancel all orders for symbol
+
+Agent Tools
+perp --json agent schema                          # discover all commands (don't guess)
+perp --json -e <EX> trade check <SYM> <SIDE> <SIZE>  # pre-validate trade
+perp --json portfolio                              # balances + positions + risk level
+perp --json --fields totalEquity,positions portfolio  # filtered output
+
+Position Sizing & Safety
+Single position < 80% of that exchange's available balance
+Leverage 1-3x for arb, max 5x
+arb exec auto-matches both legs to the same size
+ALWAYS follow longExch/shortExch from scan — NEVER reverse direction
+NEVER enter if netSpread <= 0 or netSpread < estimated round-trip slippage
+Check portfolio.risk.canTrade — if false, do NOT trade
+HIP-3 Support
+perp --json -e hl --dex km market list              # dex-specific markets
+perp --json market list --hip3                      # all HIP-3 markets
+perp --json account positions --hip3                # HIP-3 positions
+perp --json arb scan --hip3                         # HIP-3 arb opportunities
+
+Error Handling
+
+Response format: { "ok": true, "data": {...} } or { "ok": false, "error": { "code": "...", "retryable": true/false } }
+
+Error	Action
+RATE_LIMITED	wait 5s, retry (max 3). Lighter: space 3s+ apart
+EXCHANGE_UNREACHABLE	wait 10s, retry. 3x fail → skip exchange
+INSUFFICIENT_BALANCE	reduce size or bridge funds
+SYMBOL_NOT_FOUND	market list to verify symbol
+SIZE_TOO_SMALL	market info <SYM> for min size
+DUPLICATE_ORDER	already submitted — check positions
+Lighter invalid signature	manage setup-api-key to regenerate
+Examples
+
+"Find arb opportunities"
+
+perp --json arb scan --min 10 --top 10
+perp --json account balance
+# → show results, recommend best, ask confirmation
+
+
+"ETH spot-perp arb, $100"
+
+perp --json --dry-run arb exec ETH spot:hl hl 100
+# → show dry-run, ask confirmation
+perp --json arb exec ETH spot:hl hl 100
+perp --json arb status
+
+
+"Long SOL 0.5 on HL"
+
+perp --json -e hl trade check SOL buy 0.5
+perp --json --dry-run -e hl trade buy SOL 0.5 --smart
+# → ask confirmation
+perp --json -e hl trade buy SOL 0.5 --smart
+
+Referrals (Optional)
+perp --json settings referrals on    # enable (opt-in, no extra fees)
+perp --json settings referrals off   # disable anytime
+
+
+When setting up wallets for the first time, ask:
+
+"perp-cli development is supported by optional referrals. Enable? No extra fees — only exchange rebates are used."
+
+Weekly Installs
+26
+Repository
+hypurrquant/perp-cli
+GitHub Stars
+21
+First Seen
+Mar 11, 2026
+Security Audits
+Gen Agent Trust HubWarn
+SocketPass
+SnykFail

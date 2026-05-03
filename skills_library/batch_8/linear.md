@@ -1,0 +1,162 @@
+---
+title: linear
+url: https://skills.sh/lobehub/lobe-chat/linear
+---
+
+# linear
+
+skills/lobehub/lobe-chat/linear
+linear
+Installation
+$ npx skills add https://github.com/lobehub/lobe-chat --skill linear
+SKILL.md
+Linear Issue Management
+
+Before using Linear workflows, search for linear MCP tools. If not found, treat as not installed.
+
+⚠️ CRITICAL: PR Creation with Linear Issues
+
+When creating a PR that references Linear issues (LOBE-xxx), you MUST:
+
+Create the PR with magic keywords (Fixes LOBE-xxx)
+IMMEDIATELY after PR creation, add completion comments to ALL referenced Linear issues
+Do NOT consider the task complete until Linear comments are added
+
+This is NON-NEGOTIABLE. Skipping Linear comments is a workflow violation.
+
+Workflow
+Retrieve issue details before starting: mcp__linear-server__get_issue
+Read images: If the issue description contains images, MUST use mcp__linear-server__extract_images to read image content for full context
+Check for sub-issues: Use mcp__linear-server__list_issues with parentId filter
+Mark as In Progress: When starting to plan or implement an issue, immediately update status to "In Progress" via mcp__linear-server__update_issue
+Update issue status when completing: mcp__linear-server__update_issue
+Add completion comment (REQUIRED): mcp__linear-server__create_comment
+Creating Issues
+
+When creating issues with mcp__linear-server__create_issue, MUST add the claude code label.
+
+Language
+
+Issue titles, descriptions, and comments MUST follow the language of the current conversation, not default to English.
+
+Conversation in 中文 → issue body in 中文；technical terms (file paths, identifiers, library names, commands, error messages) stay in English.
+Conversation in English → issue body in English.
+Code blocks, file paths, and quoted strings always stay in their original form regardless of surrounding language.
+This applies equally to updates — when editing an existing issue (description and titles), preserve the language of the conversation that triggered the edit; do not switch the issue language during a refactor (Chinese → English or vice versa).
+
+Rationale: the issue is a continuation of the conversation. Forcing English when the discussion is in Chinese creates translation friction for the collaborator who came from that thread.
+
+Creating Sub-issue Trees
+
+When breaking a parent issue into a tree of sub-issues (e.g., task decomposition for LOBE-xxx), follow these rules — they work around real limitations of the Linear MCP tools.
+
+1. ALWAYS prefix titles with an ordering index
+
+The Linear Sub-issues panel displays children by sortOrder, which defaults to newest-first (most recently created appears on top). Neither parallel nor serial creation will produce the intended top-to-bottom reading order, and the MCP save_issue tool does not expose a sortOrder parameter — you cannot set order at create time.
+
+Workaround: encode execution order in the title itself:
+
+[1]     [db]       add schema fields
+[2]     [db]       new table + repository
+[3]     [service]  business logic layer
+[4]     [api]      REST endpoints
+[4.1]   [sdk]      client SDK wrapper
+[4.1.1] [app]      consumer integration
+[4.1.2] [app]      UI surface
+[4.2]   [ui]       dashboard page
+
+
+Even when the panel shuffles, the reader can mentally reconstruct the dependency graph at a glance. Dotted numbering [n.m.k] should mirror the parent-child nesting so the index and the tree agree.
+
+2. Nest sub-issues by logical parent-child, not flat under the root
+
+Linear supports unlimited sub-issue depth. A flat list of 8+ siblings under one root is hard to scan. Group by main-subordinate logic:
+
+Core service → its SDK → SDK consumers
+Don't create a sibling when a child is more accurate
+
+Use parentId: "LOBE-xxxx" at creation (or save_issue to move). Moving an issue's parent does not disturb its blockedBy relations.
+
+3. Sub-issue creation order is dictated by blockedBy
+
+blockedBy requires the blocker to exist first (you need its LOBE-id). So:
+
+Topologically sort the DAG — leaves (no deps) first, roots last
+Create issues with zero deps in the first wave
+Create dependent issues only after collecting the blocker IDs from prior responses
+blockedBy is append-only; passing it again does not overwrite — safe to re-run
+4. Don't waste rounds trying to parallelize
+
+MCP tool calls in a single message look parallel but execute sequentially on the server, and you still need blocker IDs from earlier responses. Just issue calls in dependency order; optimizing for parallelism gains nothing here.
+
+5. Keep each sub-issue description self-contained
+
+Each sub-issue should state:
+
+Goal (1–2 lines)
+Key files to touch
+Concrete changes / acceptance criteria
+Dependencies (link to blocker issues by LOBE-xxxx)
+Validation steps
+
+The implementer may open only the sub-issue, not the parent — don't rely on context that lives only in the parent description.
+
+Completion Comment Format
+
+Every completed issue MUST have a comment summarizing work done:
+
+## Changes Summary
+
+- **Feature**: Brief description of what was implemented
+- **Files Changed**: List key files modified
+- **PR**: #xxx or PR URL
+
+### Key Changes
+
+- Change 1
+- Change 2
+- ...
+
+
+This is critical for:
+
+Team visibility
+Code review context
+Future reference
+PR Association (REQUIRED)
+
+When creating PRs for Linear issues, include magic keywords in PR body:
+
+Fixes LOBE-123
+Closes LOBE-123
+Resolves LOBE-123
+Per-Issue Completion Rule
+
+When working on multiple issues, update EACH issue IMMEDIATELY after completing it:
+
+Complete implementation
+Run bun run type-check
+Run related tests
+Create PR if needed
+Update status to "In Review" (NOT "Done")
+Add completion comment immediately
+Move to next issue
+
+Note: Status → "In Review" when PR created. "Done" only after PR merged.
+
+❌ Wrong: Complete all → Create PR → Forget Linear comments
+
+✅ Correct: Complete → Create PR → Add Linear comments → Task done
+
+Weekly Installs
+443
+Repository
+lobehub/lobe-chat
+GitHub Stars
+75.9K
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

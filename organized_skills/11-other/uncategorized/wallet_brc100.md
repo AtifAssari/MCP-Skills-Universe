@@ -1,0 +1,619 @@
+---
+rating: ⭐⭐⭐
+title: wallet-brc100
+url: https://skills.sh/b-open-io/bsv-skills/wallet-brc100
+---
+
+# wallet-brc100
+
+skills/b-open-io/bsv-skills/wallet-brc100
+wallet-brc100
+Installation
+$ npx skills add https://github.com/b-open-io/bsv-skills --skill wallet-brc100
+SKILL.md
+BRC-100 Wallet Implementation Guide
+
+This skill provides comprehensive guidance for implementing BRC-100 conforming wallets using the @bsv/wallet-toolbox package (v1.7.18+).
+
+Getting Started: Before implementing, review the Strategic Questionnaire to determine the right architecture for your wallet type.
+
+Quick Reference
+Core Dependencies
+{
+  "@bsv/wallet-toolbox": "^1.7.18",
+  "@bsv/sdk": "^1.9.29"
+}
+
+WalletClient vs Wallet — Choose the Right Class
+
+This is the most important distinction in the BSV wallet stack:
+
+Class	Package	Use When
+WalletClient	@bsv/sdk	Your app connects to a user's existing wallet (browser extension, MetaNet Client, etc.) — you don't control the keys
+Wallet	@bsv/wallet-toolbox	You are building the wallet — you own the keys, storage, and services
+// WalletClient — thin client, no key management
+import { WalletClient } from '@bsv/sdk'
+const wallet = new WalletClient() // connects to user's wallet environment
+
+// Wallet — full wallet you build and control
+import { Wallet } from '@bsv/wallet-toolbox'
+const wallet = new Wallet({ chain, keyDeriver, storage, services })
+
+
+Most apps (dApps, payment integrations) should use WalletClient. Only wallet builders need Wallet from @bsv/wallet-toolbox.
+
+Main Classes
+Class	Purpose	Use When
+WalletClient	Thin BRC-100 client	Apps connecting to user's external wallet
+Wallet	Full BRC-100 wallet	Building production wallet apps
+SimpleWalletManager	Lightweight wrapper	Simple key-based authentication
+CWIStyleWalletManager	Multi-profile wallet	Advanced UMP token flows
+WalletSigner	Transaction signing	Custom signing logic
+Table of Contents
+Installation & Setup
+Wallet Initialization
+Transaction Operations
+Key Management
+Storage Configuration
+Certificate Operations
+Error Handling
+Production Patterns
+1. Installation & Setup
+Install Dependencies
+bun add @bsv/wallet-toolbox @bsv/sdk
+# Optional storage backends:
+bun add knex sqlite3          # SQLite
+bun add knex mysql2           # MySQL
+bun add idb                   # IndexedDB (browser)
+
+Basic Imports
+import {
+  Wallet,
+  WalletStorageManager,
+  StorageKnex,
+  StorageIdb,
+  Services,
+  WalletServices,
+  PrivilegedKeyManager
+} from '@bsv/wallet-toolbox'
+
+import {
+  PrivateKey,
+  KeyDeriver,
+  Random,
+  Utils
+} from '@bsv/sdk'
+
+2. Wallet Initialization
+Pattern A: Simple Wallet (Node.js with SQLite)
+import { Wallet, StorageKnex, Services } from '@bsv/wallet-toolbox'
+import { PrivateKey, Random } from '@bsv/sdk'
+import Knex from 'knex'
+
+async function createSimpleWallet() {
+  // 1. Create root private key (or derive from mnemonic)
+  const rootKey = new PrivateKey(Random(32))
+  // Use KeyDeriver from @bsv/sdk for proper BRC-42 key derivation
+  const keyDeriver = new KeyDeriver(rootKey)
+
+  // 2. Configure SQLite storage
+  const knex = Knex({
+    client: 'sqlite3',
+    connection: { filename: './wallet.db' },
+    useNullAsDefault: true
+  })
+
+  const storage = new StorageKnex({
+    knex,
+    storageIdentityKey: rootKey.toPublicKey().toString(),
+    storageName: 'my-wallet-storage'
+  })
+
+  await storage.makeAvailable()
+
+  // 3. Configure services (mainnet)
+  const services = new Services({
+    chain: 'main',
+    bsvExchangeRate: { timestamp: new Date(), base: 'USD', rate: 50 },
+    bsvUpdateMsecs: 15 * 60 * 1000,
+    fiatExchangeRates: {
+      timestamp: new Date(),
+      base: 'USD',
+      rates: { EUR: 0.85, GBP: 0.73 }
+    },
+    fiatUpdateMsecs: 24 * 60 * 60 * 1000,
+    arcUrl: 'https://arc.taal.com',
+    arcConfig: {}
+  })
+
+  // 4. Create wallet
+  const wallet = new Wallet({
+    chain: 'main',
+    keyDeriver,
+    storage,
+    services
+  })
+
+  return wallet
+}
+
+Pattern B: Browser Wallet (IndexedDB)
+import { Wallet, StorageIdb, Services } from '@bsv/wallet-toolbox'
+import { PrivateKey, Random } from '@bsv/sdk'
+
+async function createBrowserWallet() {
+  const rootKey = new PrivateKey(Random(32))
+
+  // Use IndexedDB for browser storage
+  const storage = new StorageIdb({
+    idb: await openDB('my-wallet-db', 1),
+    storageIdentityKey: rootKey.toPublicKey().toString(),
+    storageName: 'browser-wallet'
+  })
+
+  await storage.makeAvailable()
+
+  const services = new Services({
+    chain: 'main',
+    // ... services config
+  })
+
+  const wallet = new Wallet({
+    chain: 'main',
+    keyDeriver: createKeyDeriver(rootKey),
+    storage,
+    services
+  })
+
+  return wallet
+}
+
+Pattern C: Multi-Profile Wallet
+import { CWIStyleWalletManager, OverlayUMPTokenInteractor } from '@bsv/wallet-toolbox'
+
+async function createMultiProfileWallet() {
+  const manager = new CWIStyleWalletManager(
+    'example.com', // Admin originator
+    async (profilePrimaryKey, profilePrivilegedKeyManager, profileId) => {
+      // Build wallet for specific profile
+      const keyDeriver = createKeyDeriver(new PrivateKey(profilePrimaryKey))
+      const storage = await createStorage(profileId)
+      const services = new Services({ chain: 'main', /* ... */ })
+
+      return new Wallet({
+        chain: 'main',
+        keyDeriver,
+        storage,
+        services,
+        privilegedKeyManager: profilePrivilegedKeyManager
+      })
+    },
+    new OverlayUMPTokenInteractor(), // UMP token interactor
+    async (recoveryKey) => {
+      // Save recovery key (e.g., prompt user to write it down)
+      console.log('SAVE THIS RECOVERY KEY:', Utils.toBase64(recoveryKey))
+      return true
+    },
+    async (reason, test) => {
+      // Retrieve password from user
+      const password = prompt(`Enter password for: ${reason}`)
+      if (!password) throw new Error('Password required')
+      if (!test(password)) throw new Error('Invalid password')
+      return password
+    }
+  )
+
+  // Provide presentation key (e.g., from QR code scan)
+  const presentationKey = Random(32)
+  await manager.providePresentationKey(presentationKey)
+
+  // Provide password
+  await manager.providePassword('user-password')
+
+  // Now authenticated and ready to use
+  return manager
+}
+
+3. Transaction Operations
+Create a Transaction
+import { CreateActionArgs, CreateActionResult } from '@bsv/sdk'
+
+async function sendBSV(
+  wallet: Wallet,
+  recipientAddress: string,
+  satoshis: number
+) {
+  const args: CreateActionArgs = {
+    description: 'Send BSV payment',
+    outputs: [{
+      lockingScript: Script.fromAddress(recipientAddress).toHex(),
+      satoshis,
+      outputDescription: `Payment to ${recipientAddress}`,
+      basket: 'default',
+      tags: ['payment']
+    }],
+    options: {
+      acceptDelayedBroadcast: false, // Broadcast immediately
+      randomizeOutputs: true          // Privacy
+    }
+  }
+
+  const result: CreateActionResult = await wallet.createAction(args)
+
+  if (result.txid) {
+    console.log('Transaction created:', result.txid)
+    return result.txid
+  } else {
+    console.log('Transaction pending signature')
+    return result.signableTransaction
+  }
+}
+
+Spending Existing Outputs (inputBEEF Required)
+
+CRITICAL: When spending known wallet outputs via createAction, you MUST provide inputBEEF. The wallet needs the full BEEF proof chain (merkle proofs back to confirmed ancestors) for every input being spent. Without it, createAction will fail with "missing full proof in the inputBEEF".
+
+Two ways to obtain BEEF for inputs:
+
+1. From listOutputs with include: 'entire transactions' — for wallet-owned outputs:
+
+// Fetch outputs WITH their BEEF proof chain
+const result = await wallet.listOutputs({
+  basket: 'my-basket',
+  include: 'entire transactions',  // Returns result.BEEF
+  includeTags: true,
+})
+
+// Pass the BEEF when spending those outputs
+const createResult = await wallet.createAction({
+  description: 'Spend basket outputs',
+  inputBEEF: result.BEEF,  // Full proof chain for inputs
+  inputs: result.outputs.map(o => ({
+    outpoint: o.outpoint,
+    inputDescription: 'Basket output',
+    unlockingScriptLength: 180,
+    sequenceNumber: 0xffffffff,
+  })),
+  outputs: [],
+  options: { signAndProcess: false },
+})
+
+
+2. From a service BEEF lookup — for external inputs (sweep, purchase):
+
+// Fetch BEEF from chain services
+const beef = await services.getBeefForTxid(txid)
+// Merge multiple if needed
+for (const additionalTxid of otherTxids) {
+  beef.mergeBeef(await services.getBeefForTxid(additionalTxid))
+}
+
+const createResult = await wallet.createAction({
+  description: 'Spend external inputs',
+  inputBEEF: beef.toBinary(),
+  inputs: [...],
+  outputs: [...],
+})
+
+
+Never call createAction with inputs but without inputBEEF — even if the wallet "owns" the outputs.
+
+noSend + BEEF Relay Pattern
+
+Use noSend: true when you want to create and sign a transaction but let a backend service validate and/or broadcast it. The result is returned as BEEF (Background Evaluation Extended Format) — a bundle of the transaction plus merkle proofs of its inputs, enabling SPV verification without a full node.
+
+import { WalletClient, P2PKH, Transaction } from '@bsv/sdk'
+
+const wallet = new WalletClient()
+
+// Build and sign, but don't broadcast
+const { tx } = await wallet.createAction({
+  description: 'Payment to service',
+  outputs: [{
+    lockingScript: new P2PKH().lock(recipientAddress).toHex(),
+    satoshis: 1000,
+    outputDescription: 'Service payment',
+  }],
+  options: { noSend: true },
+})
+
+// tx is BEEF bytes — convert to hex for JSON transport
+const beefHex = Transaction.fromBEEF(tx).toHexBEEF()
+
+// Send to backend — it can SPV-verify and broadcast
+await fetch(`https://your-service.example.com/pay?session=${sessionId}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ beefHex }),
+})
+
+
+Why this pattern?
+
+The receiving service can verify the payment is valid via SPV before granting access or broadcasting
+Useful for payment-gated APIs, content unlocking, and atomic service flows
+BEEF includes merkle proofs so the server doesn't need a full node
+
+Common mistake: forgetting the $ in template literals — {session} is a literal string, ${session} interpolates the variable.
+
+Sign a Transaction (Two-Phase with completeSignedAction)
+
+Note: completeSignedAction requires @1sat/actions and @bsv/sdk v2+. If using @bsv/wallet-toolbox v1.x without @1sat/actions, use wallet.signAction() directly instead.
+
+For two-phase actions (signAndProcess: false), use the completeSignedAction helper from @1sat/actions instead of calling signAction directly:
+
+import { completeSignedAction } from '@1sat/actions'
+
+const result = await completeSignedAction(
+  wallet,
+  createResult,           // from createAction with signAndProcess: false
+  inputBEEF as number[],  // BEEF from listOutputs (full SPV proof chain)
+  async (tx) => {
+    // tx is a fully-wired Transaction; return unlocking scripts by input index
+    return { 0: { unlockingScript: myScript.toHex() } }
+  },
+)
+
+
+The helper handles BEEF merge, script verification, signAction, and abortAction on failure.
+
+signableTransaction BEEF Stripping
+
+makeSignableTransactionBeef in wallet-toolbox intentionally strips merkle proofs (uses mergeRawTx). The completeSignedAction helper fixes this by merging the unsigned tx into the original inputBEEF:
+
+import { Beef } from '@bsv/sdk'  // Beef IS exported from @bsv/sdk
+
+const beef = Beef.fromBinary(inputBEEF)
+beef.mergeRawTx(unsignedTx.toBinary())
+const atomicTx = beef.findAtomicTransaction(txid)
+
+
+This reconstructs the full BEEF with merkle proofs intact.
+
+abortAction Scope
+
+abortAction({ reference }) works on these statuses only:
+
+nosend, unsigned, unprocessed
+
+Does NOT work on: completed, failed, sending, unproven.
+
+Server-side processAction verifies unlocking scripts independently after signAction. On verification failure, the server sets status to failed and releases inputs automatically.
+
+Sign a Transaction (Direct signAction)
+
+For simple cases where you need raw signAction:
+
+async function signTransaction(
+  wallet: Wallet,
+  reference: string,
+  unlockingScripts: Record<number, { unlockingScript: string }>
+) {
+  const result = await wallet.signAction({
+    reference,
+    spends: unlockingScripts
+  })
+
+  console.log('Transaction signed:', result.txid)
+  return result
+}
+
+Check Wallet Balance
+async function getWalletBalance(wallet: Wallet) {
+  // Method 1: Quick balance (uses special operation)
+  const balance = await wallet.balance()
+  console.log(`Balance: ${balance} satoshis`)
+
+  // Method 2: Detailed balance with UTXOs
+  const detailed = await wallet.balanceAndUtxos('default')
+  console.log(`Total: ${detailed.total} satoshis`)
+  console.log(`UTXOs: ${detailed.utxos.length}`)
+  detailed.utxos.forEach(utxo => {
+    console.log(`  ${utxo.outpoint}: ${utxo.satoshis} sats`)
+  })
+
+  return balance
+}
+
+List Outputs
+import { ListOutputsArgs, ListOutputsResult } from '@bsv/sdk'
+
+async function listSpendableOutputs(wallet: Wallet) {
+  const args: ListOutputsArgs = {
+    basket: 'default',  // Change basket
+    spendable: true,    // Only spendable outputs
+    limit: 100,
+    offset: 0,
+    tags: ['payment']   // Optional: filter by tags
+  }
+
+  const result: ListOutputsResult = await wallet.listOutputs(args)
+
+  console.log(`Found ${result.totalOutputs} outputs`)
+  result.outputs.forEach(output => {
+    console.log(`  ${output.outpoint}: ${output.satoshis} sats`)
+  })
+
+  return result
+}
+
+List Actions (Transactions)
+async function listTransactionHistory(wallet: Wallet) {
+  const result = await wallet.listActions({
+    labels: [],
+    labelQueryMode: 'any',
+    limit: 50,
+    offset: 0
+  })
+
+  console.log(`Found ${result.totalActions} actions`)
+  result.actions.forEach(action => {
+    console.log(`  ${action.txid}: ${action.status} - ${action.description}`)
+  })
+
+  return result
+}
+
+4. Key Management
+Get Public Key
+async function getIdentityKey(wallet: Wallet) {
+  // Get wallet's identity key
+  const result = await wallet.getPublicKey({ identityKey: true })
+  console.log('Identity Key:', result.publicKey)
+  return result.publicKey
+}
+
+async function getDerivedKey(wallet: Wallet) {
+  // Get derived key for specific protocol
+  const result = await wallet.getPublicKey({
+    protocolID: [2, 'my-app'],
+    keyID: 'encryption-key-1',
+    counterparty: 'recipient-identity-key'
+  })
+
+  return result.publicKey
+}
+
+Encrypt/Decrypt Data
+async function encryptMessage(
+  wallet: Wallet,
+  plaintext: string,
+  recipientPubKey: string
+) {
+  const result = await wallet.encrypt({
+    plaintext: Utils.toArray(plaintext, 'utf8'),
+    protocolID: [2, 'secure-messaging'],
+    keyID: 'msg-key',
+    counterparty: recipientPubKey
+  })
+
+  return Utils.toBase64(result.ciphertext)
+}
+
+async function decryptMessage(
+  wallet: Wallet,
+  ciphertext: string,
+  senderPubKey: string
+) {
+  const result = await wallet.decrypt({
+    ciphertext: Utils.toArray(ciphertext, 'base64'),
+    protocolID: [2, 'secure-messaging'],
+    keyID: 'msg-key',
+    counterparty: senderPubKey
+  })
+
+  return Utils.toUTF8(result.plaintext)
+}
+
+Create Signature
+async function signData(wallet: Wallet, data: string) {
+  const result = await wallet.createSignature({
+    data: Utils.toArray(data, 'utf8'),
+    protocolID: [2, 'document-signing'],
+    keyID: 'sig-key',
+    counterparty: 'self'
+  })
+
+  return Utils.toBase64(result.signature)
+}
+
+5. Storage Configuration
+
+See references/storage-config.md for storage configuration details (SQLite, MySQL, IndexedDB, multi-storage manager).
+
+6. Certificate Operations
+
+See references/certificates.md for certificate operations (acquire, list, prove).
+
+7. Error Handling
+
+See references/error-handling.md for error handling patterns (WalletError types, WERR_REVIEW_ACTIONS, double-spend detection).
+
+8. Production Patterns
+
+See references/production-patterns.md for production patterns (wallet state management, transaction retry logic, background monitoring).
+
+Related Skills
+
+For comprehensive wallet development, also reference these skills:
+
+Skill	Relationship
+encrypt-decrypt-backup	Standard backup formats (.bep files, AES-256-GCM)
+junglebus	Populate UTXO set from blockchain, real-time streaming
+key-derivation	Type42/BRC-42 and BIP32 key derivation details
+wallet-encrypt-decrypt	ECDH message encryption patterns
+wallet-send-bsv	Basic transaction creation (simpler than BRC-100)
+
+For 1Sat Ordinals / Token Support:
+
+If your BRC-100 wallet needs to handle 1Sat Ordinals, BSV-20/BSV-21 tokens, or inscriptions, use @1sat/wallet-toolbox which wraps the core wallet-toolbox with ordinals capabilities.
+
+See 1sat for:
+
+wallet-create-ordinals - Mint ordinals/NFTs
+extract-blockchain-media - Extract inscribed media from transactions
+ordinals-marketplace - List/buy/cancel ordinals (OrdLock)
+token-operations - BSV21 token send/receive/deploy
+wallet-setup - BRC-100 wallet creation and sync
+transaction-building - Action-based tx building (sendBsv, signBsm)
+sweep-import - Import from external wallets via WIF
+opns-names - OpNS name registration
+dapp-connect - dApp wallet connection (@1sat/connect, @1sat/react)
+timelock - CLTV time-locked BSV
+Additional Resources
+BRC-100 Specification: https://bsv.brc.dev/wallet/0100
+BRC-42 (BKDS): https://bsv.brc.dev/wallet/0042
+BRC-43 (Security Levels): https://bsv.brc.dev/wallet/0043
+Wallet Toolbox Docs: https://bsv-blockchain.github.io/wallet-toolbox
+BSV SDK Docs: https://bsv-blockchain.github.io/ts-sdk
+@1sat/wallet-toolbox: BRC-100 wallet with 1Sat Ordinals support (wraps @bsv/wallet-toolbox)
+1sat: https://github.com/b-open-io/1sat-sdk - Ordinals minting, marketplace, and token operations
+bsv-desktop (Reference Implementation): https://github.com/bsv-blockchain/bsv-desktop
+Real-world Electron wallet with BRC-100 support
+IPC architecture for storage isolation
+Background monitoring patterns
+HTTPS server on port 2121 for BRC-100 interface
+
+Research: For deep dives into BRC specifications or implementation patterns, use the browser-agent to fetch current documentation from bsv.brc.dev.
+
+Platform Guides
+
+Platform-specific implementation guides:
+
+Platform	Guide	Reference Implementation
+Browser Extension	extension-guide.md	yours-wallet
+Desktop (Electron)	desktop-guide.md	bsv-desktop
+Web Application	web-guide.md	-
+Mobile (React Native)	mobile-guide.md	-
+Node.js Service/CLI	nodejs-guide.md	-
+
+See references/key-concepts.md for BRC-100 unique concepts:
+
+Actions vs Transactions
+Baskets and Tags
+Certificate system (BRC-52/53/64/65)
+Background Monitoring
+Common Patterns Summary
+Task	Method	Key Args
+Send BSV	createAction()	outputs, options
+Check balance	balance()	None
+List UTXOs	listOutputs()	basket, spendable
+Get history	listActions()	labels, limit
+Get pubkey	getPublicKey()	protocolID, keyID
+Encrypt data	encrypt()	plaintext, counterparty
+Get certificate	acquireCertificate()	type, certifier
+
+Remember: Always handle errors properly, use privileged keys securely, and follow BRC-100 security levels for sensitive operations!
+
+Weekly Installs
+20
+Repository
+b-open-io/bsv-skills
+GitHub Stars
+2
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

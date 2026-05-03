@@ -1,0 +1,216 @@
+---
+rating: ⭐⭐⭐
+title: design-spec
+url: https://skills.sh/duc01226/easyplatform/design-spec
+---
+
+# design-spec
+
+skills/duc01226/easyplatform/design-spec
+design-spec
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill design-spec
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Quick Summary
+
+Goal: Create structured UI/UX design specification documents from requirements or PBIs for developer handoff.
+
+Workflow:
+
+Read Source — Extract UI requirements from PBI, story, or Figma URL
+Determine Complexity — Quick Spec (sections 1-4) vs Full Spec (all 7 sections)
+Build Component Inventory — List new vs existing components
+Define States & Tokens — Interactions, design tokens, responsive breakpoints
+Save Artifact — Output to team-artifacts/design-specs/
+
+Key Rules:
+
+If Figma URL provided → auto-routes to /figma-design for context extraction
+If wireframe image provided → auto-routes to /wireframe-to-spec for structured analysis
+If screenshot provided → uses ai-multimodal for design extraction
+Reference existing design system tokens from docs/project-reference/design-system/
+Component patterns: docs/project-reference/frontend-patterns-reference.md (content auto-injected by hook — check for [Injected: ...] header before reading)
+Include accessibility requirements (keyboard nav, ARIA labels, contrast)
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Design Specification
+
+Create structured UI/UX design specification documents from requirements or PBIs for developer handoff.
+
+When to Use
+A PBI or user story needs a design spec before implementation
+Translating requirements into concrete UI layout, states, and tokens
+Documenting component inventory and interaction patterns
+Creating responsive breakpoint specifications
+When NOT to Use
+This skill auto-routes Figma URLs to /figma-design and wireframes to /wireframe-to-spec — no need to call those skills separately
+Building the actual UI -- use frontend-design
+Full UX research and design process -- use ux-designer
+Reviewing existing UI code -- use web-design-guidelines
+Prerequisites
+
+Read before executing:
+
+The source PBI, user story, or requirements document
+docs/project-reference/design-system/ -- project design tokens (if applicable)
+Existing design specs in team-artifacts/design-specs/ for format consistency
+Frontend/UI Context
+
+When this task involves frontend or UI changes,
+
+UI System Context — For ANY task touching .ts, .html, .scss, or .css files:
+
+MUST ATTENTION READ before implementing:
+
+docs/project-reference/frontend-patterns-reference.md — component base classes, stores, forms
+docs/project-reference/scss-styling-guide.md — BEM methodology, SCSS variables, mixins, responsive
+docs/project-reference/design-system/README.md — design tokens, component inventory, icons
+
+Reference docs/project-config.json for project-specific paths.
+
+Frontend patterns: docs/project-reference/frontend-patterns-reference.md
+Styling/BEM guide: docs/project-reference/scss-styling-guide.md
+Design system tokens: docs/project-reference/design-system/README.md
+Workflow
+
+Read source input & route by type
+
+Input Detected	Detection	Action
+Figma URL	figma.com/design or figma.com/file in text	Activate /figma-design to extract context, then continue
+Image/screenshot	Image file attached to prompt	Use ai-multimodal to extract design guidelines, then continue
+Hand-drawn wireframe	Image + "wireframe"/"sketch" keyword	Activate /wireframe-to-spec to generate structured spec, then continue
+PBI/story text	Acceptance criteria present	Extract UI requirements from text, continue
+Verbal/text requirements	No image, no URL, no PBI	Clarify with user, then continue
+
+For ANY visual input: extract design context FIRST, then proceed to spec generation.
+
+Determine spec complexity
+
+IF single form or simple component → Quick Spec (sections 1-4 only)
+IF full page or multi-component view → Full Spec (all 7 sections)
+IF multi-page flow → Full Spec + Flow Diagram
+
+
+Build component inventory
+
+List all UI components needed
+Identify reusable vs feature-specific components
+Note existing components from shared component library or design system
+
+Define states and interactions
+
+Default, hover, active, disabled, error, loading, empty states
+User interactions (click, drag, keyboard shortcuts)
+Transitions and animations
+
+Extract design tokens
+
+Colors, typography, spacing, shadows, border-radius
+Reference existing design system tokens where possible
+
+Document responsive behavior
+
+Mobile (320-767px), Tablet (768-1023px), Desktop (1024px+)
+What changes at each breakpoint (layout, visibility, sizing)
+
+Save artifact
+
+Path: team-artifacts/design-specs/{YYMMDD}-designspec-{feature-slug}.md
+Output Format
+# Design Spec: {Feature Name}
+
+**Source:** {PBI/story reference}
+**Date:** {YYMMDD}
+**Status:** Draft | Review | Approved
+
+## 1. Overview
+
+{1-2 sentence summary of what this UI does}
+
+## 2. Component Inventory
+
+| Component | Type     | Source           | Notes                       |
+| --------- | -------- | ---------------- | --------------------------- |
+| UserCard  | New      | Feature-specific | Displays user avatar + name |
+| DataTable | Existing | shared library   | Reuse with custom columns   |
+
+## 3. Layout
+
+{Description or ASCII wireframe of layout structure}
+
+- Desktop: {layout description}
+- Tablet: {layout changes}
+- Mobile: {layout changes}
+
+## 4. Design Tokens
+
+| Token      | Value          | Usage                 |
+| ---------- | -------------- | --------------------- |
+| $primary   | #1976D2        | Action buttons, links |
+| $text-body | 14px/1.5 Inter | Body text             |
+| $gap-md    | 16px           | Section spacing       |
+
+## 5. States & Interactions
+
+| Element  | Default    | Hover      | Active     | Disabled         | Error |
+| -------- | ---------- | ---------- | ---------- | ---------------- | ----- |
+| Save btn | Blue/white | Darken 10% | Scale 0.98 | Gray/50% opacity | --    |
+
+## 6. Accessibility
+
+- Keyboard navigation order
+- ARIA labels for interactive elements
+- Color contrast compliance notes
+
+## 7. Open Questions
+
+- {Any unresolved design decisions}
+
+Examples
+Example 1: Simple form spec
+
+Input: "Design spec for employee onboarding form"
+
+Output: Quick Spec with sections 1-4 covering form fields (name, email, department dropdown, start date picker), validation rules, submit/cancel actions, and mobile stacking behavior.
+
+Example 2: Complex dashboard spec
+
+Input: "Design spec for recruitment pipeline dashboard with drag-and-drop columns"
+
+Output: Full Spec covering Kanban board layout, candidate cards (component inventory), drag-and-drop interactions, column states (empty, populated, over-limit), filter bar, responsive collapse to list view on mobile, and accessibility for keyboard drag operations.
+
+Related Skills
+Skill	When to use instead
+ux-designer	Full UX design process with research
+figma-design	Extract specs from Figma designs
+frontend-design	Build the actual UI implementation
+interface-design	Product UI design (dashboards, apps)
+web-design-guidelines	Review existing UI for compliance
+Workflow Recommendation
+
+MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS: If you are NOT already in a workflow, you MUST ATTENTION use AskUserQuestion to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+
+Activate design-workflow workflow (Recommended) — design-spec → code-review
+Execute /design-spec directly — run this skill standalone
+Closing Reminders
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+MANDATORY IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+MANDATORY IMPORTANT MUST ATTENTION read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
+Weekly Installs
+46
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

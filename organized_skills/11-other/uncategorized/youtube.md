@@ -1,0 +1,144 @@
+---
+rating: ⭐⭐
+title: youtube
+url: https://skills.sh/vm0-ai/vm0-skills/youtube
+---
+
+# youtube
+
+skills/vm0-ai/vm0-skills/youtube
+youtube
+Installation
+$ npx skills add https://github.com/vm0-ai/vm0-skills --skill youtube
+SKILL.md
+Troubleshooting
+
+If requests fail, run zero doctor check-connector --env-name YOUTUBE_TOKEN or zero doctor check-connector --url https://www.googleapis.com/youtube/v3/search --method GET
+
+How to Use
+
+Base URL: https://www.googleapis.com/youtube/v3
+
+1. Search Videos
+curl -s "https://www.googleapis.com/youtube/v3/search?part=snippet&q=kubernetes+tutorial&type=video&maxResults=5&key=$YOUTUBE_TOKEN" | jq '.items[] | {videoId: .id.videoId, title: .snippet.title, channel: .snippet.channelTitle}'
+
+2. Search with Filters
+
+Search for videos uploaded this year, ordered by view count:
+
+curl -s "https://www.googleapis.com/youtube/v3/search?part=snippet&q=react+hooks&type=video&order=viewCount&publishedAfter=2024-01-01T00:00:00Z&maxResults=10&key=$YOUTUBE_TOKEN" | jq '.items[] | {videoId: .id.videoId, title: .snippet.title}'
+
+3. Get Video Details
+
+Replace <your-video-id> with an actual video ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=<your-video-id>&key=$YOUTUBE_TOKEN" | jq '.items[0] | {title: .snippet.title, views: .statistics.viewCount, likes: .statistics.likeCount, duration: .contentDetails.duration}'
+
+4. Get Multiple Videos
+
+Replace <your-video-id-1>, <your-video-id-2>, <your-video-id-3> with actual video IDs:
+
+curl -s "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=<your-video-id-1>,<your-video-id-2>,<your-video-id-3>&key=$YOUTUBE_TOKEN" | jq '.items[] | {id: .id, title: .snippet.title, views: .statistics.viewCount}'
+
+5. Get Trending Videos
+curl -s "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=US&maxResults=10&key=$YOUTUBE_TOKEN" | jq '.items[] | {title: .snippet.title, channel: .snippet.channelTitle, views: .statistics.viewCount}'
+
+6. Get Channel by ID
+
+Replace <your-channel-id> with an actual channel ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=<your-channel-id>&key=$YOUTUBE_TOKEN" | jq '.items[0] | {title: .snippet.title, subscribers: .statistics.subscriberCount, videos: .statistics.videoCount}'
+
+7. Get Channel by Handle
+curl -s "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=@GoogleDevelopers&key=$YOUTUBE_TOKEN" | jq '.items[0] | {id: .id, title: .snippet.title, subscribers: .statistics.subscriberCount}'
+
+8. Get Channel by Username
+curl -s "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forUsername=GoogleDevelopers&key=$YOUTUBE_TOKEN" | jq '.items[0] | {id: .id, title: .snippet.title, description: .snippet.description}'
+
+9. List Playlist Items
+
+Replace <your-playlist-id> with an actual playlist ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=<your-playlist-id>&maxResults=20&key=$YOUTUBE_TOKEN" | jq '.items[] | {position: .snippet.position, title: .snippet.title, videoId: .snippet.resourceId.videoId}'
+
+10. Get Channel Uploads Playlist
+
+First get the channel's uploads playlist ID, then list videos. Replace <your-channel-id> with an actual channel ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=<your-channel-id>&key=$YOUTUBE_TOKEN" | jq -r '.items[0].contentDetails.relatedPlaylists.uploads'
+
+11. Get Video Comments
+
+Replace <your-video-id> with an actual video ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=<your-video-id>&maxResults=20&order=relevance&key=$YOUTUBE_TOKEN" | jq '.items[] | {author: .snippet.topLevelComment.snippet.authorDisplayName, text: .snippet.topLevelComment.snippet.textDisplay, likes: .snippet.topLevelComment.snippet.likeCount}'
+
+12. Search Comments
+
+Replace <your-video-id> with an actual video ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=<your-video-id>&searchTerms=great+video&maxResults=10&key=$YOUTUBE_TOKEN" | jq '.items[] | {author: .snippet.topLevelComment.snippet.authorDisplayName, text: .snippet.topLevelComment.snippet.textDisplay}'
+
+13. Get Video Categories
+curl -s "https://www.googleapis.com/youtube/v3/videoCategories?part=snippet&regionCode=US&key=$YOUTUBE_TOKEN" | jq '.items[] | {id: .id, title: .snippet.title}'
+
+14. Search Videos by Category
+curl -s "https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=28&maxResults=10&key=$YOUTUBE_TOKEN" | jq '.items[] | {videoId: .id.videoId, title: .snippet.title}'
+
+
+Note: Category 28 = Science & Technology
+
+15. Get Playlists from Channel
+
+Replace <your-channel-id> with an actual channel ID:
+
+curl -s "https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=<your-channel-id>&maxResults=20&key=$YOUTUBE_TOKEN" | jq '.items[] | {id: .id, title: .snippet.title, description: .snippet.description}'
+
+Common Video Categories
+ID	Category
+1	Film & Animation
+10	Music
+17	Sports
+20	Gaming
+22	People & Blogs
+24	Entertainment
+25	News & Politics
+26	Howto & Style
+27	Education
+28	Science & Technology
+Part Parameter Options
+Videos
+snippet - Title, description, thumbnails, channel
+statistics - Views, likes, comments count
+contentDetails - Duration, definition, caption
+status - Upload status, privacy, license
+player - Embeddable player
+Channels
+snippet - Title, description, thumbnails
+statistics - Subscribers, videos, views
+contentDetails - Related playlists (uploads, likes)
+brandingSettings - Channel customization
+Pagination
+
+Use nextPageToken from response to get more results. Replace <your-next-page-token> with the actual token from the previous response:
+
+curl -s "https://www.googleapis.com/youtube/v3/search?part=snippet&q=python&type=video&maxResults=50&pageToken=<your-next-page-token>&key=$YOUTUBE_TOKEN" | jq '.items[] | {title: .snippet.title}'
+
+Guidelines
+Quota limits: API has 10,000 units/day quota. Search costs 100 units, most others cost 1 unit
+Rate limits: Implement exponential backoff on 403/429 errors
+API key security: Never expose API keys in client-side code
+Caching: Cache responses to reduce quota usage
+Video IDs: Extract from URLs like youtube.com/watch?v=VIDEO_ID or youtu.be/VIDEO_ID
+Weekly Installs
+104
+Repository
+vm0-ai/vm0-skills
+GitHub Stars
+57
+First Seen
+1 day ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

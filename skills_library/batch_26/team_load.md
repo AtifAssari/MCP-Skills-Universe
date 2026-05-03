@@ -1,0 +1,470 @@
+---
+title: team-load
+url: https://skills.sh/killvxk/teamskills/team-load
+---
+
+# team-load
+
+skills/killvxk/teamskills/team-load
+team-load
+Installation
+$ npx skills add https://github.com/killvxk/teamskills --skill team-load
+SKILL.md
+团队配置加载
+
+从项目目录的 .team-profiles/ 加载已保存的团队配置，跳过交互问答，直接创建团队。
+
+路径约定
+
+本 skill 中跨 skill 路径均相对于 SKILL.md 所在目录（skill base directory）。执行时以 base directory 拼接绝对路径。不要硬编码 ~/.claude/skills/ — skill 可能安装在项目级 .claude/skills/ 或全局 ~/.claude/skills/ 下。
+
+前置条件
+team-init skill 必须位于兄弟路径 ../team-init/。本 skill 的角色定义文件（含扩展角色）均从 ../team-init/references/ 读取。
+支持的配置格式
+格式	来源	识别方式	加载行为
+template	/team-init 自动保存	format: template 或有 team_type + roles 字段	读取角色定义文件构建 prompt
+snapshot	/team-save 手动保存	format: snapshot 或有 members 含 prompt 字段	直接使用保存的 prompt
+加载流程
+步骤 1: 定位配置文件
+
+配置文件路径: {当前工作目录}/.team-profiles/{name}.yaml
+
+如果 $ARGUMENTS 非空，直接使用 $ARGUMENTS 作为配置名称
+如果 $ARGUMENTS 为空，扫描 .team-profiles/ 目录下所有 .yaml 文件，列出供用户选择
+
+当目录下有多个配置时：
+
+AskUserQuestion:
+  question: "选择要加载的团队配置"
+  header: "团队配置"
+  options:
+    - label: "{name1}"
+      description: "[{format}] {description 前30字}"
+    - label: "{name2}"
+      description: "[{format}] {description 前30字}"
+    # ... 最多列出 4 个，更多在「其他」中输入
+  multiSelect: false
+
+
+如果 .team-profiles/ 目录不存在或为空，提示用户：
+
+未找到团队配置。
+- 使用 /team-init 创建新团队（会自动保存模板配置）
+- 使用 /team-save 保存当前运行中的团队（保存快照配置）
+
+步骤 2: 读取并识别格式
+
+使用 Read 工具读取 .team-profiles/{name}.yaml。
+
+格式判断：
+
+有 format: snapshot 或有 members[].prompt → snapshot 格式，跳到「快照加载流程」
+有 format: template 或有 team_type + roles → template 格式，跳到「模板加载流程」
+都不匹配 → 报错提示格式不正确
+步骤 3: 检测团队冲突
+
+扫描 ~/.claude/teams/ 目录，检查是否存在与即将创建的团队同名的目录。
+
+如果存在同名团队目录，在步骤 5（确认并允许覆盖）的摘要中增加警告：
+
+⚠ 检测到同名团队「{project_name}」正在运行。
+加载将创建新团队，旧团队的 agent 不会自动关闭。
+建议先关闭旧团队，或使用不同的项目名称。
+
+
+这只是警告，不阻止加载。
+
+步骤 4: 选择加载模式（仅 snapshot 格式）
+
+仅当 snapshot 格式时执行此步骤；template 格式直接跳至步骤 5。
+
+如果是 snapshot 格式，询问加载模式：
+
+AskUserQuestion:
+  question: "选择加载模式"
+  header: "加载模式"
+  options:
+    - label: "完整加载"
+      description: "恢复团队结构、角色设定和任务进度"
+    - label: "仅结构加载"
+      description: "只恢复团队结构和成员组成，使用原始角色定义，不加载任务进度（全新启动）"
+  multiSelect: false
+
+
+完整加载: 使用 snapshot 中保存的 prompt 和任务，走「快照加载流程」（当前行为）。
+
+仅结构加载: 从 snapshot 中提取成员组成（角色名和数量），但使用 ../team-init/references/ 中的原始角色定义重建 prompt，不创建任务。等效于将 snapshot 当作 template 使用。走「模板加载流程」，具体处理见下方「仅结构加载的转换规则」。
+
+如果是 template 格式，跳过此步骤（template 本身就是结构加载）。
+
+步骤 5: 确认并允许覆盖
+
+展示配置摘要（两种格式通用）：
+
+团队配置: {name} [{format}] {如果是仅结构加载则追加 "(仅结构)"}
+--------------------
+描述: {description}
+工作目录: {work_dir 或 cwd}
+
+团队成员:
+  - {member/role 列表}
+
+预计创建 {N} 个 Agent
+
+{仅完整加载显示:}
+任务进度:
+  {completed}✓ 已完成  {in_progress}⚡ 进行中  {pending}○ 待处理
+
+{仅结构加载显示:}
+加载模式: 仅结构 — 使用原始角色定义，不加载任务进度
+--------------------
+
+AskUserQuestion:
+  question: "确认加载此团队配置？"
+  header: "确认"
+  options:
+    - label: "直接加载"
+      description: "使用保存的配置创建团队"
+    - label: "修改项目名称"
+      description: "使用相同配置但换一个 team name"
+    - label: "修改工作目录"
+      description: "使用相同配置但换工作目录"
+    - label: "修改名称和目录"
+      description: "同时修改项目名称和工作目录"
+  multiSelect: false
+
+
+如果用户选择修改项目名称或工作目录，用 AskUserQuestion 收集新值。 如果用户选择"修改名称和目录"，依次用两个 AskUserQuestion 收集新的项目名称和新的工作目录。 用户可以在「其他」中输入取消。
+
+模板加载流程（format: template）
+
+配置中包含 team_type、roles 等字段，需要读取角色定义文件构建 prompt。
+
+T-1: 解析配置
+
+提取：
+
+team_type: 团队类型目录名 (dev/testing/reverse/debug/security/ctf/ops/discuss)
+team_type_name: 中文名称
+description: 项目描述
+tech_stack: 技术栈
+work_dir: 工作目录（"." 替换为当前工作目录）
+roles[]: 角色列表，每项有 role（代号）、count（数量）、is_lead（是否 Lead）、source（可选，extension 表示扩展角色，remote 表示远程角色）、department（可选，扩展角色所属领域）、remote_source（可选，远程角色来源标识）、verified（可选，远程角色 5-Block 验证状态）
+T-2: 创建团队
+TeamCreate:
+  team_name: "{project_name}"
+  description: "{team_type_name} - {description}"
+
+T-3: 读取角色定义和工作流
+
+角色定义和工作流位于 team-init skill 的 references 目录下（相对于本 skill 目录）：
+
+核心角色定义: ../team-init/references/{team_type}/roles/{role_code}.md
+扩展角色定义: ../team-init/references/extensions/{department}/{role_code}.md
+工作流: ../team-init/references/{team_type}/workflow.md
+
+扩展角色识别: 角色配置中 source: extension 的角色为扩展角色。其 role 字段格式为 ext-{department}-{role_code}，需从 department 字段获取部门名，从 role 字段去掉 ext-{department}- 前缀获取角色代号，然后从 ../team-init/references/extensions/{department}/{role_code}.md 读取定义。例如：engineering 领域的 AI 工程师，存储为 role: "ext-engineering-engineering-ai-engineer"，去掉 ext-engineering- 前缀得到 engineering-ai-engineer，路径为 ../team-init/references/extensions/engineering/engineering-ai-engineer.md。
+
+远程角色（source: remote）：
+
+读取 {work_dir}/.team-roles/roles-lock.json
+在 roles[] 中查找 code 与角色代号匹配的条目
+找到 → 拼接路径 {work_dir}/.team-roles/{lock_entry.filePath}，Read 获取内容
+未找到或文件不存在 → 提示用户选择：
+"现在安装"（推断 GitHub URL 从 remote_source 字段，执行 team-roles add 流程，完成后重试步骤 2）
+"跳过该角色"（从成员列表中移除，继续加载）
+"取消加载"（中止整个 team-load）
+
+work_dir 变更时的缓存回退：若用户在步骤 5 修改了工作目录，新 work_dir 可能没有 .team-roles/ 缓存。处理方式：
+
+先检查新 work_dir/.team-roles/roles-lock.json
+不存在 → 回退检查原始 work_dir/.team-roles/roles-lock.json
+都不存在 → 提示角色未安装，走上方缺失安装流程
+
+使用 Read 工具时，将以上相对路径拼接到本 skill 的 base directory 构建绝对路径。
+
+T-4: 构建角色 Prompt
+
+Lead 角色与执行角色使用不同的工作流注入策略（与 /team-init「步骤 5: 构建角色 Prompt」逻辑一致）。
+
+Lead 角色的 Prompt
+你是「{project_name}」项目的{role_name}。
+
+<project_context>
+项目名称: {project_name}
+团队类型: {team_type_name}
+项目描述: {description}
+技术栈: {tech_stack}
+工作目录: {work_dir}
+</project_context>
+
+<team_members>
+{列出所有成员的名称和角色}
+</team_members>
+
+<workflow>
+{workflow.md 的完整内容}
+</workflow>
+
+<your_role>
+{对应角色 .md 文件的完整内容}
+</your_role>
+
+执行角色的 Prompt
+
+仅注入 workflow.md 中的阶段总览表格，不含各阶段详细流程。
+
+你是「{project_name}」项目的{role_name}。
+
+<project_context>
+项目名称: {project_name}
+团队类型: {team_type_name}
+项目描述: {description}
+技术栈: {tech_stack}
+工作目录: {work_dir}
+</project_context>
+
+<team_members>
+{列出所有成员的名称和角色}
+</team_members>
+
+<workflow_overview>
+{仅 workflow.md 中「阶段总览」表格}
+</workflow_overview>
+
+<your_role>
+{对应角色 .md 文件的完整内容}
+</your_role>
+
+扩展角色的 Prompt
+
+扩展角色（source: extension）使用与执行角色相同的 prompt 结构，额外标注扩展来源：
+
+你是「{project_name}」项目的{role_name}（扩展角色 — {department}）。
+
+<project_context>
+项目名称: {project_name}
+团队类型: {team_type_name}
+项目描述: {description}
+技术栈: {tech_stack}
+工作目录: {work_dir}
+</project_context>
+
+<team_members>
+{列出所有成员的名称和角色}
+</team_members>
+
+<workflow_overview>
+{仅 workflow.md 中「阶段总览」表格}
+</workflow_overview>
+
+<your_role>
+{扩展角色 .md 文件的完整内容}
+</your_role>
+
+T-5: 创建初始任务
+
+使用 TaskCreate 根据 workflow.md 的阶段创建任务骨架。 设置阶段间的 blockedBy 依赖关系。 将第一个任务分配给 Lead 角色。
+
+T-6: 派生团队成员
+
+先创建 Lead，再并行创建其他角色。
+
+Agent:
+  name: "{member_name}"
+  subagent_type: "general-purpose"
+  team_name: "{project_name}"
+  prompt: "{T-4 构建的 prompt}"
+  mode: "bypassPermissions"
+  description: "Team member: {role_name}"
+
+
+命名规则：
+
+单实例角色: 直接使用代号
+多实例角色: 代号-序号
+扩展角色: 使用完整代号 (ext-marketing-xiaohongshu 等)
+T-7: 通知 Lead 启动
+SendMessage:
+  type: "message"
+  recipient: "{lead_name}"
+  content: |
+    团队已从模板配置加载完成。
+    - 项目: {project_name}
+    - 描述: {description}
+    - 技术栈: {tech_stack}
+    - 工作目录: {work_dir}
+    - 团队成员: {member_list}
+    - 配置来源: .team-profiles/{name}.yaml
+
+    请开始第一阶段工作。（工作流已注入到您的 prompt 中）
+  summary: "团队已从模板加载，启动项目"
+
+快照加载流程（format: snapshot）
+
+配置中包含每个成员的完整 prompt，直接使用，不需要读取角色定义文件。
+
+S-1: 解析配置
+
+提取：
+
+name: 团队名称
+description: 团队描述
+team_type: 团队类型目录名（建议必填；缺失时「仅结构加载」不可用，且 Lead 优先创建无法执行）
+team_type_name: 团队类型中文名（可选，用于 S-2 description）
+members[]: 成员列表，每项有：
+name: 成员名称
+agent_type: agent 类型
+prompt: 完整 prompt
+model: 模型（可选，默认继承当前模型）
+mode: 权限模式（可选，默认 "bypassPermissions"，可选 "plan" / "default"）
+cwd: 工作目录
+color: 颜色（可选）
+tasks[]: 任务列表（可选），每项有：
+original_id: 原始任务 ID
+subject: 任务标题
+description: 详细描述
+active_form: 进行时描述
+status: 状态
+owner: 负责人名称
+blocked_by: 依赖的 original_id 列表
+S-2: 创建团队
+TeamCreate:
+  team_name: "{project_name}"
+  description: "{team_type_name} - {description}"   # 如果 team_type_name 为空则只用 {description}
+
+S-3: 恢复任务进度
+
+如果配置中有 tasks 段且非空，按顺序恢复任务：
+
+维护一个 ID 映射表: old_id → new_id
+按 original_id 顺序遍历每个任务： a. 使用 TaskCreate 创建任务（subject, description, activeForm） b. 记录 old_id → new_id 映射
+创建完所有任务后，设置依赖关系：
+遍历每个有 blocked_by 的任务
+将 blocked_by 中的 old_id 通过映射表转换为 new_id
+使用 TaskUpdate 设置 addBlockedBy
+恢复任务状态：
+对 status 为 completed 的任务：TaskUpdate status → completed
+对 status 为 in_progress 的任务：TaskUpdate status → pending，设置 owner（重置为待处理，保留负责人，让 lead 重新评估）
+对有 owner 的 pending 任务：TaskUpdate 设置 owner
+S-4: 派生团队成员
+
+确定优先创建的成员（Lead 识别）：
+
+如果配置中有 team_type，根据以下映射找到 lead 角色代号：
+
+dev → pm
+testing → test-manager
+reverse → re-lead
+debug → debug-lead
+security → security-lead
+ctf → captain
+ops → ops-manager
+discuss → moderator
+
+在 members 列表中查找 name 匹配 lead 代号的成员，优先创建它。 如果 team_type 为空或找不到匹配的 lead 成员，则全部并行创建。
+
+对每个成员：
+
+Agent:
+  name: "{member.name}"
+  subagent_type: "general-purpose"
+  team_name: "{project_name}"
+  prompt: "{member.prompt}"
+  mode: "{member.mode 或默认 bypassPermissions}"
+  description: "Team member: {member.name}"
+
+
+注意：color 字段仅作记录保留，Task tool 不支持设置颜色，加载时不生效。
+
+Prompt 替换规则：
+
+如果用户修改了工作目录，将每个成员 prompt 中该成员自己的 member.cwd 值替换为新路径（注意：不同成员可能有不同的 cwd，按各自的值替换）
+如果用户修改了项目名称，将每个成员 prompt 中的配置原始 name 替换为新 project_name（包括 <project_context> 块中的 项目名称: 和 prompt 开头的 「{old_name}」）
+S-5: 通知 Lead 成员启动
+
+通知 S-4 中识别出的 lead 成员。如果未识别出 lead（全部并行创建），则通知 members 列表中的第一个成员。
+
+SendMessage:
+  type: "message"
+  recipient: "{lead_member_name 或 first_member_name}"
+  content: |
+    团队已从快照配置加载完成。
+    - 项目: {project_name}
+    - 描述: {description}
+    - 工作目录: {work_dir}
+    - 团队成员: {member_list}
+    - 任务恢复: {M} 个任务（{completed} 已完成, {was_in_progress} 个原进行中已重置为待处理, {pending} 待处理）
+    - 配置来源: .team-profiles/{name}.yaml (snapshot)
+
+    {如果 was_in_progress > 0: "注意：原来进行中的任务已重置为待处理状态，因为新 agent 没有之前的工作上下文，请重新评估这些任务。"}
+
+    请查看 TaskList 了解当前进度，从未完成的任务继续工作。
+  summary: "团队已从快照加载，启动项目"
+
+仅结构加载的转换规则
+
+当用户在步骤 4 选择「仅结构加载」时，将 snapshot 转换为 template 方式处理：
+
+前置条件
+
+snapshot 必须包含 team_type 字段。如果 team_type 为空，无法确定角色定义文件路径，提示用户：
+
+此快照未记录团队类型（team_type），无法使用仅结构模式。
+请使用「完整加载」，或从 template 格式配置加载。
+
+
+回退到完整加载流程。
+
+转换步骤
+
+提取成员组成: 从 members[] 中提取每个成员的 name，根据命名规则推断角色代号：
+
+ext- 前缀: 扩展角色，解析 ext-{department}-{role_code}，标记 source: extension 和 department
+无序号后缀: name 即为 role_code（如 pm → role pm）
+有序号后缀: 去掉末尾 -数字序号 获取 role_code（如 developer-2、developer-10 → role developer），统计同一 role_code 的数量作为 count
+识别 Lead: 按 team_type 的 lead 映射表匹配
+远程角色识别: 检查每个成员 prompt 开头是否含有角色标注 （远程角色 — {source}）（该标注由 team-init 的远程角色 prompt 注入规则生成）；匹配则设置 source: remote，remote_source 从标注的 {source} 部分提取
+
+构造虚拟 template: 用提取的信息构造等效于 template 格式的配置：
+
+team_type: "{从 snapshot 提取}"
+team_type_name: "{从 snapshot 提取}"
+description: "{从 snapshot 提取}"
+tech_stack: "{从 snapshot 成员 prompt 的 <project_context> 中提取，如无则为空}"
+work_dir: "{用户指定或从 snapshot 提取}"
+roles:
+  - role: "{role_code}"
+    count: {N}
+    is_lead: true/false
+  # 扩展角色（从 ext- 前缀成员推断）
+  - role: "ext-{department}-{role_code}"
+    count: 1
+    source: extension
+    department: "{department}"
+  # 远程角色（从 prompt 开头的「远程角色 — {source}」标注推断）
+  - role: "{extracted_code}"
+    count: 1
+    source: remote
+    remote_source: "{extracted_source}"
+
+
+走模板加载流程: 使用虚拟 template 执行 T-1 到 T-7，从 ../team-init/references/ 读取原始角色定义，构建全新的 prompt，创建全新的任务骨架。
+
+效果
+复用 snapshot 记录的团队组成（谁参与、多少人）
+使用最新的原始角色定义（而非 snapshot 时冻结的 prompt）
+不恢复任何任务进度，全新启动
+适用场景：想用相同的团队配置做一个新项目，或角色定义已更新需要使用最新版本
+Weekly Installs
+16
+Repository
+killvxk/teamskills
+GitHub Stars
+1
+First Seen
+Mar 1, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

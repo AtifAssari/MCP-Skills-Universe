@@ -1,0 +1,264 @@
+---
+rating: ⭐⭐⭐
+title: syncfusion-wpf-smart-text-editor
+url: https://skills.sh/syncfusion/wpf-ui-components-skills/syncfusion-wpf-smart-text-editor
+---
+
+# syncfusion-wpf-smart-text-editor
+
+skills/syncfusion/wpf-ui-components-skills/syncfusion-wpf-smart-text-editor
+syncfusion-wpf-smart-text-editor
+Installation
+$ npx skills add https://github.com/syncfusion/wpf-ui-components-skills --skill syncfusion-wpf-smart-text-editor
+SKILL.md
+Implementing Syncfusion WPF Smart Text Editor
+When to Use This Skill
+
+Use this skill when users need to:
+
+Implement AI-powered text input with predictive suggestions and context-aware completions
+Add intelligent autocomplete to multiline text editors in WPF applications
+Integrate AI services (Azure OpenAI, OpenAI, Ollama, or custom providers) for text generation
+Create smart text fields for customer support, email composition, or content creation
+Build responsive text editors with inline or popup suggestion display modes
+Customize suggestion behavior with user roles, custom phrases, and styling options
+Handle text change events and implement command patterns for text editors
+Support offline suggestions with custom phrase libraries when AI is unavailable
+
+The Smart Text Editor (SfSmartTextEditor) is ideal for scenarios requiring intelligent typing assistance, branded response templates, and AI-enhanced user input.
+
+Component Overview
+
+The Syncfusion WPF Smart Text Editor is a multiline input control that uses predictive suggestions to speed up typing. It integrates with AI inference services for context-aware completions and provides inline or popup suggestion display modes. Key capabilities include:
+
+Core Features:
+
+AI-powered suggestions via IChatInferenceService
+Inline and popup suggestion display modes
+Custom phrase library for offline suggestions
+Keyboard integration (Tab, Right Arrow to accept)
+Gesture support (tap/click for popup suggestions)
+Maximum length validation
+Placeholder text with customizable styling
+Full UI customization (fonts, colors, sizes)
+Command support (TextChangedCommand)
+
+Supported AI Providers:
+
+Azure OpenAI
+OpenAI
+Ollama (self-hosted models)
+Custom services via IChatInferenceService interface
+Claude AI (Anthropic)
+DeepSeek AI
+Google Gemini AI
+Groq AI
+Documentation and Navigation Guide
+Getting Started and Installation
+
+📄 Read: references/getting-started.md
+
+Installing Syncfusion.SfSmartComponents.WPF NuGet package
+Adding control via Designer, XAML, or C#
+Configuring UserRole and UserPhrases for suggestions
+Registering AI services in App.xaml.cs
+Running the application and verifying AI features
+
+When to read: Starting a new Smart Text Editor implementation, setting up the development environment, or adding the control to an existing WPF project.
+
+Suggestion Display Modes
+
+📄 Read: references/suggestion-display-modes.md
+
+Inline mode: Suggestions rendered in place after caret
+Popup mode: Compact hint overlay near caret
+Keyboard shortcuts (Tab, Right Arrow)
+Gesture support (tap/click)
+Choosing between Inline and Popup modes
+
+When to read: User needs to configure how suggestions appear, switch between display modes, or optimize for desktop vs touch devices.
+
+Customization and Styling
+
+📄 Read: references/customization.md
+
+Text style customization (FontSize, Foreground, fonts)
+Placeholder text and color customization
+Suggestion text color (SuggestionInlineStyle)
+Suggestion popup background (SuggestionPopupStyle)
+Maximum input length (MaxLength property)
+Complete styling examples
+
+When to read: Customizing appearance to match application themes, changing text styles, configuring placeholders, or setting character limits.
+
+Commands
+
+📄 Read: references/commands.md
+
+TextChangedCommand overview and implementation
+Command binding in XAML
+ViewModel pattern for command handling
+Event handling patterns
+Use cases for tracking text changes
+
+When to read: Implementing text change notifications, MVVM command patterns, or custom event handling logic.
+
+AI Service Configuration (Built-in Providers)
+
+📄 Read: references/ai-service-configuration.md
+
+Registering chat clients in App.xaml.cs
+Azure OpenAI configuration (deployment, API key, endpoint)
+OpenAI configuration (API key, model selection)
+Ollama self-hosted models (installation, local setup)
+Required NuGet packages for each provider
+Troubleshooting built-in AI providers
+
+When to read: Configuring Azure OpenAI, OpenAI, or Ollama for AI-powered suggestions. Use this for official/built-in AI provider setup.
+
+Common Patterns
+Pattern 1: Support Ticket Response Editor
+
+Scenario: Customer support application with branded responses.
+
+<syncfusion:SfSmartTextEditor
+    Placeholder="Write your response..."
+    UserRole="Technical support engineer helping customers with product issues"
+    MaxLength="2000"
+    SuggestionDisplayMode="Inline">
+    <syncfusion:SfSmartTextEditor.UserPhrases>
+        <sys:String>Thanks for contacting Syncfusion support.</sys:String>
+        <sys:String>Could you please share a reproducible sample?</sys:String>
+        <sys:String>We've logged this as a bug and will update you soon.</sys:String>
+        <sys:String>Let us know if you need further assistance.</sys:String>
+    </syncfusion:SfSmartTextEditor.UserPhrases>
+</syncfusion:SfSmartTextEditor>
+
+Pattern 2: Email Composition with Custom Styling
+
+Scenario: Email client with custom theme and popup suggestions.
+
+<syncfusion:SfSmartTextEditor
+    Placeholder="Compose your email..."
+    UserRole="Professional email author"
+    SuggestionDisplayMode="Popup"
+    MaxLength="5000">
+    <syncfusion:SfSmartTextEditor.Style>
+        <Style TargetType="{x:Type syncfusion:SfSmartTextEditor}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+    </syncfusion:SfSmartTextEditor.Style>
+    <syncfusion:SfSmartTextEditor.SuggestionPopupStyle>
+        <Style TargetType="syncfusion:SuggestionPopup">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </syncfusion:SfSmartTextEditor.SuggestionPopupStyle>
+</syncfusion:SfSmartTextEditor>
+
+Pattern 3: Text Editor with Change Tracking
+
+Scenario: Track text changes for auto-save or validation.
+
+<syncfusion:SfSmartTextEditor
+    x:Name="smartTextEditor"
+    TextChangedCommand="{Binding TextChangedCommand}"
+    Placeholder="Start typing..."/>
+
+public class EditorViewModel : INotifyPropertyChanged
+{
+    public ICommand TextChangedCommand { get; }
+
+    public EditorViewModel()
+    {
+        TextChangedCommand = new RelayCommand(OnTextChanged);
+    }
+
+    private void OnTextChanged()
+    {
+        // Auto-save, validation, or tracking logic
+        Debug.WriteLine("Text changed - triggering auto-save");
+    }
+}
+
+Pattern 4: Offline-First with Custom Phrases
+
+Scenario: App that works without AI connectivity.
+
+<syncfusion:SfSmartTextEditor
+    Placeholder="Type your message..."
+    UserRole="Sales representative responding to leads">
+    <syncfusion:SfSmartTextEditor.UserPhrases>
+        <sys:String>Thank you for your interest in our products.</sys:String>
+        <sys:String>I'd be happy to schedule a demo.</sys:String>
+        <sys:String>Our pricing starts at $99 per month.</sys:String>
+        <sys:String>Let me connect you with our solutions team.</sys:String>
+        <sys:String>Feel free to reach out with any questions.</sys:String>
+    </syncfusion:SfSmartTextEditor.UserPhrases>
+</syncfusion:SfSmartTextEditor>
+
+
+Note: If no AI service is configured, the editor automatically falls back to UserPhrases for suggestions.
+
+Key Properties
+Property	Type	Description	Default
+Text	string	Gets or sets the text content	""
+Placeholder	string	Placeholder text when editor is empty	null
+UserRole	string	Describes who is typing and intent (shapes AI suggestions)	null
+UserPhrases	List<string>	Custom phrase library for offline suggestions	null
+SuggestionDisplayMode	SuggestionDisplayMode	Display mode: Inline or Popup	Inline
+MaxLength	int	Maximum character limit	0 (unlimited)
+TextChangedCommand	ICommand	Command triggered when text changes	null
+Style	Style	Text style (FontSize, Foreground, etc.)	Default
+PlaceholderStyle	Style	Placeholder styling	Default
+SuggestionInlineStyle	Style	Inline suggestion text style	Default
+SuggestionPopupStyle	Style	Popup suggestion background style	Default
+Common Use Cases
+When User Needs Inline Suggestions (Desktop)
+Action: Set SuggestionDisplayMode="Inline"
+Why: Natural typing flow on keyboard-driven devices
+Reference: suggestion-display-modes.md
+When User Needs Popup Suggestions (Touch Devices)
+Action: Set SuggestionDisplayMode="Popup"
+Why: Easier to tap/click on mobile/touch screens
+Reference: suggestion-display-modes.md
+When User Needs Azure OpenAI Integration
+Action: Configure AzureOpenAIClient in App.xaml.cs
+Why: Enterprise-grade AI with Azure security and compliance
+Reference: ai-service-configuration.md
+When User Needs Character Limit
+Action: Set MaxLength property
+Why: Enforce input validation and prevent excessive text
+Reference: customization.md
+When User Needs Text Change Notifications
+Action: Bind TextChangedCommand to ViewModel
+Why: Track changes for auto-save, validation, or analytics
+Reference: commands.md
+When User Needs Offline Suggestions
+Action: Configure UserPhrases without AI service
+Why: Provide suggestions when AI is unavailable or disabled
+Reference: getting-started.md
+When User Needs Custom Theme
+Action: Apply Style, PlaceholderStyle, SuggestionInlineStyle
+Why: Match application branding and design system
+Reference: customization.md
+
+Next Steps:
+
+For initial setup and installation → Read getting-started.md
+For AI provider configuration → Read ai-service-configuration.md
+For appearance customization → Read customization.md
+Weekly Installs
+47
+Repository
+syncfusion/wpf-…s-skills
+GitHub Stars
+2
+First Seen
+Mar 26, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

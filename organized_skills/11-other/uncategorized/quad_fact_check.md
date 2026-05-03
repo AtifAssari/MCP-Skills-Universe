@@ -1,0 +1,105 @@
+---
+rating: ⭐⭐⭐
+title: quad-fact-check
+url: https://skills.sh/daiki48/dotfiles/quad-fact-check
+---
+
+# quad-fact-check
+
+skills/daiki48/dotfiles/quad-fact-check
+quad-fact-check
+Installation
+$ npx skills add https://github.com/daiki48/dotfiles --skill quad-fact-check
+SKILL.md
+4者クロスファクトチェック（Claude + Gemini + Codex）
+
+対象ドキュメントに対して、Claude Opus・Gemini Flash・Gemini Pro・Codex の4つの異なるAIで独立したファクトチェックを実施し、争点を議論して合意レポートを出力する。
+
+前提
+Gemini CLI (gemini) がインストール済みであること
+Codex CLI (codex) がインストール済みであること
+Flash はデフォルトモデル（-m 指定不要）
+Pro は -m gemini-3-pro-preview で指定
+Codex は -m gpt-5.3-codex で指定
+手順
+Step 1: 対象の特定
+会話の文脈から対象ドキュメントを特定する
+対象が曖昧な場合は Daiki に確認する
+Step 2: 4者による独立チェック
+Opus（自身）
+対象ドキュメントを通読してファクトチェック
+WebSearch で一次ソースを確認
+Gemini Flash
+Bash で以下を実行:
+cat <ファイルパス> | gemini -p "以下のドキュメントをファクトチェックしてください。技術的事実の正確性、数値の整合性、内部矛盾、コード例の正確性を検証してください。各指摘には根拠を明記し、「要修正 / 改善推奨 / 正確」に分類して報告してください。"
+
+Gemini Pro
+Bash で以下を実行:
+cat <ファイルパス> | gemini -m gemini-3-pro-preview -p "以下のドキュメントをファクトチェックしてください。技術的事実の正確性、数値の整合性、内部矛盾、コード例の正確性を検証してください。各指摘には根拠を明記し、「要修正 / 改善推奨 / 正確」に分類して報告してください。"
+
+Codex (gpt-5.3-codex)
+Bash で以下を実行:
+codex exec -m gpt-5.3-codex --ephemeral -s read-only "以下のドキュメントをファクトチェックしてください。技術的事実の正確性、数値の整合性、内部矛盾、コード例の正確性を検証してください。各指摘には根拠を明記し、「要修正 / 改善推奨 / 正確」に分類して報告してください。
+
+$(cat <ファイルパス>)"
+
+Step 3: 結果の比較・争点抽出
+4者の結果を突き合わせる
+全員一致: そのまま採用（信頼度: 最高）
+3者一致 + 1者不一致: 争点として抽出
+2対2: 重要争点として抽出
+片方のみ検出: Opus が追加検証
+Step 4: 争点の議論
+
+各争点について:
+
+Opus が WebSearch で追加の検証情報を収集
+検証情報を添えて各 AI に再質問:
+echo "<争点の内容と追加検証情報>" | gemini -p "以下の争点について、追加情報を踏まえて見解を述べてください。"
+echo "<争点の内容と追加検証情報>" | gemini -m gemini-3-pro-preview -p "以下の争点について、追加情報を踏まえて見解を述べてください。"
+codex exec -m gpt-5.3-codex --ephemeral -s read-only "以下の争点について、追加情報を踏まえて見解を述べてください。
+
+<争点の内容と追加検証情報>"
+
+全ての回答を総合して最終判断を下す
+Step 5: 合意レポートの出力
+## 4者クロスファクトチェック結果
+
+**対象**: <ドキュメント名>
+**チェック者**: Claude Opus 4.6 / Gemini Flash / Gemini Pro / Codex (gpt-5.3-codex)
+
+### 要修正
+| # | セクション | 内容 | 合意 |
+|---|-----------|------|------|
+| 1 | ... | ... | Opus ✅ Flash ✅ Pro ✅ Codex ✅ |
+
+### 改善推奨
+| # | セクション | 内容 | 合意 |
+|---|-----------|------|------|
+
+### 争点と議論
+| 争点 | Opus | Flash | Pro | Codex | 結論 |
+|------|------|-------|-----|-------|------|
+
+### 検出能力比較
+| 検出項目 | Opus | Flash | Pro | Codex |
+|---------|------|-------|-----|-------|
+
+### 検証済み（正確）
+<主要な検証済み項目のリスト>
+
+注意事項
+Gemini・Codex の結果は必ず Opus が検証する（誤検出の可能性がある）
+争点は根拠に基づいて解決し、多数決で決めない
+各 AI への再質問は争点ごとに個別に行う
+Codex が利用不可の場合は 3者（cross-fact-check 相当）にフォールバックする
+Weekly Installs
+12
+Repository
+daiki48/dotfiles
+First Seen
+Feb 23, 2026
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykWarn

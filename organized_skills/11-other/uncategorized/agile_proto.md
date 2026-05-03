@@ -1,0 +1,294 @@
+---
+rating: ⭐⭐⭐
+title: agile-proto
+url: https://skills.sh/djalmajr/essential-skills/agile-proto
+---
+
+# agile-proto
+
+skills/djalmajr/essential-skills/agile-proto
+agile-proto
+Installation
+$ npx skills add https://github.com/djalmajr/essential-skills --skill agile-proto
+SKILL.md
+Interactive UI Prototyping
+
+Build standalone interactive prototypes to validate UI flows before implementation. Zero build tools — everything runs from CDN. Visual and API mirror the org's shadcn experience 1:1 (live reference: apps/messaging/client-proto/).
+
+Stack
+z-proto — web component shell (responsive presets, zoom, resize handles, Figma export button)
+Tailwind CSS v4 — @tailwindcss/browser + @theme inline mapping shadcn CSS variables
+shadcn components (55) — one file per component in components/ui/, class strings copied verbatim from the original shadcn. Behavior delegated to native HTML5 (<dialog>, <details>, popover API, scroll-snap)
+Preact + htm — rendering via importmap + esm.sh
+iconify-icon — web component, wrapped by <Icon> in components/ui/icon.js
+
+No daisyUI, no Radix. The 55 components in components/ui/ cover the shadcn catalog — always import from there, never recreate.
+
+Structure
+{app}/client-proto/
+├── index.html             # CDN imports, importmap, @theme inline, z-proto shell
+├── index.js               # SCENES + hash routing
+├── index.css              # z-proto overrides + shadcn variables (light)
+├── components/
+│   ├── app-shell.js       # shadcn sidebar + topbar (breadcrumbs/actions)
+│   └── ui/                # one file per shadcn component (55 components)
+│       ├── utils.js                # cn() helper
+│       ├── icon.js                 # <iconify-icon> wrapper
+│       │
+│       ├── # Layout / containers
+│       ├── aspect-ratio.js · button-group.js · card.js · empty.js
+│       ├── field.js · input-group.js · item.js · resizable.js · scroll-area.js
+│       │
+│       ├── # Behavioral (native HTML5)
+│       ├── accordion.js            # <details>/<summary>
+│       ├── alert-dialog.js         # <dialog role=alertdialog>
+│       ├── collapsible.js          # <details>
+│       ├── command.js              # static (real filtering needs JS)
+│       ├── context-menu.js         # oncontextmenu + fixed positioning
+│       ├── dialog.js               # <dialog> + .showModal()
+│       ├── drawer.js · sheet.js    # <dialog> with slide
+│       ├── dropdown-menu.js        # <details> styled as a menu
+│       ├── hover-card.js           # CSS :hover/:focus-within
+│       ├── menubar.js              # horizontal <details>
+│       ├── navigation-menu.js      # nav + group-hover
+│       ├── popover.js              # native popover API
+│       ├── tooltip.js              # CSS-only
+│       │
+│       ├── # Forms
+│       ├── checkbox.js · combobox.js   # <input list> + <datalist>
+│       ├── input.js · input-otp.js · mask-input.js
+│       ├── label.js · native-select.js · radio-group.js
+│       ├── select.js · slider.js   # <input type=range>
+│       ├── progress.js             # <progress>
+│       ├── switch.js · textarea.js · toggle.js · toggle-group.js
+│       │
+│       ├── # Data display / navigation
+│       ├── alert.js · avatar.js · badge.js · breadcrumb.js · button.js
+│       ├── calendar.js             # static 7×6 grid
+│       ├── carousel.js             # CSS scroll-snap
+│       ├── chart.js                # placeholders (BarChart/LineChart)
+│       ├── kbd.js · pagination.js · separator.js · sidebar.js
+│       ├── skeleton.js · sonner.js # static toast
+│       ├── spinner.js · table.js · tabs.js
+└── routes/                # one scene per file (shadcn demos)
+    ├── home.js
+    ├── dashboard.js
+    ├── tasks.js           # data table + dialog + dropdown
+    ├── music.js           # rich layout + tooltip
+    ├── settings.js
+    └── components.js      # live reference
+
+
+To add a new component: create components/ui/<name>.js with the class string copied from the original shadcn, importing cn from ./utils.js. Same convention as shadcn (@/components/ui/button).
+
+Philosophy: behavior via native DOM/CSS
+
+Inspired by the spectre.css philosophy: "interactive" components don't use Radix nor JS positioning. They delegate to HTML5/CSS:
+
+shadcn component	Implementation here
+Dialog / AlertDialog	<dialog> + .showModal() / .close() (openDialog(id) / closeDialog(id))
+Drawer / Sheet	<dialog> positioned with slide classes
+Accordion / Collapsible	<details> + <summary>
+DropdownMenu / Menubar	<details> styled as an absolute menu + onBlur to close
+ContextMenu	oncontextmenu + <div> positioned with position: fixed
+Popover	native popover API (popover attr + popovertarget) — Chrome 114+, Safari 17+, Firefox 125+
+HoverCard / Tooltip / NavigationMenu	:hover / :focus-within in CSS, no JS
+Combobox	<input list> + <datalist>
+Slider	<input type="range">
+Progress	<progress>
+Calendar	7×6 grid (static) — for a real input, prefer <input type="date">
+Carousel	CSS scroll-snap
+Switch	<label> with <input type="checkbox"> + peer-checked:translate-x-*
+
+When complex interactivity is unavoidable (Command with real filtering, Toast with timing, Form with validation), the pattern is to render the visual state that the prototype needs; real behavior only when the scenario truly requires it.
+
+Bootstrapping
+cp -r ~/.claude/skills/agile-proto/templates/ my-app/client-proto/
+cd my-app/client-proto
+bunx serve -s .
+
+
+Templates ship with the shadcn theme applied, a working sidebar, hash routing across scenes, and routes/components.js as a live reference.
+
+Testing the skill template
+
+To iterate on the templates without polluting any project:
+
+# run directly from the skill
+cd ~/.claude/skills/agile-proto/templates
+bunx serve -s .
+# opens http://localhost:3000 — navigate via #dashboard, #tasks, #music, etc.
+
+# or in a sandbox
+cp -r ~/.claude/skills/agile-proto/templates /tmp/proto-test
+cd /tmp/proto-test && bunx serve -s .
+
+
+The -s flag (SPA mode) ensures / resolves to index.html; routing between scenes uses the hash. To test Figma export, you must use localhost (the clipboard API requires a secure context).
+
+Important patterns
+Hash routing (not wouter)
+
+index.js keeps a SCENES array and a useHashScene() hook reacting to window.location.hash. To add a scene: create a file under routes/, import it, and add an entry to SCENES with id, Component, activeUrl, optionally pageLabel/breadcrumbs/actions.
+
+Scene with AppShell
+
+By default, every scene renders inside <AppShell> (sidebar + topbar). For a fullscreen scene with no chrome, mark the entry with noShell: true.
+
+shadcn components — catalog
+
+Before creating any component, check whether it already exists in components/ui/. The 55 below cover the original shadcn (except direction — RTL provider — and form — needs react-hook-form). Always import from the corresponding file.
+
+Legend: ⚠️ = visual-only (no runtime interactivity — purely for showing state in a prototype).
+
+Component	Import
+Accordion, AccordionItem	~/components/ui/accordion.js
+Alert, AlertTitle, AlertDescription	~/components/ui/alert.js
+AlertDialog, AlertDialogContent, ... + openAlertDialog/closeAlertDialog	~/components/ui/alert-dialog.js
+AspectRatio	~/components/ui/aspect-ratio.js
+Avatar, AvatarFallback	~/components/ui/avatar.js
+Badge	~/components/ui/badge.js
+Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator	~/components/ui/breadcrumb.js
+Button	~/components/ui/button.js
+ButtonGroup, ButtonGroupText, ButtonGroupSeparator	~/components/ui/button-group.js
+Calendar ⚠️	~/components/ui/calendar.js
+Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter	~/components/ui/card.js
+Carousel, CarouselContent, CarouselItem, CarouselPrevious ⚠️, CarouselNext ⚠️	~/components/ui/carousel.js
+ChartContainer, BarChartPlaceholder ⚠️, LineChartPlaceholder ⚠️	~/components/ui/chart.js
+Checkbox	~/components/ui/checkbox.js
+Collapsible, CollapsibleTrigger, CollapsibleContent	~/components/ui/collapsible.js
+Combobox	~/components/ui/combobox.js
+Command ⚠️ (no live filtering), CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator, CommandShortcut	~/components/ui/command.js
+ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator + useContextMenu()	~/components/ui/context-menu.js
+Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter + openDialog/closeDialog	~/components/ui/dialog.js
+Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter + openDrawer/closeDrawer	~/components/ui/drawer.js
+DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator	~/components/ui/dropdown-menu.js
+Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent	~/components/ui/empty.js
+FieldSet, FieldLegend, FieldGroup, Field, FieldContent, FieldLabel, FieldDescription, FieldError, FieldSeparator	~/components/ui/field.js
+HoverCard, HoverCardTrigger, HoverCardContent	~/components/ui/hover-card.js
+Icon	~/components/ui/icon.js
+Input	~/components/ui/input.js
+InputGroup, InputGroupAddon, InputGroupInput, InputGroupText	~/components/ui/input-group.js
+InputOTP, InputOTPSeparator	~/components/ui/input-otp.js
+ItemGroup, Item, ItemMedia, ItemContent, ItemTitle, ItemDescription, ItemActions, ItemHeader, ItemFooter, ItemSeparator	~/components/ui/item.js
+Kbd	~/components/ui/kbd.js
+Label	~/components/ui/label.js
+MaskInput (alias for Input — no real mask; use pattern on Input directly)	~/components/ui/mask-input.js
+Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem, MenubarSeparator, MenubarShortcut	~/components/ui/menubar.js
+NativeSelect, NativeSelectGroup, NativeSelectItem (aliases for Select — same impl)	~/components/ui/native-select.js
+NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink	~/components/ui/navigation-menu.js
+Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis	~/components/ui/pagination.js
+PopoverTrigger, PopoverContent	~/components/ui/popover.js
+Progress	~/components/ui/progress.js
+RadioGroup, RadioGroupItem	~/components/ui/radio-group.js
+ResizablePanelGroup, ResizablePanel, ResizableHandle	~/components/ui/resizable.js
+ScrollArea	~/components/ui/scroll-area.js
+Select, SelectGroup, SelectItem	~/components/ui/select.js
+Separator	~/components/ui/separator.js
+Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter + openSheet/closeSheet	~/components/ui/sheet.js
+Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger ⚠️ (does not collapse — visual only), SidebarInset	~/components/ui/sidebar.js
+Skeleton	~/components/ui/skeleton.js
+Slider	~/components/ui/slider.js
+Toaster, Toast	~/components/ui/sonner.js
+Spinner	~/components/ui/spinner.js
+Switch	~/components/ui/switch.js
+Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption	~/components/ui/table.js
+TabsList, TabsTrigger	~/components/ui/tabs.js
+Textarea	~/components/ui/textarea.js
+Toggle	~/components/ui/toggle.js
+ToggleGroup, ToggleGroupItem	~/components/ui/toggle-group.js
+Tooltip	~/components/ui/tooltip.js
+
+Variants follow shadcn naming: default, secondary, destructive, outline, ghost, link. Sizes: default, sm, lg, icon, icon-sm, icon-lg.
+
+Live reference: the #components route in the template renders all 55 with demos navigable from the sidebar. Use it as a smoke check when wiring up a new scene.
+
+When to create a new component
+
+Only add a new file under components/ui/ if:
+
+You verified — via the table above or by listing components/ui/ — that no equivalent exists.
+The component is genuinely reusable (not a scene).
+
+Recipe: copy the original shadcn .tsx (packages/ui/src/components/ui/<name>.tsx in the org), port it to htm/preact keeping the class strings literal, import cn from ./utils.js, delegate behavior to HTML5 when possible (see "Philosophy" above).
+
+Theme
+
+Colors are defined as CSS variables in index.css (light mode: neutral palette with violet --primary). Tailwind v4 maps these variables to utilities via @theme inline in index.html — so bg-primary, text-muted-foreground, border-sidebar-border, etc. work out of the box.
+
+To rebrand: edit --primary and --ring in index.css. For dark mode: duplicate the :root block as [data-theme="dark"] and set data-theme on <html>.
+
+Scroll containment
+
+index.css already contains the z-proto override that pins the stage to the viewport and only allows scroll inside each scene. Every scene root must use flex-1 w-full h-full overflow-y-auto.
+
+Figma export
+
+z-proto integrates with Figma's official capture.js. No third-party plugin required — Figma desktop natively recognizes the pasted payload.
+
+How it works
+Set figma-key="YOUR_KEY" on <z-proto> in index.html. The key is generated the first time you use "Paste from Web" in Figma desktop.
+Click the "Figma" button in the z-proto header.
+z-proto adds #figmacapture={key}&figmaselector=body to the URL and reloads.
+Figma's capture.js (loaded at runtime) detects the hash, serializes the DOM with styles/assets/fonts, wraps it in a text/html payload with (figh2d) markers, and writes to the clipboard.
+In Figma desktop: Cmd+V → pastes as editable frames.
+Prerequisites
+HTTPS or localhost (clipboard API requires a secure context).
+Clipboard permission granted to the browser.
+Up-to-date Figma desktop (native (figh2d) payload reading).
+Known limitation
+
+Figma's capture.js is an IIFE that only fires via #figmacapture in the URL — so the page reloads before each capture. This is a property of the official script, not of z-proto. Iterating with capture in a loop means accepting one reload per export.
+
+Selector
+
+Default is body (covers the entire rendered scene, including z-proto chrome if visible). To capture only the scene content, change figmaselector in the hash to #app or another CSS selector.
+
+Rules
+Zero build tools. Everything via CDN. No package.json, no bundler, no install step.
+Always import components from ~/components/ui/<name>.js. The shadcn catalog (55 components) is already implemented — see the "shadcn components — catalog" table. Never recreate Button, Dialog, Card, etc. locally. Never import from lucide-react, @radix-ui, daisyUI. For icons: <${Icon} icon="lucide:..." />. To add a component that demonstrably does not exist in the catalog, follow the recipe.
+Preact + htm. html tagged templates, not JSX. .js files, not .tsx.
+Hash routing. Scenes registered in SCENES in index.js. Each scene lives in routes/*.js.
+AppShell by default. Every scene renders inside <AppShell> (sidebar + topbar) — except when noShell: true.
+Inline mock data. Forms pre-filled, lists hardcoded. No fetching.
+One scene per file. Feature-based: routes/inbox/list.js, etc.
+Scroll containment. Every scene root needs flex-1 w-full h-full overflow-y-auto.
+Colors via shadcn variables. Use bg-primary, text-muted-foreground, border-sidebar-border. Don't use raw colors (bg-violet-500).
+For Figma export. Set figma-key on <z-proto>. The reload is part of the official flow.
+Discovery
+
+Before creating a proto:
+
+Check whether client-proto/ already exists in the project.
+If it does, read client-proto/index.html, index.js, and components/app-shell.js for context.
+Read .agents/rules/ for project-specific conventions.
+If it doesn't exist, copy templates from the skill.
+
+Before implementing a scene:
+
+Consult the "shadcn components — catalog" table above — the entire shadcn is ready in components/ui/.
+For each UI element of the scene (button, modal, sidebar, table, etc.), find the corresponding component.
+Only write custom markup for elements that aren't standard shadcn (scene-specific layout/structure).
+Checklist
+ client-proto/ is self-contained (no deps beyond CDN)
+ index.html loads Tailwind v4 and iconify-icon from CDN, with @theme inline mapping all shadcn variables
+ index.css contains the z-proto scroll override and the :root block with shadcn variables
+ components/ui/ covers 55 shadcn components (one file each) with literal class strings and cn helper in utils.js. Behavior via native HTML5/CSS (<dialog>, <details>, popover API, scroll-snap, etc.)
+ routes/components.js lists every component in a navigable sidebar with short demos
+ No scene recreates a component that already exists in components/ui/ (Button, Dialog, Card, Table, etc. are imported, not copy-pasted)
+ components/app-shell.js provides sidebar + topbar
+ Hash routing works and the scene picker appears in <z-proto-header>
+ Every scene root has flex-1 w-full h-full overflow-y-auto
+ Icons via <Icon icon="lucide:..." /> (not lucide-react)
+ Forms pre-filled with mock data
+ (Optional) figma-key set on <z-proto> when Figma export is desired; Cmd+V in Figma desktop pastes as editable frames
+Weekly Installs
+15
+Repository
+djalmajr/essent…l-skills
+First Seen
+1 day ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

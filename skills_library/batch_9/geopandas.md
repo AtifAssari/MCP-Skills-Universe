@@ -1,0 +1,232 @@
+---
+title: geopandas
+url: https://skills.sh/davila7/claude-code-templates/geopandas
+---
+
+# geopandas
+
+skills/davila7/claude-code-templates/geopandas
+geopandas
+Installation
+$ npx skills add https://github.com/davila7/claude-code-templates --skill geopandas
+SKILL.md
+GeoPandas
+
+GeoPandas extends pandas to enable spatial operations on geometric types. It combines the capabilities of pandas and shapely for geospatial data analysis.
+
+Installation
+uv pip install geopandas
+
+Optional Dependencies
+# For interactive maps
+uv pip install folium
+
+# For classification schemes in mapping
+uv pip install mapclassify
+
+# For faster I/O operations (2-4x speedup)
+uv pip install pyarrow
+
+# For PostGIS database support
+uv pip install psycopg2
+uv pip install geoalchemy2
+
+# For basemaps
+uv pip install contextily
+
+# For cartographic projections
+uv pip install cartopy
+
+Quick Start
+import geopandas as gpd
+
+# Read spatial data
+gdf = gpd.read_file("data.geojson")
+
+# Basic exploration
+print(gdf.head())
+print(gdf.crs)
+print(gdf.geometry.geom_type)
+
+# Simple plot
+gdf.plot()
+
+# Reproject to different CRS
+gdf_projected = gdf.to_crs("EPSG:3857")
+
+# Calculate area (use projected CRS for accuracy)
+gdf_projected['area'] = gdf_projected.geometry.area
+
+# Save to file
+gdf.to_file("output.gpkg")
+
+Core Concepts
+Data Structures
+GeoSeries: Vector of geometries with spatial operations
+GeoDataFrame: Tabular data structure with geometry column
+
+See data-structures.md for details.
+
+Reading and Writing Data
+
+GeoPandas reads/writes multiple formats: Shapefile, GeoJSON, GeoPackage, PostGIS, Parquet.
+
+# Read with filtering
+gdf = gpd.read_file("data.gpkg", bbox=(xmin, ymin, xmax, ymax))
+
+# Write with Arrow acceleration
+gdf.to_file("output.gpkg", use_arrow=True)
+
+
+See data-io.md for comprehensive I/O operations.
+
+Coordinate Reference Systems
+
+Always check and manage CRS for accurate spatial operations:
+
+# Check CRS
+print(gdf.crs)
+
+# Reproject (transforms coordinates)
+gdf_projected = gdf.to_crs("EPSG:3857")
+
+# Set CRS (only when metadata missing)
+gdf = gdf.set_crs("EPSG:4326")
+
+
+See crs-management.md for CRS operations.
+
+Common Operations
+Geometric Operations
+
+Buffer, simplify, centroid, convex hull, affine transformations:
+
+# Buffer by 10 units
+buffered = gdf.geometry.buffer(10)
+
+# Simplify with tolerance
+simplified = gdf.geometry.simplify(tolerance=5, preserve_topology=True)
+
+# Get centroids
+centroids = gdf.geometry.centroid
+
+
+See geometric-operations.md for all operations.
+
+Spatial Analysis
+
+Spatial joins, overlay operations, dissolve:
+
+# Spatial join (intersects)
+joined = gpd.sjoin(gdf1, gdf2, predicate='intersects')
+
+# Nearest neighbor join
+nearest = gpd.sjoin_nearest(gdf1, gdf2, max_distance=1000)
+
+# Overlay intersection
+intersection = gpd.overlay(gdf1, gdf2, how='intersection')
+
+# Dissolve by attribute
+dissolved = gdf.dissolve(by='region', aggfunc='sum')
+
+
+See spatial-analysis.md for analysis operations.
+
+Visualization
+
+Create static and interactive maps:
+
+# Choropleth map
+gdf.plot(column='population', cmap='YlOrRd', legend=True)
+
+# Interactive map
+gdf.explore(column='population', legend=True).save('map.html')
+
+# Multi-layer map
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+gdf1.plot(ax=ax, color='blue')
+gdf2.plot(ax=ax, color='red')
+
+
+See visualization.md for mapping techniques.
+
+Detailed Documentation
+Data Structures - GeoSeries and GeoDataFrame fundamentals
+Data I/O - Reading/writing files, PostGIS, Parquet
+Geometric Operations - Buffer, simplify, affine transforms
+Spatial Analysis - Joins, overlay, dissolve, clipping
+Visualization - Plotting, choropleth maps, interactive maps
+CRS Management - Coordinate reference systems and projections
+Common Workflows
+Load, Transform, Analyze, Export
+# 1. Load data
+gdf = gpd.read_file("data.shp")
+
+# 2. Check and transform CRS
+print(gdf.crs)
+gdf = gdf.to_crs("EPSG:3857")
+
+# 3. Perform analysis
+gdf['area'] = gdf.geometry.area
+buffered = gdf.copy()
+buffered['geometry'] = gdf.geometry.buffer(100)
+
+# 4. Export results
+gdf.to_file("results.gpkg", layer='original')
+buffered.to_file("results.gpkg", layer='buffered')
+
+Spatial Join and Aggregate
+# Join points to polygons
+points_in_polygons = gpd.sjoin(points_gdf, polygons_gdf, predicate='within')
+
+# Aggregate by polygon
+aggregated = points_in_polygons.groupby('index_right').agg({
+    'value': 'sum',
+    'count': 'size'
+})
+
+# Merge back to polygons
+result = polygons_gdf.merge(aggregated, left_index=True, right_index=True)
+
+Multi-Source Data Integration
+# Read from different sources
+roads = gpd.read_file("roads.shp")
+buildings = gpd.read_file("buildings.geojson")
+parcels = gpd.read_postgis("SELECT * FROM parcels", con=engine, geom_col='geom')
+
+# Ensure matching CRS
+buildings = buildings.to_crs(roads.crs)
+parcels = parcels.to_crs(roads.crs)
+
+# Perform spatial operations
+buildings_near_roads = buildings[buildings.geometry.distance(roads.union_all()) < 50]
+
+Performance Tips
+Use spatial indexing: GeoPandas creates spatial indexes automatically for most operations
+Filter during read: Use bbox, mask, or where parameters to load only needed data
+Use Arrow for I/O: Add use_arrow=True for 2-4x faster reading/writing
+Simplify geometries: Use .simplify() to reduce complexity when precision isn't critical
+Batch operations: Vectorized operations are much faster than iterating rows
+Use appropriate CRS: Projected CRS for area/distance, geographic for visualization
+Best Practices
+Always check CRS before spatial operations
+Use projected CRS for area and distance calculations
+Match CRS before spatial joins or overlays
+Validate geometries with .is_valid before operations
+Use .copy() when modifying geometry columns to avoid side effects
+Preserve topology when simplifying for analysis
+Use GeoPackage format for modern workflows (better than Shapefile)
+Set max_distance in sjoin_nearest for better performance
+Weekly Installs
+293
+Repository
+davila7/claude-…emplates
+GitHub Stars
+26.6K
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykWarn

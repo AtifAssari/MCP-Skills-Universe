@@ -1,0 +1,170 @@
+---
+title: prioritize
+url: https://skills.sh/duc01226/easyplatform/prioritize
+---
+
+# prioritize
+
+skills/duc01226/easyplatform/prioritize
+prioritize
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill prioritize
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Quick Summary
+
+Goal: Order 3+ backlog items using RICE, MoSCoW, or Value-Effort frameworks with scores and rationale.
+
+Workflow:
+
+Collect Items — Read from files or parse inline list (minimum 3 items)
+Select Framework — RICE (quantitative), MoSCoW (stakeholder alignment), Value-Effort (quick decision)
+Score Each Item — Apply framework criteria and calculate scores
+Rank and Report — Output prioritized table with rationale and recommendations
+
+Key Rules:
+
+Minimum 3 items required; fewer than 3 should be discussed directly
+Default to RICE if unsure; ask user if ambiguous
+Optionally update PBI file priority fields after ranking
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Backlog Prioritization
+
+Order backlog items using data-driven prioritization frameworks to produce a ranked list with scores and rationale.
+
+When to Use
+Sprint planning needs an ordered backlog (3+ items to rank)
+Stakeholders need a priority ranking with justification
+Feature roadmap ordering with objective criteria
+Comparing competing features or initiatives
+When NOT to Use
+Fewer than 3 items (just discuss directly)
+Creating PBIs or writing stories -- use product-owner or story
+Full product strategy -- use product-owner
+Project status tracking -- use project-manager
+Prerequisites
+A list of 3+ backlog items (PBIs, features, or user stories)
+IF items exist as files: read from team-artifacts/pbis/ or user-provided path
+IF items provided inline: use the provided descriptions
+Workflow
+
+Collect items to prioritize
+
+IF file path provided -> read items from files
+IF inline list -> parse items from user message
+IF fewer than 3 items -> ask user for more or suggest direct discussion
+
+Select framework using decision tree:
+
+IF quantitative data available (reach, metrics)  -> RICE
+IF stakeholder alignment needed (must/should/could) -> MoSCoW
+IF quick decision needed (2 axes only)            -> Value-Effort 2x2
+IF user specifies framework                       -> use that framework
+IF unsure                                         -> ask user, default RICE
+
+
+Score each item using selected framework:
+
+RICE:
+
+Score = (Reach x Impact x Confidence) / Effort
+
+Reach:      Users affected per quarter (number)
+Impact:     0.25 (minimal) | 0.5 (low) | 1 (medium) | 2 (high) | 3 (massive)
+Confidence: 0.5 (low) | 0.8 (medium) | 1.0 (high)
+Effort:     Story points (1, 2, 3, 5, 8, 13, 21)
+
+
+MoSCoW:
+
+Must Have:   Critical for release, non-negotiable
+Should Have: Important but not vital, workarounds exist
+Could Have:  Desirable, include if capacity allows
+Won't Have:  Out of scope for this cycle
+
+
+Value-Effort 2x2:
+
+High Value + Low Effort  = Quick Wins    (do first)
+High Value + High Effort = Strategic     (plan carefully)
+Low Value  + Low Effort  = Fill-ins      (if time permits)
+Low Value  + High Effort = Time Sinks    (avoid)
+
+
+Rank items by score (descending for RICE, category for MoSCoW, quadrant for V-E)
+
+Output prioritized list with scores and rationale
+
+IF PBI files exist -> optionally update priority field in frontmatter (numeric 1-999)
+
+Output Format
+## Prioritized Backlog
+
+**Framework:** [RICE | MoSCoW | Value-Effort]
+**Date:** [YYMMDD]
+**Items scored:** [count]
+
+### Rankings
+
+| Rank | Item      | Score | Rationale                                           |
+| ---- | --------- | ----- | --------------------------------------------------- |
+| 1    | Feature A | 45.0  | High reach (5000), high impact (3), high confidence |
+| 2    | Feature B | 12.0  | Medium reach (2000), medium impact, low effort      |
+| 3    | Feature C | 2.5   | Low reach, minimal impact, high effort              |
+
+### Recommendations
+
+- **Do first:** [top items]
+- **Plan next:** [medium items]
+- **Defer:** [low items with reasoning]
+
+Examples
+Example 1: RICE scoring of 5 features
+
+Input: "Prioritize: SSO login, dark mode, export to PDF, email notifications, bulk import"
+
+Output:
+
+Rank	Feature	Reach	Impact	Conf	Effort	RICE
+1	Email notifications	5000	2	0.8	1	8000
+2	SSO login	2000	3	0.8	3	1600
+3	Bulk import	500	2	1.0	1	1000
+4	Export to PDF	1000	1	0.8	2	400
+5	Dark mode	3000	0.5	0.5	2	375
+Example 2: MoSCoW categorization
+
+Input: "Categorize for Q1 release: payment gateway, admin dashboard redesign, API rate limiting, user avatars, audit logs"
+
+Output:
+
+Must Have: Payment gateway (revenue-critical), API rate limiting (security)
+Should Have: Audit logs (compliance, workaround exists with manual exports)
+Could Have: Admin dashboard redesign (improves efficiency but current works)
+Won't Have: User avatars (nice-to-have, defer to Q2)
+Related Skills
+Skill	When to use instead
+product-owner	Full product management workflow
+story	Breaking PBIs into user stories
+refine	Refining ideas into PBIs
+project-manager	Sprint/project status and tracking
+Closing Reminders
+IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+Weekly Installs
+39
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

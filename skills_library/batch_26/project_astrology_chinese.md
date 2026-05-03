@@ -1,0 +1,96 @@
+---
+title: project-astrology-chinese
+url: https://skills.sh/vasilyu1983/ai-agents-public/project-astrology-chinese
+---
+
+# project-astrology-chinese
+
+skills/vasilyu1983/ai-agents-public/project-astrology-chinese
+project-astrology-chinese
+Installation
+$ npx skills add https://github.com/vasilyu1983/ai-agents-public --skill project-astrology-chinese
+SKILL.md
+Chinese Astrology
+
+Provide Chinese zodiac, BaZi, Zi Wei Dou Shu, Feng Shui, and Qi Men Dun Jia guidance with explicit inputs, assumptions, and uncertainty.
+
+Scope and routing
+If the user wants Western astrology, route to Western resources (do not improvise).
+If the user wants Jyotish/Vedic, use ../project-astrology-vedic/SKILL.md.
+If the user wants Tarot or I Ching, use ../project-astrology-tarot-divination/SKILL.md.
+If the user wants numerology, use ../project-astrology-numerology/SKILL.md.
+Core workflow
+Collect inputs:
+Birth date (Gregorian), birth time (local), birth place (city/country), timezone/DST at birth.
+Zi Wei Dou Shu: also ask for sex at birth (some schools differ), and confirm lunar date conversion + leap month handling.
+Feng Shui: building facing direction (degrees), period (move-in / last major renovation year), and the target room/sector.
+Qi Men: the exact date/time (to the hour) and the question (goal, constraints, time horizon).
+Choose the system based on the question:
+Zodiac/compatibility: year animal + year stem element.
+BaZi: Four Pillars, Day Master, Ten Gods, luck pillars.
+Zi Wei: 12-palace chart + key stars + decade/year luck.
+Feng Shui/Flying Stars: time + space sectors.
+Ze Ri / date selection: references/date-selection-ze-ri.md
+Apply accuracy rules (do not guess):
+Zodiac animal year switches at Chinese New Year; Jan/Feb births must be checked.
+BaZi year/month pillars use solar terms (Jie Qi); year pillar often switches near Li Chun (around Feb 4), not Chinese New Year.
+Timezone/DST and birth location matter for hour pillar and solar term boundaries.
+Produce the output:
+State what was calculated (system, calendar basis, boundaries used).
+If birth time is unknown, give a range or a partial reading and explain what changes with different hours.
+Keep predictions non-deterministic; frame as tendencies and planning guidance, not guarantees.
+Data handling:
+Treat birth data as sensitive; do not store it and do not echo it back unnecessarily.
+Request-to-resource map
+Compatibility: references/compatibility-guide.md
+Zodiac calculations: references/zodiac-calculations.md and references/chinese-calendar.md
+BaZi: references/bazi-guide.md and references/bazi-day-master-analysis.md
+Ten Gods: references/ten-gods-guide.md
+Combinations and clashes: references/bazi-combinations-clashes.md
+Luck pillars and timing: references/da-yun-luck-pillars.md
+Zi Wei Dou Shu: references/zi-wei-dou-shu.md
+Flying Stars / Feng Shui: references/flying-stars-feng-shui.md and references/timing-fengshui.md
+Qi Men timing: references/qi-men-dun-jia.md
+Annual forecast: references/annual-forecast.md
+Animal profiles: references/animal-personalities.md
+Five Elements: references/five-elements-guide.md
+Request-to-resource map (advanced)
+BaZi advanced analysis:
+Na Yin (sound elements): references/na-yin-guide.md
+Shen Sha (symbolic stars): references/shen-sha-guide.md
+Changsheng Cycle (12 life stages): references/changsheng-cycle.md
+Yong Shen (useful god / climate regulation): references/yong-shen-guide.md
+Kong Wang (void branch / emptiness): references/kong-wang-guide.md
+Special chart structures: references/special-chart-structures.md
+Daily planning / almanac: references/tong-shu-daily.md
+Zi Wei star catalog: references/zi-wei-star-catalog.md
+Yi Jing hexagrams: references/yi-jing-hexagrams.md
+Divination systems:
+Da Liu Ren (Six Ren oracle): references/da-liu-ren.md
+Mei Hua Yi Shu (Plum Blossom numerology): references/mei-hua-yi-shu.md
+Common pitfalls
+Using Chinese New Year boundaries for BaZi pillars (BaZi uses Jie Qi solar terms).
+Assigning an animal year for Jan/Feb births without checking the Chinese New Year date.
+Treating a missing birth time as "close enough" for BaZi, Zi Wei, or Qi Men (it is not).
+Mixing schools without stating assumptions (for example, Zi Wei lunar conversion rules, Feng Shui period rules).
+Templates
+assets/template-chinese-reading.md
+assets/template-compatibility.md
+Sources (non-authoritative)
+
+Use these for cross-checking only; do not treat them as canonical when dates/solar terms matter.
+
+https://www.chinesefortunecalendar.com/
+https://www.yourchineseastrology.com/
+Weekly Installs
+118
+Repository
+vasilyu1983/ai-…s-public
+GitHub Stars
+59
+First Seen
+Jan 23, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

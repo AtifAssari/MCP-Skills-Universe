@@ -1,0 +1,86 @@
+---
+rating: ⭐⭐
+title: enterprise-readiness
+url: https://skills.sh/dirnbauer/webconsulting-skills/enterprise-readiness
+---
+
+# enterprise-readiness
+
+skills/dirnbauer/webconsulting-skills/enterprise-readiness
+enterprise-readiness
+Installation
+$ npx skills add https://github.com/dirnbauer/webconsulting-skills --skill enterprise-readiness
+SKILL.md
+Enterprise Readiness Assessment
+When to Use
+Production/enterprise readiness evaluations
+Supply chain security: SLSA provenance, cosign signing, SBOMs
+CI/CD hardening, workflow permissions
+OpenSSF Best Practices (Passing/Silver/Gold), OSPS Baseline (L1/2/3)
+Scorecard optimization (Token-Permissions, Branch-Protection, Pinned-Deps)
+Code review, ADRs, changelogs, SECURITY.md
+Assessment Workflow
+Discovery: Identify platform, languages, existing CI/CD, dependabot.yml
+Scoring: Apply checklists; check Scorecard, badge criteria, coverage
+Gap Analysis: List missing controls by severity
+Implementation: Apply fixes (SHA-pin actions, harden permissions, add workflows)
+Verification: Re-score and compare
+Mandatory Workflows & Badges
+
+Coverage required: CI, CodeQL, OpenSSF Scorecard, dependency review, security (composer audit + SBOM). Each may be a dedicated .github/workflows/<name>.yml OR a job that calls the netresearch reusable workflow. Badges: CI, Codecov, Scorecard, Best Practices, Baseline. See references/badges-and-workflows.md.
+
+Key Hardening Patterns
+Permissions: Declare permissions: contents: read at workflow-level; grant write only per-job
+SHA pinning: Third-party actions pinned to SHA with version comment (# v4.2.0). Org-internal reusable workflows use @main
+Harden-Runner: step-security/harden-runner as first step in every job; prefer egress-policy: block with allowed-endpoints
+Dependabot: Configure dependabot.yml with all ecosystems (composer, npm, github-actions, docker); set up auto-merge workflow for dependency PRs using pull_request_target
+Coverage: Upload via codecov-action; configure codecov.yml with patch coverage threshold
+Duplicate CI prevention: Scope push: trigger to branches: [main] when pull_request: is also present
+SLSA provenance: Use actions/attest-build-provenance with id-token: write and attestations: write permissions; verify with gh attestation verify
+Security policy: Create SECURITY.md with vulnerability disclosure process and response SLA (Critical: 7 days, High: 30 days)
+Critical Rules
+NEVER interpolate ${{ github.event.* }} or ${{ inputs.* }} in run: blocks (script injection)
+NEVER guess action versions -- fetch from GitHub API and verify SHA against tags
+ALWAYS include https:// URLs in badge justifications
+ALWAYS configure auto-merge for repos with Dependabot/Renovate
+References
+Reference	Use
+references/general.md	Always
+references/scorecard-playbook.md	Scorecard optimization
+references/badges-and-workflows.md	Badge URLs, workflows
+references/mandatory-requirements.md	Checklist
+references/ci-patterns.md	CI/CD, hooks
+references/code-review.md	PR quality
+references/documentation.md	ADRs, changelogs
+references/slsa-provenance.md	SLSA Level 3
+references/signed-releases.md	Cosign/GPG
+references/openssf-badge-silver.md	Silver
+references/openssf-badge-gold.md	Gold
+references/openssf-badge-baseline.md	OSPS Baseline
+references/harden-runner-guide.md	Harden-Runner
+references/solo-maintainer-guide.md	N/A criteria
+
+Related skills: go-development, github-project, security-audit, git-workflow.
+
+Credits & Attribution
+
+This skill is based on the excellent work by Netresearch DTT GmbH.
+
+Original repository: https://github.com/netresearch/enterprise-readiness-skill
+
+Copyright (c) Netresearch DTT GmbH — Methodology and best practices (MIT / CC-BY-SA-4.0)
+
+Special thanks to Netresearch DTT GmbH for their generous open-source contributions to the TYPO3 community, which helped shape this skill collection. Adapted by webconsulting.at for this skill collection
+
+Weekly Installs
+38
+Repository
+dirnbauer/webco…g-skills
+GitHub Stars
+27
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

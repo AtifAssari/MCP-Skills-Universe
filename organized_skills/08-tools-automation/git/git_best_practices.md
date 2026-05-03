@@ -1,0 +1,178 @@
+---
+rating: ⭐⭐⭐
+title: git-best-practices
+url: https://skills.sh/0xbigboss/claude-code/git-best-practices
+---
+
+# git-best-practices
+
+skills/0xbigboss/claude-code/git-best-practices
+git-best-practices
+Installation
+$ npx skills add https://github.com/0xbigboss/claude-code --skill git-best-practices
+SKILL.md
+Git Best Practices
+Always Active Principles
+
+When this skill is loaded, follow these directives for all git operations:
+
+Discover before acting — run branch discovery to determine the repo's default and production branches before branching, merging, or opening PRs
+Conventional commits — every commit uses type(scope): description format
+Stage explicitly — add files by name so only intended changes are committed
+Protect shared history — use --force-with-lease for force pushes; confirm with the user before any force push
+Agent Git Workflow
+Check state — run git status and git diff HEAD
+Discover branches — identify default/current/(optional) production branch names (see Branch Discovery)
+Stage by name — git add path/to/file for each file; verify with git status
+Write a conventional commit — type(scope): description with optional body
+Push safely — regular push by default; git push --force-with-lease origin {branch} only for rewritten history after user confirmation
+Checkpoint Commits
+
+Agents may create WIP checkpoint commits during long-running tasks, cleaned up before PR.
+
+Prefix with wip: or use standard conventional commit format
+Keep changes logically grouped even in WIP state
+Run /rewrite-history before opening a PR to craft a clean narrative
+Commit Discipline
+Stage files explicitly by name: git add src/auth.ts src/auth.test.ts
+Verify staged content with git status before committing
+Keep secrets, .env files, credentials, and large binaries out of commits — warn the user if staged files look sensitive
+Target one logical change per commit in final PR-ready state
+Force Push
+
+Use --force-with-lease exclusively to protect against overwriting upstream changes:
+
+git push --force-with-lease origin feat/my-branch
+
+
+Always confirm with the user before any force push, regardless of branch.
+
+Conventional Commits
+
+Format: type(scope): description
+
+Subject line rules:
+
+Lowercase, imperative mood, no trailing period
+Under 72 characters
+Scope is optional but preferred when a clear subsystem exists
+
+Common types:
+
+Type	Use for
+feat	New functionality
+fix	Bug fix
+docs	Documentation only
+refactor	Restructuring without behavior change
+perf	Performance improvement
+chore	Maintenance, dependencies, tooling
+test	Adding or updating tests
+ci	CI/CD pipeline changes
+build	Build system changes
+style	Formatting, whitespace (no logic change)
+Commit Bodies
+
+Body is optional — only add one when the change is genuinely non-obvious. The subject line carries the "what"; the body explains "why."
+
+Add a body when:
+
+The motivation or tradeoff is non-obvious
+Multi-part changes benefit from a bullet list
+External context is needed (links, issue references, root cause)
+
+See git-examples.md for commit message examples.
+
+Branch Discovery
+
+Before branching or opening a PR, discover the repo's branch topology. Run these commands and store the results:
+
+# Default branch (PR target for most repos)
+gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
+
+# Current branch
+git branch --show-current
+
+# Production branch (if different from default)
+git branch -r --list 'origin/main' 'origin/master' 'origin/production'
+
+
+If gh is unavailable or the repo has no remote, see the fallback commands in git-examples.md.
+
+Store the discovered branch name and reference it throughout. Use the actual branch name in all subsequent commands.
+
+Branch Naming
+
+Use repository branch naming conventions first. If no convention is documented, use:
+
+Format: type/description-TICKET-ID
+
+Examples:
+
+feat/add-login-SEND-77
+fix/pool-party-stall-SEN-68
+chore/update-deps
+hotfix/auth-bypass
+
+Include the ticket ID when an issue exists. Omit when there is no ticket.
+
+Branch Flow
+
+Use repository branch flow policy first. If policy is undocumented, a common baseline is:
+
+{production-branch} (production deploys)
+ └── {default-branch} (staging/testnet deploys, PR target)
+      ├── feat/add-feature-TICKET
+      ├── fix/bug-description-TICKET
+      └── hotfix/* (branches off production branch for hotfixes)
+
+Feature and fix branches start from the default branch
+Hotfix branches start from the production branch
+PRs target the default branch unless the repo uses a single-branch flow
+When default branch and production branch are the same, all PRs target that branch directly
+Merge Strategy
+
+Use repository merge policy first (required in many organizations).
+
+If no policy exists, these defaults are reasonable:
+
+PR target	Strategy	Rationale
+Feature → default branch	Squash merge	Clean history, one commit per feature
+Default → production	Merge commit	Preserves the release boundary; visible deploy points
+Hotfix → production	Squash merge	Single atomic fix on production
+PR Workflow
+Sizing
+
+Pragmatic sizing over arbitrary limits. Each commit tells a clear story regardless of PR size. A PR should be reviewable as a coherent unit — if a reviewer cannot hold the full change in their head, consider splitting.
+
+PR Creation
+
+Use repo-native PR tooling (gh pr create, GitLab CLI, or web UI) with:
+
+Short title under 70 characters
+Summary section with 1-3 bullet points
+Test plan as a bulleted checklist
+History Rewriting Before PR
+
+For branches with messy WIP history, use /rewrite-history to:
+
+Backup the branch
+Reset to the base branch tip
+Recommit changes as a clean narrative sequence
+Verify byte-for-byte match with backup
+Confirm with the user before force-pushing rewritten history
+Open PR with link to backup branch
+
+Each rewritten commit introduces one coherent idea, building on the previous — like a tutorial teaching the reader how the feature was built.
+
+Weekly Installs
+109
+Repository
+0xbigboss/claude-code
+GitHub Stars
+43
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,214 @@
+---
+title: dev
+url: https://skills.sh/darraghh1/my-claude-setup/dev
+---
+
+# dev
+
+skills/darraghh1/my-claude-setup/dev
+dev
+Installation
+$ npx skills add https://github.com/darraghh1/my-claude-setup --skill dev
+SKILL.md
+Dev
+
+YOUR TASK: $ARGUMENTS
+
+Critical
+Check TaskList FIRST before doing anything else — tasks may already exist from a previous session or compact
+Find a reference implementation before writing code — never guess at patterns
+Invoke the right domain skill for each piece of work — skills embed project-specific conventions
+Run verification (tests, typecheck) before reporting done — unverified code breaks downstream work
+Do NOT create plan files, phase files, or documentation — this skill implements directly
+Task Tracking
+
+Tasks survive context compacts — skipping this check causes lost progress and repeated work.
+
+Before starting work, run TaskList to check if tasks already exist from a previous session or before a compact. If tasks exist:
+
+Read existing tasks with TaskGet for each task ID
+Find the first task with status pending or in_progress
+Resume from that task — do NOT recreate the task list
+
+If no tasks exist, create them in Step 2 after scoping the work.
+
+Mark each task in_progress when starting and completed when done.
+
+Workflow
+Step 1: Understand the Task
+
+Read any files the user referenced or that are clearly relevant. If the task mentions an existing file, read it. If it mentions a feature area, Glob for related files.
+
+Extract:
+
+What needs to change — new files, modified files, or both
+What domain(s) are involved — database, server actions, services, UI, forms, tests
+What already exists — don't rebuild what's already there
+Step 2: Create Task List
+
+Break the task into concrete sub-tasks. Each task should be a single, completable unit of work.
+
+Always include structured metadata on every task for compact recovery and progress tracking:
+
+TaskCreate({
+  subject: "Create notifications service",
+  description: "Create createNotificationsService(client) at app/home/[account]/notifications/_lib/server/notifications.service.ts. Methods: list (paginated, account-scoped), markAsRead, create. Follow service pattern from existing services.",
+  activeForm: "Creating notifications service",
+  metadata: {
+    created_by: "dev",
+    agent_type: "orchestrator",
+    skill: "{domain-skill-used}",
+    role: "step",
+    attempt: 1
+  }
+})
+
+
+Task descriptions must be self-contained — include file paths, function signatures, and acceptance criteria. If your context gets compacted, the task description is all you'll have.
+
+Order tasks by dependency:
+
+Schema/database changes first (if any)
+Service layer
+Server actions
+UI components and forms
+Tests (or interleave with TDD — Step 0 pattern)
+Verification
+Step 3: Identify Domain Skills and References
+
+For each task, determine the right domain skill and find a reference implementation:
+
+Work Type	Domain Skill	Reference Glob
+Database schema, migrations, RLS policies	/postgres-expert	supabase/migrations/*.sql
+Service layer (business logic, CRUD)	/service-builder	app/home/[account]/**/*service*.ts
+Server actions (mutations, auth + Zod)	/server-action-builder	app/home/[account]/**/*server-actions*.ts
+React forms with validation	/react-form-builder	app/home/[account]/**/_components/*.tsx
+React components, pages, layouts	/vercel-react-best-practices	app/home/[account]/**/_components/*.tsx
+E2E tests	/playwright-e2e	e2e/tests/**/*.spec.ts
+UI/UX review	/web-design-guidelines	N/A (guideline check, not reference-based)
+
+For each domain involved:
+
+Glob the reference pattern — read ONE file of the matching type
+
+Extract key patterns: function signatures, imports, naming, error handling
+
+Invoke the domain skill before implementing that type of work:
+
+Skill({ skill: "postgres-expert" })
+
+
+The skill loads project-specific conventions. Follow them.
+
+Reference is ground truth. If the codebase does something differently from what you'd expect, match the codebase.
+
+Step 4: Implement
+
+Work through your task list sequentially. For each task:
+
+TaskUpdate — mark in_progress
+Invoke the domain skill (if not already loaded for this type)
+Read the reference file (if not already read for this type)
+Implement the change
+Run quick verification (tests for that area if they exist)
+TaskUpdate — mark completed
+
+Key project patterns to follow:
+
+Server actions: validate with Zod, verify auth before processing
+Services: createXxxService(client) factory wrapping private class, import 'server-only'
+Imports: path aliases, ordering: React > third-party > internal > local
+After mutations: revalidatePath('/home/[account]/...')
+
+Scope boundary — implement ONLY what was asked:
+
+Do NOT add improvements not specified in the task
+Do NOT refactor adjacent code
+Do NOT create documentation files
+
+IMPORTANT: Before using the Write tool on any existing file, you MUST Read it first or the write will silently fail. Prefer Edit for modifying existing files.
+
+Step 5: Verify
+
+Run the verification suite:
+
+pnpm test
+pnpm run typecheck
+
+
+Both must pass. If either fails, fix the issues before proceeding.
+
+If the project doesn't have these commands, check package.json scripts for alternatives.
+
+Step 6: Confirm Scope with Diff
+
+Before summarizing, run git diff --name-only (or git diff --name-only HEAD if changes are staged) to confirm exactly which files were touched. This gives an accurate, complete list rather than relying on memory — especially after context compacts.
+
+If the diff shows files you didn't intend to modify, investigate before reporting done.
+
+Step 7: Close Out Tasks
+
+Before summarizing, mark ALL tasks as completed. Run TaskList to verify — every task should be completed. If the TaskCompleted hook blocks your first attempt (verification gate), immediately retry — the second attempt will go through.
+
+This step exists because agents routinely forget to close tasks, leaving orphaned in_progress entries that confuse future sessions.
+
+Step 8: Summary
+
+Report what was done:
+
+Files created/modified (list from git diff --name-only with brief description of each change)
+Domain skills used (which skills were invoked)
+Verification result (tests passing, typecheck clean)
+Anything left for the user (manual steps, env vars to set, etc.)
+Resuming After Context Compact
+
+If you notice context was compacted or you're unsure of current progress:
+
+Run TaskList to see all tasks and their status
+Find the in_progress task — that's where you were
+Run TaskGet {id} on that task — read description AND metadata for full context (skill used, role, attempt count)
+Continue from that task — don't restart from the beginning
+
+Tasks persist across compacts. The task list and metadata are your source of truth for progress, not your memory.
+
+Pattern for every work session:
+
+TaskList → find in_progress or first pending → TaskGet (read metadata) → continue work → TaskUpdate (completed) → next task
+
+Troubleshooting
+Domain skill not found or not relevant
+
+Cause: The task doesn't fit neatly into one domain skill.
+
+Fix: Skip skill invocation for that piece of work. Find a reference file of the same type in the codebase and follow its patterns directly. The reference is more important than the skill.
+
+Tests fail but code looks correct
+
+Cause: Reference patterns may have changed, or existing tests have assumptions your change breaks.
+
+Fix: Re-read the failing test file. Understand what it expects. If your change intentionally alters behavior, update the test. If not, your implementation has a bug — fix it.
+
+Task is too large for a single session
+
+Cause: The task scope exceeds what can be done before context fills up.
+
+Fix: This is exactly why task tracking exists. Your tasks will survive compaction. If the task is truly massive (10+ files, multiple domains), suggest the user create a plan with /create-plan instead.
+
+Constraints
+Do NOT create plan files, phase files, or review files — this is for direct implementation
+Do NOT skip the reference read — guessing at patterns causes review failures
+Do NOT skip verification — unverified code is incomplete work
+Auto-invoke domain skills for matching work types — they embed conventions you'll miss otherwise
+Keep task descriptions self-contained — they're your lifeline after compaction
+Weekly Installs
+23
+Repository
+darraghh1/my-cl…de-setup
+GitHub Stars
+44
+First Seen
+Feb 19, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,327 @@
+---
+title: test-spec
+url: https://skills.sh/duc01226/easyplatform/test-spec
+---
+
+# test-spec
+
+skills/duc01226/easyplatform/test-spec
+test-spec
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill test-spec
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Quick Summary
+
+Goal: Plan tests, generate specifications, create detailed test cases, and analyze coverage — from PBIs/acceptance criteria OR from codebase analysis.
+
+MANDATORY IMPORTANT MUST ATTENTION Plan ToDo Task to READ the following project-specific reference doc:
+
+project-structure-reference.md -- project patterns and structure
+
+Graph Impact Analysis — When .code-graph/graph.db exists, run blast-radius --json to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use trace --direction downstream for deep chains on high-impact files.
+
+docs/project-reference/domain-entities-reference.md — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+docs/test-specs/ — Test specifications by module (read existing TCs before generating new to avoid duplicates and maintain TC ID continuity)
+
+If file not found, search for: project documentation, coding standards, architecture docs.
+
+Two Modes:
+
+Mode	Entry Point	Depth	Output
+From PBI	User provides PBI, story, or AC	Lighter — extract criteria, categorize, generate	team-artifacts/test-specs/
+From Codebase	User specifies feature/module	Deep — analyze code, build knowledge model, traceability	.ai/workspace/specs/
+
+Workflow:
+
+Business & Code Investigation — CRITICAL FIRST STEP. Understand business logic, entities, and code paths BEFORE writing any test spec
+Test Planning — Define scope, strategy, environments, identify test types needed
+Test Specification — Extract/analyze scenarios, categorize (positive/negative/edge/security)
+Approval Gate — Present test plan for user confirmation before generating cases
+Test Case Generation — Create TC-{FEATURE}-{NNN} cases with GWT, evidence, priority
+Coverage Analysis — Map cases to requirements, identify gaps, traceability matrix
+Validation — Interview user to confirm coverage, priorities, test data needs
+
+Key Rules:
+
+TC format: TC-{FEATURE}-{NNN} — feature codes defined in docs/project-reference/feature-docs-reference.md and each feature doc's Section 15
+
+Evidence-Based Reasoning — Speculation is FORBIDDEN. Every claim needs proof.
+
+Cite file:line, grep results, or framework docs for EVERY claim
+Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+Cross-service validation required for architectural changes
+"I don't have enough evidence" is valid and expected output
+
+BLOCKED until: - [ ] Evidence file path (file:line) - [ ] Grep search performed - [ ] 3+ similar patterns found - [ ] Confidence level stated
+
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because" If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+⚠️ INVESTIGATE FIRST — NEVER generate test specs without completing Phase 0 (Business & Code Investigation). You must understand the business logic and code paths before writing any test case.
+⚠️ ALWAYS PLAN TASKS — Use TaskCreate to break work into granular todo items BEFORE starting. Must include a final review task.
+Every test case must have Evidence: {FilePath}:{LineNumber}
+NEVER proceed past approval gate without explicit user confirmation
+For permanent TC writing to feature docs, prefer /tdd-spec which writes directly to Section 15
+Minimum 3 test categories: positive, negative, edge cases
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Task Planning (MANDATORY)
+
+Before starting ANY work, create todo tasks using TaskCreate:
+
+Create tasks for each phase you'll execute (Phase 0 through Phase F as needed)
+Break large phases into sub-tasks (e.g., "Investigate entities", "Read business docs", "Generate test cases for CheckIns")
+MUST ATTENTION include a final review task — verify all test cases have evidence, IDs are correct, coverage is complete, and no placeholders remain
+Mark each task in_progress before starting, completed when done
+Only ONE task in_progress at a time
+Phase 0: Business & Code Investigation (CRITICAL — DO NOT SKIP)
+
+Purpose: Understand the business logic, code structure, and domain context BEFORE writing any test spec. Test specs written without this understanding will miss critical scenarios and contain incorrect assumptions.
+
+Step 1: Read Business Feature Documentation
+
+Locate and read the relevant business docs in docs/business-features/:
+
+Service	Docs Path
+ServiceB	docs/business-features/ServiceB/
+ServiceA	docs/business-features/ServiceA/
+ServiceC	docs/business-features/ServiceC/
+ServiceD	docs/business-features/ServiceD/
+Auth	docs/business-features/Accounts/
+
+Read: INDEX.md → relevant detailed-features/*.md → API-REFERENCE.md
+
+Step 2: Investigate Code — Entities, Commands, Queries, Handlers
+
+Search and read ALL related code artifacts:
+
+grep/glob for the feature name in:
+├── Entities/           → Domain models, business rules, validation logic
+├── UseCaseCommands/    → Command + Result + Handler (side effects, validation)
+├── UseCaseQueries/     → Query + Result + Handler (data retrieval, filtering)
+├── UseCaseEvents/      → Entity Event Handlers (notifications, sync, side effects)
+├── BackgroundJobs/     → Scheduled tasks, recurring jobs
+├── Consumers/          → Message bus consumers (cross-service events)
+├── Repositories/       → Data access, query extensions
+└── Controllers/        → API endpoints, request/response contracts
+
+
+For each file found, note:
+
+What business rule does it enforce?
+What validation does it perform?
+What side effects does it trigger?
+What edge cases exist in the logic?
+Step 3: Write Investigation Notes to Temp Report
+
+MANDATORY IMPORTANT MUST ATTENTION create a temp investigation report BEFORE generating test specs:
+
+plans/reports/test-investigation-{YYMMDD}-{HHMM}-{feature-slug}.md
+
+
+Report structure:
+
+# Test Investigation: {Feature Name}
+
+## Business Context
+
+- Summary of business requirements from docs
+- Key business rules identified
+
+## Code Artifacts Found
+
+| Type           | File   | Key Logic                  | Test-Relevant Notes         |
+| -------------- | ------ | -------------------------- | --------------------------- |
+| Entity         | {path} | {business rules}           | {edge cases}                |
+| Command        | {path} | {validation, side effects} | {error paths}               |
+| Query          | {path} | {filtering, permissions}   | {empty results, pagination} |
+| Event Handler  | {path} | {side effects triggered}   | {failure scenarios}         |
+| Background Job | {path} | {scheduling, batch logic}  | {concurrency, idempotency}  |
+
+## Business Rules to Test
+
+1. {Rule from entity/command — with file:line evidence}
+2. {Rule from validation — with file:line evidence}
+
+## Identified Edge Cases
+
+1. {Edge case from code analysis}
+2. {Edge case from business doc gaps}
+
+## Cross-Service Dependencies
+
+- {Service} via {message bus event} — {what to verify}
+
+## Open Questions
+
+- {Anything unclear from investigation}
+
+
+This report becomes the foundation for all subsequent phases. Reference it throughout test spec generation.
+
+Phase 0 Completion Criteria
+ Read ALL relevant business feature docs
+ Found and analyzed ALL entities related to the feature
+ Found and analyzed ALL commands/queries/event-handlers/background-jobs
+ Investigation report written to plans/reports/
+ Business rules listed with file:line evidence
+ Edge cases identified from code analysis
+
+ONLY proceed to Phase A after completing ALL criteria above.
+
+Phase A: Test Planning
+
+Define scope and strategy (using Phase 0 investigation report as input):
+
+Reference the investigation report from plans/reports/test-investigation-*.md
+Define test types needed based on code artifacts found (unit, integration, E2E, regression, smoke, performance)
+Define test environments and data needs
+Plan regression test suite impact
+Estimate testing effort
+Test Categories
+Category	Purpose
+Positive	Happy path verification
+Negative	Error handling
+Boundary	Edge values
+Integration	Component interaction
+Security	Auth, injection, XSS
+Phase B: Test Specification
+From PBI Mode (lighter)
+Extract acceptance criteria from PBI/stories
+Identify test scenarios (positive/negative/edge)
+Define coverage requirements and test data needs
+Create test spec artifact
+From Codebase Mode (deep analysis)
+
+Build structured knowledge model in .ai/workspace/analysis/[feature-name].analysis.md:
+
+Discovery — Search all feature-related files (entities, commands, queries, event handlers, controllers, BG jobs, consumers, components)
+Systematic analysis — For each file document: coverageTargets, edgeCases, businessScenarios, detailedTestCases
+Overall analysis — Map end-to-end workflows, business logic, integration points, cross-service dependencies
+Spec Structure
+Feature Overview (epic, user stories, acceptance criteria, business requirements, roles/permissions)
+Entity Relationship Diagram (core entities, mermaid diagram)
+Test Scope and Categories
+Test Scenarios (high-level)
+Coverage Requirements
+Test Data Needs
+Phase C: Approval Gate (MANDATORY)
+
+CRITICAL: Present test plan with coverage analysis for explicit user approval. DO NOT proceed to case generation without it.
+
+Phase D: Test Case Generation
+
+Generate test cases in 4 priority groups: Critical (P0), High (P1), Medium (P2), Low (P3).
+
+TC Code Numbering Rules
+
+When creating new TC-{FEATURE}-{NNN} codes:
+
+Always check the feature doc's first — docs/business-features/{App}/detailed-features/ contains existing TC codes. New codes must not collide.
+Existing docs use decade-based grouping — e.g., GM: 001-004 (CRUD), 011-013 (validation), 021-023 (permissions), 031-033 (events). Find the next free decade.
+If a collision is unavoidable — renumber in the doc side only. Keep [Trait("TestSpec")] in .cs files unchanged and add a renumbering note in the doc.
+Feature doc is the canonical registry — the [Trait("TestSpec")] in test files is for traceability, not the source of truth for numbering.
+Test Case Format
+#### TC-{FEATURE}-{NNN}: {Descriptive title}
+
+- **Priority:** P0 | P1 | P2 | P3
+- **Type:** Positive | Negative | Boundary | Integration | Security
+
+**Preconditions:** {Setup required}
+**Test Data:** {Data requirements}
+
+**Given** {precondition}
+**And** {additional context}
+**When** {action performed}
+**Then** the system should:
+
+- {Expected outcome 1}
+- {Expected outcome 2}
+
+**Evidence:** `{FilePath}:{LineNumber}`
+
+Component Interaction Flow (for deep mode)
+Frontend → Controller → Command/Query → Repository → Event → Consumer
+
+Edge Case Categories
+
+Input Validation: Empty/null, boundary values (min, max, min-1, max+1), invalid formats, SQL injection, XSS payloads
+
+State-Based: First use (empty state), maximum capacity, concurrent access, session timeout
+
+Integration: Service unavailable, network timeout, partial data response, rate limiting
+
+Phase E: Coverage Analysis
+Map test cases to requirements (bidirectional traceability matrix)
+Identify coverage gaps
+Calculate coverage percentage per category
+Multi-dimensional coverage validation
+Traceability Matrix (for deep mode)
+
+Bidirectional mapping: Test Case ↔ Business Requirement ↔ Source Component
+
+Phase F: Validation (MANDATORY)
+
+After generating test cases, validate with user:
+
+Question Categories
+Category	Example Question
+Coverage	"Is the test coverage adequate for critical paths?"
+Priority	"Which test categories should be prioritized?"
+Test Data	"Are the test data requirements realistic and available?"
+Edge Cases	"Any additional edge cases or error scenarios to consider?"
+Integration	"Are cross-service integration points covered?"
+Process
+Generate 2-4 questions focused on coverage completeness, priorities, and test data
+Use AskUserQuestion tool to interview
+Document in test spec under ## Validation Summary
+Update test spec based on answers
+
+This step is NOT optional.
+
+Output Conventions
+File Naming
+team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md        # From PBI mode
+.ai/workspace/specs/[feature-name].ai_spec_doc.md              # From Codebase mode
+
+ID Patterns
+Spec-level: TS-{FEATURE}-{NNN} (e.g., TS-GM-001)
+Test case: TC-{FEATURE}-{NNN} (e.g., TC-GM-015)
+Quality Checklist
+
+Before completing test artifacts:
+
+ Every test case has TC-{FEATURE}-{NNN} ID
+ Every test case has Evidence field with file:line
+ Test summary counts match actual test case count
+ At least 3 categories: positive, negative, edge
+ Regression impact identified
+ Test data requirements documented
+ No template placeholders remain
+Related
+test-specs-docs — Write test specs to docs/test-specs/ (permanent docs)
+qc-specialist — Quality gates after test case generation
+integration-test — the project CQRS integration test code generation
+Closing Reminders
+IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+IMPORTANT MUST ATTENTION add a final review todo task to verify work quality MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+IMPORTANT MUST ATTENTION run graph impact analysis on changed files when .code-graph/graph.db exists. Compute stale file gap.
+IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act). NEVER speculate without proof.
+IMPORTANT MUST ATTENTION READ CLAUDE.md before starting
+Weekly Installs
+34
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

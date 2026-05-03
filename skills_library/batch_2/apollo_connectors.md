@@ -1,0 +1,182 @@
+---
+title: apollo-connectors
+url: https://skills.sh/apollographql/skills/apollo-connectors
+---
+
+# apollo-connectors
+
+skills/apollographql/skills/apollo-connectors
+apollo-connectors
+Installation
+$ npx skills add https://github.com/apollographql/skills --skill apollo-connectors
+Summary
+
+Integrate REST APIs into GraphQL supergraphs using @source and @connect directives.
+
+Provides a structured 5-step process: research API structure, implement schema with directives, validate via rover supergraph compose, execute connectors, and test coverage
+Supports request configuration including headers, body payloads, batching for N+1 patterns, and environment variable injection via $env
+Handles response mapping with field selection, aliasing, sub-selections for nested data, and entity relationships for federated types
+Includes schema template, reference files for grammar/methods/variables, and validation rules for selection mapping and literal values
+SKILL.md
+Apollo Connectors Schema Assistant
+MCP Tools
+
+If GraphOS MCP Tools are available, use them:
+
+connectors-spec: Fetch the complete Connectors specification before starting any connector work
+apollo_docs_search: Search for relevant documentation
+apollo_docs_read: Read specific documentation pages by slug
+
+Documentation paths by topic:
+
+Requests: /graphos/connectors/requests/url, /headers, /body, /batching
+Responses: /graphos/connectors/responses/fields, /error-handling
+Mapping: /graphos/connectors/mapping, /arrays, /enums, /literals
+Entities: /graphos/connectors/entities, /patterns
+Process
+
+Follow this 5-step process. DO NOT skip any steps.
+
+Step 1: Research
+ Understand the API being called and the structure of responses
+ Ask the user for example API responses if not provided
+ Fetch relevant documentation from MCP tools or reference files
+ DO NOT write any code until research is complete
+Step 2: Implement
+ Create the schema using the template below
+ Follow the grammar, methods, and variables in the reference files
+ Ask clarifying questions if unsure about requirements
+Step 3: Validate (Compose)
+ Run rover supergraph compose --config ./supergraph.yaml
+ Fix any composition errors before proceeding
+Step 4: Execute
+ Run rover connector run --schema <file> -c "<Type.field>" -v "{}"
+ Verify the connector executes correctly
+Step 5: Test
+ Create or update test files under /tests/
+ Run rover connector test
+ Ensure full test coverage for each connector
+Schema Template
+# Note to AI Friends: This is an Apollo Connectors schema. You should use your connectors-spec MCP tool if you have it available before editing this file.
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.12")
+  @link(url: "https://specs.apollo.dev/connect/v0.3", import: ["@source", "@connect"])
+
+@source(name: "api_name", http: { baseURL: "https://api.example.com" })
+
+type Query {
+  example(id: ID!): Example
+    @connect(
+      source: "api_name"
+      http: { GET: "/example/{$args.id}" }
+      selection: """
+      id
+      name
+      """
+    )
+}
+
+type Example {
+  id: ID!
+  name: String
+}
+
+
+Version Requirements: Always use federation/v2.12 and connect/v0.3 unless specified otherwise.
+
+Reference Files
+
+Before implementing connectors, read the relevant reference files:
+
+Grammar - Selection mapping EBNF syntax
+Methods - Available transformation methods
+Variables - Available mapping variables
+Entities - Entity patterns and batching
+Validation - Rover commands for validation
+Troubleshooting - Common errors and solutions
+Key Rules
+Selection Mapping
+Prefer sub-selections over ->map for cleaner mappings
+Do NOT use $ when selecting fields directly from root
+Field aliasing: newName: originalField (only when renaming)
+Sub-selection: fieldName { ... } (to map nested content)
+# DO - Direct sub-selection for arrays
+$.results {
+  firstName: name.first
+  lastName: name.last
+}
+
+# DO NOT - Unnecessary root $
+$ {
+  id
+  name
+}
+
+# DO - Direct field selection
+id
+name
+
+Entities
+Add @connect on a type to make it an entity (no @key needed)
+Create entity stubs in parent selections: user: { id: userId }
+When you see an ID field (e.g., productId), create an entity relationship
+Each entity should have ONE authoritative subgraph with @connect
+Literal Values
+
+Use $() wrapper for literal values in mappings:
+
+$(1)              # number
+$(true)           # boolean
+$("hello")        # string
+$({"a": "b"})     # object
+
+# In body
+body: "$({ a: $args.a })"  # CORRECT
+body: "{ a: $args.a }"     # WRONG - will not compose
+
+Headers
+http: {
+  GET: "/api"
+  headers: [
+    { name: "Authorization", value: "Bearer {$env.API_KEY}" },
+    { name: "X-Forwarded", from: "x-client" }
+  ]
+}
+
+Batching
+
+Convert N+1 patterns using $batch:
+
+type Product @connect(
+  source: "api"
+  http: {
+    POST: "/batch"
+    body: "ids: $batch.id"
+  }
+  selection: "id name"
+) {
+  id: ID!
+  name: String
+}
+
+Ground Rules
+NEVER make up syntax or directive values not in this specification
+NEVER use --elv2-license accept (for humans only)
+ALWAYS ask for example API responses before writing code
+ALWAYS validate with rover supergraph compose after changes
+ALWAYS create entity relationships when you see ID fields
+Prefer $env over $config for environment variables
+Use rover dev for running Apollo Router locally
+Weekly Installs
+876
+Repository
+apollographql/skills
+GitHub Stars
+56
+First Seen
+Jan 23, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

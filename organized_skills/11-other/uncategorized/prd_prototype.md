@@ -1,0 +1,357 @@
+---
+rating: ⭐⭐⭐
+title: prd-prototype
+url: https://skills.sh/guoxiangjie/skills/prd-prototype
+---
+
+# prd-prototype
+
+skills/guoxiangjie/skills/prd-prototype
+prd-prototype
+Installation
+$ npx skills add https://github.com/guoxiangjie/skills --skill prd-prototype
+SKILL.md
+PRD 原型生成技能
+⚡ 快速开始
+
+何时使用：
+
+PRD 文档已完成，需要生成可交互的原型进行演示
+需要快速验证产品设计和页面流程
+开发前需要可视化原型供团队评审
+用户上传了 PRD 文档并要求生成原型
+
+使用方式：
+
+/prd-prototype  # 启动原型生成流程
+
+
+产物路径：
+
+PRD 文档位置        → 原型产物位置
+prd/                → prd/prototype/
+
+📚 核心资源导航
+资源	用途	何时读取
+commands/generate.md	原型生成详细流程	执行 generate 命令时
+commands/check.md	同步状态检查流程	执行 check 命令时
+commands/update.md	增量更新流程	执行 update 命令时
+commands/preview.md	原型预览和导出流程	执行 preview 命令时
+templates/html_tailwind.html	HTML+Tailwind 模板	生成 Tailwind 原型时
+templates/react_shadcn.html	React+shadcn/ui+Tailwind 模板	生成 React 原型时
+templates/pages_schema.json	页面契约模板	生成 pages.json 时
+scripts/prototype_validator.js	完整性验证脚本	最终检查时
+🛡️ 三阶段质量保障机制
+
+原型生成采用三阶段质量保障，确保完整性和正确性：
+
+┌─────────────────────────────────────────────────────────────┐
+│  阶段1: 规划锁定                                              │
+│  ├── 扫描模块 PRD，读取内容                                   │
+│  ├── 生成设计体系并确认                                       │
+│  └── 生成 pages.json 页面契约，用户确认锁定                   │
+├─────────────────────────────────────────────────────────────┤
+│  阶段2: 按序生成 + 即时验证                                   │
+│  ├── 读取 pages.json 作为生成队列                             │
+│  ├── 每个页面生成前验证引用合法性                              │
+│  ├── 每个页面生成后即时验证完整性                              │
+│  └── 不合格则重试（最多2次）                                  │
+├─────────────────────────────────────────────────────────────┤
+│  阶段3: 最终完整性检查                                        │
+│  ├── 运行与构建验证（pnpm install + tsc + pnpm build）         │
+│  ├── 页面清单核对（pages.json vs 实际文件）                   │
+│  ├── 链接有效性检查（href 目标是否存在）                      │
+│  ├── 导航一致性检查（侧边栏菜单是否匹配）                      │
+│  ├── 内容完整性检查（表格数据、弹窗实现）                      │
+│  └── 输出检查报告（validation_report.md）                    │
+└─────────────────────────────────────────────────────────────┘
+
+pages.json 页面契约
+
+核心创新点：通过 pages.json 锁定页面清单，作为生成"契约"：
+
+锁定页面清单 - 明确要生成哪些页面，防止遗漏或过度生成
+约束链接目标 - 所有链接必须指向契约中的有效页面
+统一导航菜单 - 所有页面使用相同的侧边栏配置
+支持即时验证 - 生成过程中可验证页面完整性
+🎨 设计美学准则
+
+核心原则：拒绝通用 AI 审美，追求独特、有辨识度的设计。
+
+❌ 绝对禁止
+类别	禁止项
+字体	Inter、Roboto、Arial、Helvetica、系统默认
+配色	白底紫渐变、Bootstrap 蓝、均匀分布的彩色
+布局	标准三栏、对称网格、模板化设计
+✅ 必须追求
+维度	要求
+字体	个性标题 + 精致正文，强字重对比（900 vs 400）
+色彩	主色突出（80% 视觉焦点）、点缀鲜明
+动效	入场动画 + 错开延迟、悬停微交互
+布局	不对称、元素叠加、打破网格、大量留白
+细节	渐变背景、装饰边框、强烈阴影
+风格选项
+风格	适用场景	特色元素
+工业硬朗	企业后台	硬阴影、粗线条、高对比
+科技现代	数据大屏	发光效果、渐变背景、赛博朋克
+暖调复古	电商平台	米白背景、砖红点缀、装饰边框
+深色奢华	金融系统	深邃黑底、金色点缀、细腻纹理
+清新自然	教育医疗	薄荷绿调、柔和阴影、圆润边角
+
+详细美学指南见：templates/design_aesthetics.md
+
+🎯 核心功能
+generate 命令
+
+功能：从 PRD 文档生成交互式原型
+
+支持的技术栈：
+
+技术栈	适用场景	输出
+HTML + Tailwind CSS	快速原型、轻量演示	多个 HTML 文件 + Tailwind CDN
+React + shadcn/ui + Tailwind	现代化应用、美观实用	React 组件 + shadcn/ui 风格
+业务逻辑气泡
+
+在 PRD 文档中使用 <@>业务逻辑说明<@> 标记，生成原型时会自动转换为悬停提示气泡。
+
+特点：
+
+💡 图标标识有业务说明
+悬停显示，不影响页面正常交互
+支持多行文本，超长内容可滚动
+适合向客户/开发讲解产品设计逻辑
+
+使用示例：
+
+PRD 中写：
+新增用户按钮 <@>点击打开新增表单弹窗，必填字段：用户名、姓名<@>
+
+原型生成后：
+[新增用户] 💡 ← 悬停显示气泡提示
+
+
+转换规则：详见 commands/generate.md 中的"业务逻辑标记转换"章节
+
+生成的目录结构：
+
+prd/prototype/                  # 原型目录（固定路径）
+├── mapping.md              # 映射文档（记录 PRD 与原型的依赖关系）
+├── index.html              # 首页/登录页
+├── dashboard.html          # 仪表盘
+├── user-management.html    # 用户管理（含 CRUD 弹窗）
+├── order-management.html   # 订单管理（含详情抽屉）
+└── settings.html           # 系统设置
+
+
+⚠️ 重要：所有页面都直接放在 prd/prototype/ 目录下，不要创建子目录。链接直接写文件名即可。
+
+每个页面包含：
+
+Logo（点击返回仪表盘）
+侧边栏导航菜单
+面包屑导航
+主内容区（表格/表单 + 弹窗）
+
+执行流程（需求/项目经理模式）：
+
+检查 PRD 文档，确定产物路径（prd/prototype/）
+扫描并读取模块 PRD（基于实际存在的模块 PRD 文件）
+从模块 PRD 提取页面内容（功能需求、字段定义、界面设计）
+选择使用人身份（需求/项目经理 或 研发人员）
+选择设计风格（仅需求/项目经理模式，4种预设+自定义）
+确认页面契约（pages.json）
+逐页生成原型内容（HTML + Tailwind CSS）
+完整性检查
+生成映射文档（mapping.md）
+确认完成并提示预览
+
+执行流程（研发人员模式）：
+
+检查 PRD 文档，确定产物路径（prd/prototype/）
+扫描并读取模块 PRD（基于实际存在的模块 PRD 文件）
+从模块 PRD 提取页面内容（功能需求、字段定义、界面设计）
+选择使用人身份 → 研发人员
+确认技术栈：React 18 + Ant Design + Zustand + React Router v6 5.5. 检测并安装依赖 Skills（vercel-react-best-practices、vercel-composition-patterns）
+全局分析与组件设计（提取公共组件、类型定义、Mock 数据，使用 composition-patterns） + 视觉风格选择
+生成项目脚手架（Vite + TypeScript + SPA 架构）
+生成全局公共组件（CommonTable、CommonModal 等）
+逐页生成页面组件（使用 react-best-practices 确保代码质量）
+路由注册与整合
+运行与构建验证（pnpm install + tsc --noEmit + pnpm build，失败则修复重试）
+最终完整性检查（TypeScript 编译、路由、Mock 数据、构建产物）
+确认完成，提示 pnpm run dev
+check 命令
+
+功能：检查原型与 PRD 的同步状态
+
+执行流程：
+
+读取映射文档（mapping.md）
+读取所有 PRD 当前版本
+对比每页依赖的 PRD 版本
+输出检查报告（同步/需更新/缺失）
+
+适用场景：
+
+PRD 更新后检查原型是否需要同步
+定期检查原型与 PRD 的一致性
+update 命令
+
+功能：增量更新原型页面
+
+执行流程：
+
+执行同步检查
+展示待更新页面列表
+用户确认更新范围
+读取 PRD 变更内容
+定向更新受影响的页面
+更新映射文档
+
+适用场景：
+
+PRD 版本更新后同步原型
+新增模块 PRD 后生成对应原型
+删除模块 PRD 后移除对应原型
+preview 命令
+
+功能：预览和导出生成的原型
+
+执行流程：
+
+检查原型目录是否存在
+在浏览器中打开原型首页
+提供导出选项（ZIP 打包等）
+📋 模块 PRD 页面映射规则
+
+⚠️ 核心原则：页面内容严格依赖模块 PRD，不依赖主 PRD 的模块清单！
+
+从模块 PRD 文档中提取页面信息：
+
+模块 PRD 章节	映射为
+第3章 详细功能需求	页面功能、按钮操作
+第4章 数据字段定义	表格列、表单字段
+第5章 用户界面设计	页面布局、弹窗内容
+第6章 业务规则与边界	校验逻辑、提示信息
+
+从主 PRD 提取基础信息：
+
+主 PRD 内容	映射为
+项目名称	Logo 文字
+用户角色	权限控制和导航菜单
+业务流程图	页面跳转关系
+⚠️ 重要原则
+一个模块 PRD 一个页面：每个模块 PRD 只生成一个页面，CRUD 操作通过弹窗实现
+内容依赖模块 PRD：页面内容严格基于模块 PRD 的具体描述，不依赖主 PRD 的模块清单
+弹窗优先：新增、编辑、详情、删除等操作都在页面内通过弹窗完成，不生成独立页面
+完整导航结构：每个页面必须包含 Logo（点击返回首页）、侧边栏菜单、面包屑导航
+内容完整：表格必须有数据和操作列，表单必须有完整字段，禁止使用 alert/confirm/prompt
+统一图标库：所有技术栈统一使用 Lucide 图标，保持视觉一致
+身份区分：需求/项目经理模式使用 HTML+Tailwind，研发人员模式使用 React 18+Ant Design+Zustand
+SPA 架构：研发人员模式生成完整的 SPA 单页应用，包含路由、布局、公共组件、Mock 数据
+代码质量：研发人员模式产物是正式前端项目，需 TypeScript 严格类型、CSS Modules 样式隔离
+📋 页面规划原则
+
+页面数量 = 固定页面（2个） + 模块 PRD 数量
+
+✅ 正确做法（基于实际存在的模块 PRD）：
+- 扫描到 3 个模块 PRD → 生成 5 个页面（2 固定 + 3 模块）
+- 登录页 → index.html
+- 仪表盘 → dashboard.html
+- 用户管理（M001_prd.md） → user-management.html（含弹窗）
+- 订单管理（M002_prd.md） → order-management.html（含抽屉）
+- 商品管理（M003_prd.md） → product-management.html（含弹窗）
+
+❌ 错误做法：
+- 依赖主 PRD 的模块清单（可能有 10 个模块）
+- 但实际只生成了 3 个模块 PRD
+- 却生成了 10 个原型页面（内容凭空猜测）
+
+🔗 与其他技能的协作
+前置依赖：需要先有 PRD 文档（由 /prd-suite 生成）
+后续流程：原型确认后可进入开发阶段
+📖 详细流程
+
+完整工作流程请参考：
+
+commands/generate.md - 原型生成详细流程
+commands/check.md - 同步状态检查流程
+commands/update.md - 增量更新流程
+commands/preview.md - 原型预览和导出
+👤 使用人身份选择
+
+在生成原型前，首先选择使用人身份：
+
+身份	技术栈	适用场景	后续流程
+需求、项目经理	HTML + Tailwind CSS	快速原型、产品演示、需求评审	进入设计风格选择
+研发人员	React 18 + Ant Design + Zustand	开发团队对接、技术评审、项目实现	全局分析+脚手架+逐页生成
+研发人员模式技术选型
+技术项	选型
+React	18.x
+路由	React Router v6
+状态管理	Zustand
+UI 组件库	Ant Design
+样式方案	Ant Design 内置 + CSS Modules
+TypeScript	严格模式
+构建工具	Vite
+架构	SPA 单页应用
+研发人员模式特点
+SPA 架构：React Router v6 路由，Ant Design Pro 风格布局
+视觉风格：Ant Design Pro 官方规范（preview.pro.ant.design），固定蚂蚁蓝 #1677FF 主色
+组件拆分：先分析全局公共组件，再逐页生成页面组件
+类型安全：完整 TypeScript 类型定义
+Mock 数据：内置模拟数据层，无需后端即可运行
+正式项目：产物可直接作为项目实现代码使用
+代码质量：使用 vercel-react-best-practices 和 vercel-composition-patterns skills 确保代码质量
+自动安装：流程中自动检测并安装所需 skills，未安装时 fallback 到内置规则
+🎨 预设设计风格选择
+
+⚠️ 需求/项目经理模式：进入下方完整设计风格选择流程（4 种预设 JSON 风格 + 自定义输入）。
+
+⚠️ 研发人员模式：在步骤 6R.4.5 中进行视觉风格选择（4 种预设 + 自定义），通过 Ant Design ConfigProvider + CSS 变量应用。
+
+在生成原型前，提供预设设计风格供用户选择，支持自定义输入。
+
+选择流程
+扫描预设风格 - 从 templates/design/ 目录读取预设风格文件
+展示选项 - 4 个预设风格 + 1 个自定义输入选项
+用户选择 - 选择预设风格或输入自定义规范
+确认保存 - 确认后用于后续页面生成
+预设风格清单
+风格	主色	基础单位	适用场景	核心特征
+众诚	#246FE5	4px	企业中后台	极简、清晰、标准化、反馈明确
+类Ant Design	#165DFF	8px	企业中后台	阿里官方、确定性、自然流畅
+类Element Plus	#409EFF	8px	Vue3 中后台	Vue3 经典、清晰易用、简约高效
+类Arco Design	#165DFF	8px	企业中后台	字节官方、简洁直观、高效易用
+自定义输入
+
+用户可选择"自定义输入"选项，提供两种输入方式：
+
+JSON 格式 - 直接粘贴完整的风格 JSON 规范
+自然语言 - 描述设计偏好，AI 将转换为规范
+设计风格文件结构
+
+预设风格 JSON 文件包含：
+
+design_philosophy - 设计哲学与原则
+general_constraints - 强制约束规则
+global_style - 全局样式（颜色、字体、布局）
+component_rules - 组件规范
+ai_quick_guide - 快速参考信息
+
+详细选择流程见：commands/generate.md 步骤 4-5
+
+最后更新：2026-04-09 (研发人员模式完整流程 + 运行与构建验证机制)
+
+Weekly Installs
+54
+Repository
+guoxiangjie/skills
+GitHub Stars
+7
+First Seen
+Mar 20, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

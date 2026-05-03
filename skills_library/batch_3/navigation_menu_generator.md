@@ -1,0 +1,91 @@
+---
+title: navigation-menu-generator
+url: https://skills.sh/kostja94/marketing-skills/navigation-menu-generator
+---
+
+# navigation-menu-generator
+
+skills/kostja94/marketing-skills/navigation-menu-generator
+navigation-menu-generator
+Installation
+$ npx skills add https://github.com/kostja94/marketing-skills --skill navigation-menu-generator
+SKILL.md
+Components: Navigation Menu
+
+Guides navigation menu design for SEO, UX, and accessibility. Navigation helps users find content and signals site structure to search engines.
+
+When invoking: On first use, if helpful, open with 1-2 sentences on what this skill covers and why it matters, then provide the main output. On subsequent use or when the user asks to skip, go directly to the main output.
+
+Initial Assessment
+
+Check for project context first: If .claude/project-context.md or .cursor/project-context.md exists, read it for key pages and audience.
+
+Identify:
+
+Site structure: Main sections, hierarchy
+Primary goals: Conversion paths, key pages
+Platform: Web, mobile, both
+Structure & Organization
+Menu Size
+Primary nav: 7-9 items; avoid overwhelming users
+Sub-navigation: Up to 2 levels; deeper topics in sub-menus
+Pattern: Horizontal top nav or vertical side nav; avoid novel patterns
+Hierarchy
+Reflect sitemap structure; need not match exactly
+Prioritize what visitors need most
+Logical grouping by topic or task
+SEO Best Practices
+Practice	Purpose
+Semantic HTML	<nav>, <ul>, <li>; proper landmark roles
+Descriptive anchor text	Target keywords; avoid "Click here"
+Text links	Prefer text over images; crawlers need readable links
+Initial render	All nav HTML in first paint; no JS-only menus for critical links. See rendering-strategies
+Visible links	Prefer visible over hidden; helps crawlers understand structure
+Crawlability
+Sub-menus: Ensure HTML is in DOM (e.g., CSS-hidden, not JS-injected)
+Footer nav: Include secondary links
+Breadcrumbs: See breadcrumb-generator for implementation
+UX Guidelines
+Visibility & Location
+Desktop: Visible nav; avoid hiding behind hamburger when space allows
+Expected placement: Primary nav in header; footer nav at bottom
+Current location: Indicate active page/section in menu
+Accessibility
+Requirement	Practice
+Labels	Clear, intuitive wording
+Contrast	4.5:1 for link text
+Touch targets	>=44x44px; adequate spacing
+Keyboard	Full keyboard navigation; focus visible
+Screen readers	Proper ARIA; skip links for long menus
+Design
+Simple, clear; avoid covering entire screen with open menus on desktop
+Consistent across pages
+Mobile: Hamburger acceptable; ensure menu is usable when open
+Output Format
+Structure (primary items, sub-items)
+Anchor text suggestions
+HTML/ARIA notes
+SEO checklist
+Accessibility checklist
+Related Skills
+website-structure: Plan structure and nav hierarchy; nav reflects planned sections
+xml-sitemap: Nav should reflect discoverable pages
+internal-links: Nav is primary internal linking
+site-crawlability: Nav affects crawl paths
+category-page-generator: Category hierarchy in nav
+footer-generator: Footer nav complements header nav
+logo-generator: Logo typically sits in header with nav
+breadcrumb-generator: Breadcrumb navigation; BreadcrumbList schema
+rendering-strategies: Nav in first paint; no JS-only menus
+Weekly Installs
+525
+Repository
+kostja94/market…g-skills
+GitHub Stars
+413
+First Seen
+Mar 1, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

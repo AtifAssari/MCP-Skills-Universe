@@ -1,0 +1,301 @@
+---
+title: playwright-best-practices
+url: https://skills.sh/currents-dev/playwright-best-practices-skill/playwright-best-practices
+---
+
+# playwright-best-practices
+
+skills/currents-dev/playwright-best-practices-skill/playwright-best-practices
+playwright-best-practices
+Installation
+$ npx skills add https://github.com/currents-dev/playwright-best-practices-skill --skill playwright-best-practices
+Summary
+
+Comprehensive reference guide for writing, debugging, and maintaining Playwright tests across all testing types and scenarios.
+
+Covers 50+ testing patterns including E2E, component, API, GraphQL, visual regression, accessibility, security, mobile, and Electron app testing
+Includes activity-based lookup tables for writing new tests, debugging failures, fixing flaky tests, and infrastructure setup
+Provides decision trees for test type selection, architecture patterns (POM vs fixtures), framework-specific guidance (React, Angular, Vue, Next.js), and error scenario handling
+Addresses advanced topics: multi-user collaboration, WebSocket/real-time testing, OAuth/SSO mocking, third-party service integration, performance budgeting, and console error monitoring
+SKILL.md
+Playwright Best Practices
+
+This skill provides comprehensive guidance for all aspects of Playwright test development, from writing new tests to debugging and maintaining existing test suites.
+
+Activity-Based Reference Guide
+
+Consult these references based on what you're doing:
+
+Writing New Tests
+
+When to use: Creating new test files, writing test cases, implementing test scenarios
+
+Activity	Reference Files
+Writing E2E tests	test-suite-structure.md, locators.md, assertions-waiting.md
+Writing component tests	component-testing.md, test-suite-structure.md
+Writing API tests	api-testing.md, test-suite-structure.md
+Writing GraphQL tests	graphql-testing.md, api-testing.md
+Writing visual regression tests	visual-regression.md, canvas-webgl.md
+Structuring test code with POM	page-object-model.md, test-suite-structure.md
+Setting up test data/fixtures	fixtures-hooks.md, test-data.md
+Handling authentication	authentication.md, authentication-flows.md
+Testing date/time features	clock-mocking.md
+Testing file upload/download	file-operations.md, file-upload-download.md
+Testing forms/validation	forms-validation.md
+Testing drag and drop	drag-drop.md
+Testing accessibility	accessibility.md
+Testing security (XSS, CSRF)	security-testing.md
+Using test annotations	annotations.md
+Using test tags	test-tags.md
+Testing iframes	iframes.md
+Testing canvas/WebGL	canvas-webgl.md
+Internationalization (i18n)	i18n.md
+Testing Electron apps	electron.md
+Testing browser extensions	browser-extensions.md
+Mobile & Responsive Testing
+
+When to use: Testing mobile devices, touch interactions, responsive layouts
+
+Activity	Reference Files
+Device emulation	mobile-testing.md
+Touch gestures (swipe, tap)	mobile-testing.md
+Viewport/breakpoint testing	mobile-testing.md
+Mobile-specific UI	mobile-testing.md, locators.md
+Real-Time & Browser APIs
+
+When to use: Testing WebSockets, geolocation, permissions, multi-tab flows
+
+Activity	Reference Files
+WebSocket/real-time testing	websockets.md
+Geolocation mocking	browser-apis.md
+Permission handling	browser-apis.md
+Clipboard testing	browser-apis.md
+Camera/microphone mocking	browser-apis.md
+Multi-tab/popup flows	multi-context.md
+OAuth popup handling	third-party.md, multi-context.md
+Debugging & Troubleshooting
+
+When to use: Test failures, element not found, timeouts, unexpected behavior
+
+Activity	Reference Files
+Debugging test failures	debugging.md, assertions-waiting.md
+Fixing flaky tests	flaky-tests.md, debugging.md, assertions-waiting.md
+Debugging flaky parallel runs	flaky-tests.md, performance.md, fixtures-hooks.md
+Ensuring test isolation / avoiding state leak	flaky-tests.md, fixtures-hooks.md, performance.md
+Fixing selector issues	locators.md, debugging.md
+Investigating timeout issues	assertions-waiting.md, debugging.md
+Using trace viewer	debugging.md
+Debugging race conditions	flaky-tests.md, debugging.md, assertions-waiting.md
+Debugging console/JS errors	console-errors.md, debugging.md
+Error & Edge Case Testing
+
+When to use: Testing error states, offline mode, network failures, validation
+
+Activity	Reference Files
+Error boundary testing	error-testing.md
+Network failure simulation	error-testing.md, network-advanced.md
+Offline mode testing	error-testing.md, service-workers.md
+Service worker testing	service-workers.md
+Loading state testing	error-testing.md
+Form validation testing	error-testing.md
+Multi-User & Collaboration Testing
+
+When to use: Testing features involving multiple users, roles, or real-time collaboration
+
+Activity	Reference Files
+Multiple users in one test	multi-user.md
+Real-time collaboration	multi-user.md, websockets.md
+Role-based access testing	multi-user.md
+Concurrent action testing	multi-user.md
+Architecture Decisions
+
+When to use: Choosing test patterns, deciding between approaches, planning test architecture
+
+Activity	Reference Files
+POM vs fixtures decision	pom-vs-fixtures.md
+Test type selection	test-architecture.md
+Mock vs real services	when-to-mock.md
+Test suite structure	test-suite-structure.md
+Framework-Specific Testing
+
+When to use: Testing React, Angular, Vue, or Next.js applications
+
+Activity	Reference Files
+Testing React apps	react.md
+Testing Angular apps	angular.md
+Testing Vue/Nuxt apps	vue.md
+Testing Next.js apps	nextjs.md
+Refactoring & Maintenance
+
+When to use: Improving existing tests, code review, reducing duplication
+
+Activity	Reference Files
+Refactoring to Page Object Model	page-object-model.md, test-suite-structure.md
+Improving test organization	test-suite-structure.md, page-object-model.md
+Extracting common setup/teardown	fixtures-hooks.md
+Replacing brittle selectors	locators.md
+Removing explicit waits	assertions-waiting.md
+Creating test data factories	test-data.md
+Configuration setup	configuration.md
+Infrastructure & Configuration
+
+When to use: Setting up projects, configuring CI/CD, optimizing performance
+
+Activity	Reference Files
+Configuring Playwright project	configuration.md, projects-dependencies.md
+Setting up CI/CD pipelines	ci-cd.md, github-actions.md
+GitHub Actions setup	github-actions.md
+GitLab CI setup	gitlab.md
+Other CI providers	other-providers.md
+Docker/container setup	docker.md
+Global setup & teardown	global-setup.md
+Project dependencies	projects-dependencies.md
+Optimizing test performance	performance.md, test-suite-structure.md
+Configuring parallel execution	parallel-sharding.md, performance.md
+Isolating test data between workers	fixtures-hooks.md, performance.md
+Test coverage	test-coverage.md
+Test reporting/artifacts	reporting.md
+Advanced Patterns
+
+When to use: Complex scenarios, API mocking, network interception
+
+Activity	Reference Files
+Mocking API responses	test-suite-structure.md, network-advanced.md
+Network interception	network-advanced.md, assertions-waiting.md
+GraphQL mocking	network-advanced.md
+HAR recording/playback	network-advanced.md
+Custom fixtures	fixtures-hooks.md
+Advanced waiting strategies	assertions-waiting.md
+OAuth/SSO mocking	third-party.md, multi-context.md
+Payment gateway mocking	third-party.md
+Email/SMS verification mocking	third-party.md
+Failing on console errors	console-errors.md
+Security testing (XSS, CSRF)	security-testing.md
+Performance budgets & Web Vitals	performance-testing.md
+Lighthouse integration	performance-testing.md
+Test annotations (skip, fixme)	annotations.md
+Test tags (@smoke, @fast)	test-tags.md
+Test steps for reporting	annotations.md
+Quick Decision Tree
+What are you doing?
+│
+├─ Writing a new test?
+│  ├─ E2E test → core/test-suite-structure.md, core/locators.md, core/assertions-waiting.md
+│  ├─ Component test → testing-patterns/component-testing.md
+│  ├─ API test → testing-patterns/api-testing.md, core/test-suite-structure.md
+│  ├─ GraphQL test → testing-patterns/graphql-testing.md
+│  ├─ Visual regression → testing-patterns/visual-regression.md
+│  ├─ Visual/canvas test → testing-patterns/canvas-webgl.md, core/test-suite-structure.md
+│  ├─ Accessibility test → testing-patterns/accessibility.md
+│  ├─ Mobile/responsive test → advanced/mobile-testing.md
+│  ├─ i18n/locale test → testing-patterns/i18n.md
+│  ├─ Electron app test → testing-patterns/electron.md
+│  ├─ Browser extension test → testing-patterns/browser-extensions.md
+│  ├─ Multi-user test → advanced/multi-user.md
+│  ├─ Form validation test → testing-patterns/forms-validation.md
+│  └─ Drag and drop test → testing-patterns/drag-drop.md
+│
+├─ Testing specific features?
+│  ├─ File upload/download → testing-patterns/file-operations.md, testing-patterns/file-upload-download.md
+│  ├─ Date/time dependent → advanced/clock-mocking.md
+│  ├─ WebSocket/real-time → browser-apis/websockets.md
+│  ├─ Geolocation/permissions → browser-apis/browser-apis.md
+│  ├─ OAuth/SSO mocking → advanced/third-party.md, advanced/multi-context.md
+│  ├─ Payments/email/SMS → advanced/third-party.md
+│  ├─ iFrames → browser-apis/iframes.md
+│  ├─ Canvas/WebGL/charts → testing-patterns/canvas-webgl.md
+│  ├─ Service workers/PWA → browser-apis/service-workers.md
+│  ├─ i18n/localization → testing-patterns/i18n.md
+│  ├─ Security (XSS, CSRF) → testing-patterns/security-testing.md
+│  └─ Performance/Web Vitals → testing-patterns/performance-testing.md
+│
+├─ Architecture decisions?
+│  ├─ POM vs fixtures → architecture/pom-vs-fixtures.md
+│  ├─ Test type selection → architecture/test-architecture.md
+│  ├─ Mock vs real services → architecture/when-to-mock.md
+│  └─ Test suite structure → core/test-suite-structure.md
+│
+├─ Framework-specific testing?
+│  ├─ React app → frameworks/react.md
+│  ├─ Angular app → frameworks/angular.md
+│  ├─ Vue/Nuxt app → frameworks/vue.md
+│  └─ Next.js app → frameworks/nextjs.md
+│
+├─ Authentication testing?
+│  ├─ Basic auth patterns → advanced/authentication.md
+│  └─ Complex flows (MFA, reset) → advanced/authentication-flows.md
+│
+├─ Test is failing/flaky?
+│  ├─ Flaky test investigation → debugging/flaky-tests.md
+│  ├─ Element not found → core/locators.md, debugging/debugging.md
+│  ├─ Timeout issues → core/assertions-waiting.md, debugging/debugging.md
+│  ├─ Race conditions → debugging/flaky-tests.md, debugging/debugging.md
+│  ├─ Flaky only with multiple workers → debugging/flaky-tests.md, infrastructure-ci-cd/performance.md
+│  ├─ State leak / isolation → debugging/flaky-tests.md, core/fixtures-hooks.md
+│  ├─ Console/JS errors → debugging/console-errors.md, debugging/debugging.md
+│  └─ General debugging → debugging/debugging.md
+│
+├─ Testing error scenarios?
+│  ├─ Network failures → debugging/error-testing.md, advanced/network-advanced.md
+│  ├─ Offline (unexpected) → debugging/error-testing.md
+│  ├─ Offline-first/PWA → browser-apis/service-workers.md
+│  ├─ Error boundaries → debugging/error-testing.md
+│  └─ Form validation → testing-patterns/forms-validation.md, debugging/error-testing.md
+│
+├─ Refactoring existing code?
+│  ├─ Implementing POM → core/page-object-model.md
+│  ├─ Improving selectors → core/locators.md
+│  ├─ Extracting fixtures → core/fixtures-hooks.md
+│  ├─ Creating data factories → core/test-data.md
+│  └─ Configuration setup → core/configuration.md
+│
+├─ Setting up infrastructure?
+│  ├─ CI/CD → infrastructure-ci-cd/ci-cd.md
+│  ├─ GitHub Actions → infrastructure-ci-cd/github-actions.md
+│  ├─ GitLab CI → infrastructure-ci-cd/gitlab.md
+│  ├─ Other CI providers → infrastructure-ci-cd/other-providers.md
+│  ├─ Docker/containers → infrastructure-ci-cd/docker.md
+│  ├─ Sharding/parallel → infrastructure-ci-cd/parallel-sharding.md
+│  ├─ Reporting/artifacts → infrastructure-ci-cd/reporting.md
+│  ├─ Global setup/teardown → core/global-setup.md
+│  ├─ Project dependencies → core/projects-dependencies.md
+│  ├─ Test performance → infrastructure-ci-cd/performance.md
+│  ├─ Test coverage → infrastructure-ci-cd/test-coverage.md
+│  └─ Project config → core/configuration.md, core/projects-dependencies.md
+│
+├─ Organizing tests?
+│  ├─ Skip/fixme/slow tests → core/annotations.md
+│  ├─ Test tags (@smoke, @fast) → core/test-tags.md
+│  ├─ Filtering tests (--grep) → core/test-tags.md
+│  ├─ Test steps → core/annotations.md
+│  └─ Conditional execution → core/annotations.md
+│
+└─ Running subset of tests?
+   ├─ By tag (@smoke, @critical) → core/test-tags.md
+   ├─ Exclude slow/flaky tests → core/test-tags.md
+   ├─ PR vs nightly tests → core/test-tags.md, infrastructure-ci-cd/ci-cd.md
+   └─ Project-specific filtering → core/test-tags.md, core/configuration.md
+
+Test Validation Loop
+
+After writing or modifying tests:
+
+Run tests: npx playwright test --reporter=list
+If tests fail:
+Review error output and trace (npx playwright show-trace)
+Fix locators, waits, or assertions
+Re-run tests
+Only proceed when all tests pass
+Run multiple times for critical tests: npx playwright test --repeat-each=5
+Weekly Installs
+34.2K
+Repository
+currents-dev/pl…es-skill
+GitHub Stars
+252
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

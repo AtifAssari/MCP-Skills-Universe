@@ -1,0 +1,124 @@
+---
+rating: ⭐⭐⭐
+title: codex-collaborator
+url: https://skills.sh/tianguzhe/zsh-config/codex-collaborator
+---
+
+# codex-collaborator
+
+skills/tianguzhe/zsh-config/codex-collaborator
+codex-collaborator
+Installation
+$ npx skills add https://github.com/tianguzhe/zsh-config --skill codex-collaborator
+SKILL.md
+Codex Collaborator
+
+与 Codex MCP 协作的三阶段流程，确保分析全面、原型安全、审查到位。
+
+核心原则
+只读安全：所有调用 sandbox="read-only"，原型只要 unified diff
+批判性思考：必须质疑 Codex 回答，尽信书则不如无书
+SESSION_ID 复用：首次调用后全程复用同一会话
+三阶段流程
+阶段 1：需求分析
+
+初步分析后，调用 Codex 完善需求：
+
+mcp__codex__codex(
+    PROMPT="""
+## 需求
+[用户需求描述]
+
+## 初步思路
+[你的初步分析]
+
+## 请求
+1. 完善需求分析，指出遗漏场景
+2. 优化实施计划
+3. 识别风险
+""",
+    cd="{{PROJECT_PATH}}",
+    sandbox="read-only"
+)
+
+
+→ 记录返回的 SESSION_ID，后续调用复用
+
+阶段 2：原型获取
+
+编码前必须获取原型（严禁实际修改）：
+
+mcp__codex__codex(
+    PROMPT="""
+基于需求分析，生成代码实现原型。
+
+要求：
+- **仅输出 unified diff patch**
+- **不要实际创建或修改文件**
+- 为关键设计提供说明
+""",
+    cd="{{PROJECT_PATH}}",
+    SESSION_ID="{{SESSION_ID}}",
+    sandbox="read-only"
+)
+
+
+→ 以原型为逻辑参考，重写生产级代码
+
+阶段 3：代码审查
+
+编码完成后立即调用审查：
+
+mcp__codex__codex(
+    PROMPT="""
+## 审查请求
+审查代码改动和需求完成度。
+
+## 变更
+[git diff 或文件列表]
+
+## 需求
+[原始需求]
+
+## 审查维度
+1. 功能正确性
+2. 需求覆盖
+3. 代码质量
+4. 潜在风险
+""",
+    cd="{{PROJECT_PATH}}",
+    SESSION_ID="{{SESSION_ID}}",
+    sandbox="read-only"
+)
+
+
+→ 质疑审查结论，验证建议可行性
+
+批判性质询
+
+每阶段至少提出 1 个具体质疑：
+
+阶段	质询重点
+需求分析	是否遗漏边界场景？技术方案是否可行？
+原型获取	设计是否完整？是否有安全漏洞？
+代码审查	审查是否深入？建议是否实际可行？
+
+质询技巧：
+
+具体而非抽象："网络切换时会如何表现？" 而非 "有问题吗？"
+挑战假设："你说够了，但是否考虑了 [场景]？"
+追问细节："性能问题在什么数据量级下出现？"
+参考文档
+工具调用规范：references/api.md
+Weekly Installs
+8
+Repository
+tianguzhe/zsh-config
+GitHub Stars
+1
+First Seen
+Jan 23, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

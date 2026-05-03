@@ -1,0 +1,265 @@
+---
+title: arch-performance-optimization
+url: https://skills.sh/duc01226/easyplatform/arch-performance-optimization
+---
+
+# arch-performance-optimization
+
+skills/duc01226/easyplatform/arch-performance-optimization
+arch-performance-optimization
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill arch-performance-optimization
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Critical Thinking Mindset — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act. Anti-hallucination: Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+AI Mistake Prevention — Failure modes to avoid on every task:
+
+Check downstream references before deleting. Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+Verify AI-generated content against actual code. AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+Trace full dependency chain after edits. Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+Trace ALL code paths when verifying correctness. Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+When debugging, ask "whose responsibility?" before fixing. Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+Assume existing values are intentional — ask WHY before changing. Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+Verify ALL affected outputs, not just the first. Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+Holistic-first debugging — resist nearest-attention trap. When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+Surgical changes — apply the diff test. Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+Surface ambiguity before coding — don't pick silently. If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+Evidence-Based Reasoning — Speculation is FORBIDDEN. Every claim needs proof.
+
+Cite file:line, grep results, or framework docs for EVERY claim
+Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+Cross-service validation required for architectural changes
+"I don't have enough evidence" is valid and expected output
+
+BLOCKED until: - [ ] Evidence file path (file:line) - [ ] Grep search performed - [ ] 3+ similar patterns found - [ ] Confidence level stated
+
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because" If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+docs/project-reference/domain-entities-reference.md — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+Quick Summary
+
+Goal: Analyze and resolve performance bottlenecks across database, API, network, and frontend layers.
+
+Workflow:
+
+Identify Bottleneck — Classify as database, API, network, or frontend issue
+Measure Baseline — Gather metrics before changes (response time, query time, bundle size)
+Optimize — Apply layer-specific fixes (indexes, caching, lazy loading, OnPush)
+Verify — Measure again and confirm improvement without regressions
+
+Key Rules:
+
+Never use SELECT * or unbounded result sets in production
+Always use async I/O; never block threads with .Result
+Avoid N+1 queries — use eager loading or batch fetching
+Use bounded parallelism (ParallelAsync with maxConcurrent) for background jobs
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Performance Optimization Workflow
+When to Use This Skill
+Slow API response times
+Database query optimization
+Frontend rendering issues
+Memory usage concerns
+Scalability planning
+Pre-Flight Checklist
+ Identify performance bottleneck
+ Gather baseline metrics
+ Determine acceptable thresholds
+ Plan measurement approach
+Performance Analysis Framework
+Step 1: Identify Bottleneck Type
+Performance Issue
+├── Database (slow queries, N+1)
+├── API (serialization, processing)
+├── Network (payload size, latency)
+└── Frontend (rendering, bundle size)
+
+Step 2: Measure Baseline
+# API response time
+curl -w "@curl-format.txt" -o /dev/null -s "http://api/endpoint"
+
+# Database query time (SQL Server)
+SET STATISTICS TIME ON;
+SELECT * FROM Table WHERE ...;
+
+# Frontend bundle analysis
+npm run build -- --stats-json
+npx webpack-bundle-analyzer stats.json
+
+Database Optimization
+
+⚠️ MUST ATTENTION READ: CLAUDE.md for N+1 detection, eager loading, projection, paging, and parallel query patterns. See database-optimization skill for advanced index and query optimization.
+
+Index Recommendations
+-- Frequently filtered columns
+CREATE INDEX IX_Employee_CompanyId ON Employees(CompanyId);
+CREATE INDEX IX_Employee_Status ON Employees(Status);
+
+-- Composite index for common queries
+CREATE INDEX IX_Employee_Company_Status
+ON Employees(CompanyId, Status)
+INCLUDE (FullName, Email);
+
+-- Full-text search index
+CREATE FULLTEXT INDEX ON Employees(FullName, Email);
+
+API Optimization
+
+⚠️ MUST ATTENTION READ: CLAUDE.md for parallel tuple queries and response DTO patterns.
+
+Caching
+// Static data caching
+private static readonly ConcurrentDictionary<string, LookupData> _cache = new();
+
+public async Task<LookupData> GetLookupAsync(string key)
+{
+    if (_cache.TryGetValue(key, out var cached))
+        return cached;
+
+    var data = await LoadFromDbAsync(key);
+    _cache.TryAdd(key, data);
+    return data;
+}
+
+Frontend Optimization
+Bundle Size
+// :x: Import entire library
+import _ from 'lodash';
+
+// :white_check_mark: Import specific functions
+import { debounce } from 'lodash-es/debounce';
+
+Lazy Loading
+// :white_check_mark: Lazy load routes
+const routes: Routes = [
+    {
+        path: 'feature',
+        loadChildren: () => import('./feature/feature.module').then(m => m.FeatureModule)
+    }
+];
+
+Change Detection
+// :white_check_mark: OnPush for performance
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+
+// :white_check_mark: Track-by for lists
+trackByItem = this.ngForTrackByItemProp<Item>('id');
+
+// Template
+@for (item of items; track trackByItem)
+
+Virtual Scrolling
+// For large lists
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+
+<cdk-virtual-scroll-viewport itemSize="50">
+  @for (item of items; track item.id) {
+    <div class="item">{{ item.name }}</div>
+  }
+</cdk-virtual-scroll-viewport>
+
+Background Job Optimization
+
+⚠️ MUST ATTENTION READ: CLAUDE.md for bounded parallelism (ParallelAsync with maxConcurrent) and batch processing (UpdateManyAsync) patterns.
+
+Performance Monitoring
+Logging Slow Operations
+var sw = Stopwatch.StartNew();
+var result = await ExecuteOperation();
+sw.Stop();
+
+if (sw.ElapsedMilliseconds > 1000)
+    Logger.LogWarning("Slow operation: {Ms}ms", sw.ElapsedMilliseconds);
+
+Database Query Logging
+// In DbContext configuration
+optionsBuilder.LogTo(
+    Console.WriteLine,
+    new[] { DbLoggerCategory.Database.Command.Name },
+    LogLevel.Information);
+
+Performance Checklist
+Database
+ Indexes on filtered columns
+ Eager loading for relations
+ Projection for partial data
+ Paging at database level
+ No N+1 queries
+API
+ Parallel operations where possible
+ Response DTOs (not entities)
+ Caching for static data
+ Pagination for lists
+Frontend
+ Lazy loading for routes
+ OnPush change detection
+ Track-by for lists
+ Virtual scrolling for large lists
+ Tree-shaking imports
+Background Jobs
+ Bounded parallelism
+ Batch operations
+ Paged processing
+ Appropriate scheduling
+Anti-Patterns to AVOID
+
+:x: SELECT * in production
+
+var all = await context.Table.ToListAsync();
+
+
+:x: Synchronous I/O
+
+var result = asyncOperation.Result;  // Blocks thread
+
+
+:x: Unbounded result sets
+
+await repo.GetAllAsync();  // Could be millions
+
+
+:x: Repeated database calls in loops
+
+foreach (var id in ids)
+    await repo.GetByIdAsync(id);  // N queries
+
+Verification Checklist
+ Baseline metrics recorded
+ Bottleneck identified and addressed
+ Changes measured against baseline
+ No new performance issues introduced
+ Monitoring in place
+Related
+arch-security-review
+database-optimization
+Closing Reminders
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+MANDATORY IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+MUST ATTENTION apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+MUST ATTENTION apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+[TASK-PLANNING] Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+Weekly Installs
+48
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

@@ -1,0 +1,99 @@
+---
+title: relay-diagnostic
+url: https://skills.sh/aibtcdev/skills/relay-diagnostic
+---
+
+# relay-diagnostic
+
+skills/aibtcdev/skills/relay-diagnostic
+relay-diagnostic
+Installation
+$ npx skills add https://github.com/aibtcdev/skills --skill relay-diagnostic
+SKILL.md
+Relay Diagnostic Skill
+
+Diagnoses and recovers stuck sponsored transactions by inspecting the sponsor relay's nonce state and optionally triggering automated recovery.
+
+Use this for operator diagnostics only. Caller-facing x402 payment state should come from canonical payment-status polling by paymentId, not from relay health heuristics.
+
+check-health — Read-only, no wallet required. Returns relay version, sponsor nonce status, detected gaps, and stuck transactions.
+recover — Requires an unlocked wallet (to source the sponsor API key). Attempts RBF, gap-fill, or both.
+Usage
+bun run relay-diagnostic/relay-diagnostic.ts <subcommand> [options]
+
+Subcommands
+check-health
+
+Check the sponsor relay availability and nonce status. No wallet needed.
+
+bun run relay-diagnostic/relay-diagnostic.ts check-health
+
+
+Output:
+
+{
+  "healthy": true,
+  "network": "mainnet",
+  "version": "1.2.0",
+  "sponsorAddress": "SP1PMPPVCMVW96FSWFV30KJQ4MNBMZ8MRWR3JWQ7",
+  "nonceStatus": {
+    "lastExecuted": 4210,
+    "lastMempool": 4215,
+    "possibleNext": 4216,
+    "missingNonces": [],
+    "mempoolNonces": [4211, 4212, 4213, 4214, 4215],
+    "hasGaps": false,
+    "gapCount": 0,
+    "mempoolDesync": false,
+    "desyncGap": 5
+  },
+  "stuckTransactions": [],
+  "issues": [],
+  "formatted": "Relay Health Check (mainnet)\nStatus: HEALTHY\n..."
+}
+
+recover
+
+Attempt automated recovery of stuck transactions. Requires an unlocked wallet.
+
+bun run relay-diagnostic/relay-diagnostic.ts recover [options]
+
+
+Options:
+
+--action <rbf|fill-gaps|both> — Recovery mode (default: both)
+--txids <txid,...> — Comma-separated list of specific stuck txids for RBF (omit to bump all)
+--nonces <n,...> — Comma-separated list of specific missing nonces for gap-fill (omit to fill all)
+
+Output:
+
+{
+  "action": "both",
+  "rbf": {
+    "supported": true,
+    "result": { "bumped": 2 }
+  },
+  "fillGaps": {
+    "supported": true,
+    "result": { "filled": 0 }
+  },
+  "summary": "Recovery request sent to relay. Run check-health to verify nonce state improved."
+}
+
+Notes
+Always run check-health before recover — recovery without a prior health check may bump transactions unnecessarily.
+If the relay returns 404 or 501 for recovery endpoints, the tool reports supported: false with instructions to contact the AIBTC team.
+The sponsor address for mainnet is SP1PMPPVCMVW96FSWFV30KJQ4MNBMZ8MRWR3JWQ7.
+Wallet operations require an unlocked wallet (use bun run wallet/wallet.ts unlock first).
+Weekly Installs
+91
+Repository
+aibtcdev/skills
+GitHub Stars
+6
+First Seen
+Mar 20, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

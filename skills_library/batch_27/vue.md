@@ -1,0 +1,83 @@
+---
+title: vue
+url: https://skills.sh/iceywu/skills/vue
+---
+
+# vue
+
+skills/iceywu/skills/vue
+vue
+Installation
+$ npx skills add https://github.com/iceywu/skills --skill vue
+SKILL.md
+Vue
+
+Based on Vue 3.5. Always use Composition API with <script setup lang="ts">.
+
+Preferences
+Prefer TypeScript over JavaScript
+Prefer <script setup lang="ts"> over <script>
+For performance, prefer shallowRef over ref if deep reactivity is not needed
+Always use Composition API over Options API
+Discourage using Reactive Props Destructure
+Core
+Topic	Description	Reference
+Script Setup & Macros	<script setup>, defineProps, defineEmits, defineModel, defineExpose, defineOptions, defineSlots, generics	script-setup-macros
+Reactivity & Lifecycle	ref, shallowRef, computed, watch, watchEffect, effectScope, lifecycle hooks, composables	core-new-apis
+Features
+Topic	Description	Reference
+Built-in Components & Directives	Transition, Teleport, Suspense, KeepAlive, v-memo, custom directives	advanced-patterns
+Quick Reference
+Component Template
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+
+const props = defineProps<{
+  title: string
+  count?: number
+}>()
+
+const emit = defineEmits<{
+  update: [value: string]
+}>()
+
+const model = defineModel<string>()
+
+const doubled = computed(() => (props.count ?? 0) * 2)
+
+watch(() => props.title, (newVal) => {
+  console.log('Title changed:', newVal)
+})
+
+onMounted(() => {
+  console.log('Component mounted')
+})
+</script>
+
+<template>
+  <div>{{ title }} - {{ doubled }}</div>
+</template>
+
+Key Imports
+// Reactivity
+import { ref, shallowRef, computed, reactive, readonly, toRef, toRefs, toValue } from 'vue'
+
+// Watchers
+import { watch, watchEffect, watchPostEffect, onWatcherCleanup } from 'vue'
+
+// Lifecycle
+import { onMounted, onUpdated, onUnmounted, onBeforeMount, onBeforeUpdate, onBeforeUnmount } from 'vue'
+
+// Utilities
+import { nextTick, defineComponent, defineAsyncComponent } from 'vue'
+
+Weekly Installs
+22
+Repository
+iceywu/skills
+First Seen
+Feb 28, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

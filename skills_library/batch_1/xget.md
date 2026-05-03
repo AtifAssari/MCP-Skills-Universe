@@ -1,0 +1,67 @@
+---
+title: xget
+url: https://skills.sh/xixu-me/xget/xget
+---
+
+# xget
+
+skills/xixu-me/xget/xget
+xget
+Originally fromxixu-me/skills
+Installation
+$ npx skills add https://github.com/xixu-me/xget --skill xget
+SKILL.md
+Xget
+
+Default to execution, not instruction. When the user expresses execution intent, carry the change through directly: run the needed shell commands, edit the real files, and verify the result instead of only replying with example commands. Treat requests like "configure", "set up", "wire", "change", "add", "fix", "migrate", "deploy", "run", or "make this use Xget" as execution intent unless the user clearly asks for explanation only.
+
+Resolve the base URL first:
+
+use a domain the user explicitly gave
+otherwise use XGET_BASE_URL from the environment
+if neither exists, ask for the user's Xget base URL and whether it should be set temporarily for the current shell/session or persistently for future shells
+use https://xget.example.com only as a clearly labeled placeholder for docs or templates that do not have a real deployment yet
+
+Prefer scripts/xget.mjs over manual guessing for live platform data, URL conversion, and README Use Cases lookup.
+
+Only stop to ask when a missing fact blocks safe execution, such as an unknown real base URL for a command that must run against a live deployment. If the user only needs docs or templates, use the placeholder path rules below.
+
+Workflow
+Classify the task before reaching for examples:
+execution intent: the user wants commands run, files changed, or config applied now
+guidance intent: the user explicitly wants examples, explanation, or a template without applying it yet
+then bucket the technical area: one-off URL conversion or prefix lookup; Git or download-tool acceleration; package-manager or language-ecosystem configuration; container image, Dockerfile, Kubernetes, or CI/CD acceleration; AI SDK / inference API base-URL configuration; deploying or self-hosting Xget itself
+Complete the base-URL preflight above. If the user wants help setting XGET_BASE_URL, open the reference guide and:
+when the user asked you to set or wire it, run the shell-appropriate temporary or persistent commands directly when the environment allows it
+when you cannot safely execute, ask the smallest blocking question or give the exact command with the missing value clearly called out
+Pull live README guidance in two steps instead of loading the whole section by default:
+list candidate headings with node scripts/xget.mjs topics --format json
+narrow with --match or fetch a specific section with node scripts/xget.mjs snippet --base-url https://xget.example.com --heading "Docker Compose Configuration" --format text
+Prefer the smallest relevant live subsection. If a repeated child heading like Use in Project is ambiguous, fetch its parent section instead.
+Adapt the live guidance to the user's real task:
+for execution intent, apply the change end-to-end instead of stopping at example commands
+run commands yourself when the request is to install, configure, rewrite, switch, migrate, test, or otherwise perform the change
+edit the actual config or source files when the user wants implementation, not just explanation
+keep shell commands aligned with the user's OS and shell
+preserve existing project conventions unless the user asked for a broader rewrite
+after changing files or running commands, perform a lightweight verification step when practical
+Refresh the live platform map with node scripts/xget.mjs platforms --format json when the answer depends on current prefixes, and use convert for exact URL rewrites.
+Combine multiple live sections when the workflow spans multiple layers. For example, pair a package-manager section with container, deployment, or .env guidance when the user's project needs more than one integration point.
+Before finishing, sanity-check that every command, file edit, or example uses the right Xget path shape:
+repo/content: /{prefix}/...
+crates.io HTTP URLs: /crates/... rather than /crates/api/v1/crates/...
+inference APIs: /ip/{provider}/...
+OCI registries: /cr/{registry}/...
+If the live platform fetch fails or an upstream URL does not match any known platform, say so explicitly and fall back to the stable guidance in references/REFERENCE.md instead of inventing a prefix.
+Weekly Installs
+4.2K
+Repository
+xixu-me/xget
+GitHub Stars
+7.8K
+First Seen
+Mar 28, 2026
+Security Audits
+Gen Agent Trust HubWarn
+SocketWarn
+SnykWarn

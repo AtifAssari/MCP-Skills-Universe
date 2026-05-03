@@ -1,0 +1,243 @@
+---
+rating: ⭐⭐
+title: code-no-test
+url: https://skills.sh/duc01226/easyplatform/code-no-test
+---
+
+# code-no-test
+
+skills/duc01226/easyplatform/code-no-test
+code-no-test
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill code-no-test
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Critical Thinking Mindset — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act. Anti-hallucination: Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+AI Mistake Prevention — Failure modes to avoid on every task:
+
+Check downstream references before deleting. Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+Verify AI-generated content against actual code. AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+Trace full dependency chain after edits. Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+Trace ALL code paths when verifying correctness. Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+When debugging, ask "whose responsibility?" before fixing. Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+Assume existing values are intentional — ask WHY before changing. Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+Verify ALL affected outputs, not just the first. Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+Holistic-first debugging — resist nearest-attention trap. When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+Surgical changes — apply the diff test. Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+Surface ambiguity before coding — don't pick silently. If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+Understand Code First — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+
+Search 3+ similar patterns (grep/glob) — cite file:line evidence
+Read existing files in target area — understand structure, base classes, conventions
+Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists
+Map dependencies via connections or callers_of — know what depends on your target
+Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files)
+Re-read analysis file before implementing — never work from memory alone
+NEVER invent new patterns when existing ones work — match exactly or document deviation
+
+BLOCKED until: - [ ] Read target files - [ ] Grep 3+ patterns - [ ] Graph trace (if graph.db exists) - [ ] Assumptions verified with evidence
+
+docs/project-reference/domain-entities-reference.md — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+Quick Summary
+
+Goal: Execute an implementation plan phase end-to-end without running tests (code + review + commit).
+
+Workflow:
+
+Plan Detection — Find latest plan or use provided path, auto-select next incomplete phase
+Analysis — Extract tasks from phase file, initialize todo tracking
+Implementation — Code changes step-by-step, run type checks
+Code Review — Subagent reviews for security, performance, architecture violations
+User Approval — Blocking gate requiring explicit approval
+Finalize — Update plan status, docs, auto-commit
+
+Key Rules:
+
+One phase per command run, steps must complete in order
+Critical code review issues block progression (must be 0)
+User must explicitly approve before finalize step
+
+MUST ATTENTION READ CLAUDE.md then THINK HARDER to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+$ARGUMENTS
+
+Role Responsibilities
+You are a senior software engineer who must study the provided implementation plan end-to-end before writing code.
+Validate the plan's assumptions, surface blockers, and confirm priorities with the user prior to execution.
+Drive the implementation from start to finish, reporting progress and adjusting the plan responsibly while honoring YAGNI, KISS, and DRY principles.
+
+IMPORTANT: Remind these rules with subagents communication:
+
+Sacrifice grammar for the sake of concision when writing reports.
+In reports, list any unresolved questions at the end, if any.
+Ensure token efficiency while maintaining high quality.
+Step 0: Plan Detection & Phase Selection
+
+If $ARGUMENTS is empty:
+
+Find latest plan.md in ./plans | find ./plans -name "plan.md" -type f -exec stat -f "%m %N" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-
+Parse plan for phases and status, auto-select next incomplete (prefer IN_PROGRESS or earliest Planned)
+
+If $ARGUMENTS provided: Use that plan and detect which phase to work on (auto-detect or use argument like "phase-2").
+
+Output: ✓ Step 0: [Plan Name] - [Phase Name]
+
+Subagent Pattern (use throughout):
+
+Task(subagent_type="[type]", prompt="[task description]", description="[brief]")
+
+Workflow Sequence
+
+Rules: Follow steps 1-6 in order. Each step requires output marker starting with "✓ Step N:". Mark each complete in TaskCreate before proceeding. Do not skip steps.
+
+Step 1: Analysis & Task Extraction
+
+Read plan file completely. Map dependencies between tasks. List ambiguities or blockers. Identify required skills/tools and activate from catalog. Parse phase file and extract actionable tasks. If the plan references analysis files in .ai/workspace/analysis/, re-read them before implementation.
+
+TaskCreate Initialization & Task Extraction:
+
+Initialize TaskCreate with Step 0: [Plan Name] - [Phase Name] and all command steps (Step 1 through Step 6)
+Read phase file (e.g., phase-01-preparation.md)
+Look for tasks/steps/phases/sections/numbered/bulleted lists
+MUST ATTENTION convert to TaskCreate tasks:
+Phase Implementation tasks → Step 2.X (Step 2.1, Step 2.2, etc.)
+Phase Code Review tasks → Step 3.X (Step 3.1, Step 3.2, etc.)
+Ensure each task has UNIQUE name (increment X for each task)
+Add tasks to TaskCreate after their corresponding command step
+
+Output: ✓ Step 1: Found [N] tasks across [M] phases - Ambiguities: [list or "none"]
+
+Mark Step 1 complete in TaskCreate, mark Step 2 in_progress.
+
+Step 2: Implementation
+
+Implement selected plan phase step-by-step following extracted tasks (Step 2.1, Step 2.2, etc.). Mark tasks complete as done. For UI work, call ui-ux-designer subagent: "Implement [feature] UI per ./docs/design-guidelines.md". Use ai-multimodal skill for image assets, media-processing skill for editing. Run type checking and compile to verify no syntax errors.
+
+Output: ✓ Step 2: Implemented [N] files - [X/Y] tasks complete, compilation passed
+
+Mark Step 2 complete in TaskCreate, mark Step 3 in_progress.
+
+Step 3: Code Review
+
+Call code-reviewer subagent: "Review changes for plan phase [phase-name]. Check security, performance, architecture, YAGNI/KISS/DRY". If critical issues found: STOP, fix all, re-run tester to verify, re-run code-reviewer. Repeat until no critical issues.
+
+Critical issues: Security vulnerabilities (XSS, SQL injection, OWASP), performance bottlenecks, architectural violations, principle violations.
+
+Output: ✓ Step 3: Code reviewed - [0] critical issues
+
+Validation: If critical issues > 0, Step 3 INCOMPLETE - do not proceed.
+
+Mark Step 3 complete in TaskCreate, mark Step 4 in_progress.
+
+Step 4: User Approval ⏸ BLOCKING GATE
+
+Present summary (3-5 bullets): what implemented, code review outcome.
+
+Ask user explicitly: "Phase implementation complete. Code reviewed. Approve changes?"
+
+Stop and wait - do not output Step 5 content until user responds.
+
+Output (while waiting): ⏸ Step 4: WAITING for user approval
+
+Output (after approval): ✓ Step 4: User approved - Ready to complete
+
+Mark Step 4 complete in TaskCreate, mark Step 5 in_progress.
+
+Step 5: Finalize
+
+Prerequisites: User approved in Step 4 (verified above).
+
+STATUS UPDATE - BOTH MANDATORY - PARALLEL EXECUTION:
+Call project-manager sub-agent: "Update plan status in [plan-path]. Mark plan phase [phase-name] as DONE with timestamp. Update roadmap."
+Call docs-manager sub-agent: "Update docs for plan phase [phase-name]. Changed files: [list]."
+
+ONBOARDING CHECK: Detect onboarding requirements (API keys, env vars, config) + generate summary report with next steps.
+
+AUTO-COMMIT (after steps 1 and 2 completes):
+
+Run only if: Steps 1 and 2 successful + User approved + Tests passed
+Auto-stage, commit with message [phase - plan] and push
+
+Validation: Steps 1 and 2 must complete successfully. Step 3 (auto-commit) runs only if conditions met.
+
+Mark Step 5 complete in TaskCreate.
+
+Phase workflow finished. Ready for next plan phase.
+
+Critical Enforcement Rules
+
+Step outputs must follow unified format: ✓ Step [N]: [Brief status] - [Key metrics]
+
+Examples:
+
+Step 0: ✓ Step 0: [Plan Name] - [Phase Name]
+Step 1: ✓ Step 1: Found [N] tasks across [M] phases - Ambiguities: [list]
+Step 2: ✓ Step 2: Implemented [N] files - [X/Y] tasks complete
+Step 3: ✓ Step 3: Code reviewed - [0] critical issues
+Step 4: ✓ Step 4: User approved - Ready to complete
+Step 5: ✓ Step 5: Finalize - Status updated - Git committed
+
+If any "✓ Step N:" output missing, that step is INCOMPLETE.
+
+TaskCreate tracking required: Initialize at Step 0, mark each step complete before next.
+
+Mandatory subagent calls:
+
+Step 3: code-reviewer
+Step 4: project-manager AND docs-manager (when user approves)
+
+Blocking gates:
+
+Step 3: Critical issues must be 0
+Step 4: User must explicitly approve
+Step 5: Both project-manager and docs-manager must complete successfully
+
+REMEMBER:
+
+Do not skip steps. Do not proceed if validation fails. Do not assume approval without user response.
+One plan phase per command run. Command focuses on single plan phase only.
+You can always generate images with ai-multimodal skill on the fly for visual assets.
+You always read and analyze the generated assets with ai-multimodal skill to verify they meet requirements.
+For image editing (removing background, adjusting, cropping), use media-processing skill or similar tools as needed.
+Next Steps (Standalone: MUST ATTENTION ask user via AskUserQuestion. Skip if inside workflow.)
+
+MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS: If this skill was called outside a workflow, you MUST ATTENTION use AskUserQuestion to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+"Proceed with full workflow (Recommended)" — I'll detect the best workflow to continue from here (code implemented, no tests). This ensures review, testing, and docs steps aren't skipped.
+"/code-simplifier" — Simplify implementation
+"/workflow-review-changes" — Review changes before commit
+"Skip, continue manually" — user decides
+
+If already inside a workflow, skip — the workflow handles sequencing.
+
+Closing Reminders
+IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+IMPORTANT MUST ATTENTION validate decisions with user via AskUserQuestion — never auto-decide MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+IMPORTANT MUST ATTENTION search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+IMPORTANT MUST ATTENTION READ CLAUDE.md before starting
+MUST ATTENTION apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+MUST ATTENTION apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+[TASK-PLANNING] Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+Weekly Installs
+35
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

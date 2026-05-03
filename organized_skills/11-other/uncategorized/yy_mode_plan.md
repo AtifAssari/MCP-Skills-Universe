@@ -1,0 +1,186 @@
+---
+rating: ⭐⭐⭐
+title: yy-mode-plan
+url: https://skills.sh/bulls-cows/skills/yy-mode-plan
+---
+
+# yy-mode-plan
+
+skills/bulls-cows/skills/yy-mode-plan
+yy-mode-plan
+Installation
+$ npx skills add https://github.com/bulls-cows/skills --skill yy-mode-plan
+SKILL.md
+yy-mode-plan
+
+计划优先执行模式，要求在做出任何变更前必须获得用户确认。
+
+触发条件
+
+用户在聊天中输入 /yy-mode-plan 命令。
+
+核心规则
+1. 计划优先
+
+在用户明确确认执行之前：
+
+禁止进行任何编辑（计划文件除外）
+禁止运行任何非只读工具
+禁止对系统进行任何更改
+禁止以"任务简单"或"意图明显"为由跳过展示计划、等待确认的步骤
+2. 用户确认
+
+简单需求可跳过文件创建，直接在对话界面输出内容供用户确认，仍需等待用户明确确认后才可开始执行。
+
+复杂需求按以下流程：
+
+将计划写入计划文件
+调用 NotifyUser 表示计划制定完成
+等待用户明确确认执行
+3. 计划确认后
+仅在用户明确确认后开始开发
+无需再次确认，直接更新/创建待办事项列表
+仅在计划完全完成时终止
+4. 计划被拒绝时
+仍然禁止进行任何编辑
+根据用户反馈优化/完善计划
+再次调用 NotifyUser 提供新计划
+计划文件位置
+
+计划文件将按照以下规则创建：
+
+目录选择优先级
+
+用户手动指定（最高优先级）
+
+用户可指定工具目录和计划文件名
+格式：--tool-dir <目录> --plan-file <文件名>
+
+自动检测
+
+按以下优先级顺序检查项目根目录：
+.agents
+.claude
+.opencode
+.trae
+找到第一个存在的目录即停止检测
+
+无匹配目录
+
+提示用户指定目录或创建
+目录结构
+{项目根目录}/
+└── {工具目录}/          # 如 .claude
+    └── plans/            # 固定的 plans 目录
+        └── {时间戳}_{计划文件名}.md  # 时间戳格式：YYYYMMDD_HHMMSS，如 "20260324_153045_用户认证系统.md"
+
+
+时间戳前缀（精确到秒）确保文件按创建时间升序排列，最新计划始终位于目录末尾，便于查找。
+
+路径示例
+自动检测：.claude/plans/20260324_153045_用户认证系统.md
+用户指定：.agents/plans/20260324_153045_jwt-auth.md
+计划文件结构
+
+计划应包含：
+
+目标：明确说明将要完成的内容
+方法：高层策略
+步骤：有序的实施步骤列表
+涉及文件：将要修改的文件列表
+风险：潜在问题及应对策略
+使用示例
+示例 1：自动检测目录
+用户: /yy-mode-plan
+用户: 添加基于 JWT 令牌的用户认证
+
+AI:
+1. 检测项目根目录下的工具目录（.agents > .claude > .opencode > .trae）
+2. 假设检测到 .claude 目录
+3. 在 .claude/plans/20260324_153045_用户认证系统.md 创建计划文件
+4. 创建包含实施步骤的计划文件
+5. 通知用户等待确认
+6. **确认执行后**，逐步实施计划
+
+示例 2：手动指定目录
+用户: /yy-mode-plan --tool-dir .agents --plan-file jwt-auth
+用户: 添加基于 JWT 令牌的用户认证
+
+AI:
+1. 使用用户指定的工具目录 .agents
+2. 在 .agents/plans/20260324_153045_jwt-auth.md 创建计划文件
+3. 创建包含实施步骤的计划文件
+4. 通知用户等待确认
+5. **确认执行后**，逐步实施计划
+
+Output contract
+计划文件格式
+
+创建的计划文件应包含以下结构：
+
+# [功能名称] 实施计划
+
+## 目标
+[明确说明将要完成的内容]
+
+## 方法
+[高层策略说明]
+
+## 步骤
+1. [步骤1 - 具体描述]
+2. [步骤2 - 具体描述]
+3. [步骤3 - 具体描述]
+
+## 涉及文件
+| 文件路径 | 操作类型 | 说明 |
+|---------|---------|------|
+| src/auth/api.ts | 修改 | 添加 JWT 验证逻辑 |
+| src/utils/token.ts | 新增 | Token 生成工具 |
+
+## 风险与应对
+| 风险 | 可能性 | 影响 | 应对策略 |
+|------|--------|------|----------|
+| Token 过期处理 | 中 | 中 | 添加 refresh token 机制 |
+| 并发请求 | 低 | 高 | 添加请求队列 |
+
+路径格式规范
+使用正斜杠作为路径分隔符，路径包含空格时使用引号包裹，以确保跨平台兼容性和正确解析
+输出示例
+## 计划已制定完成
+
+### 目标
+为应用添加基于 JWT 令牌的用户认证功能
+
+### 方法
+1. 使用 jsonwebtoken 库生成和验证 Token
+2. 设计 Token 存储策略（httpOnly Cookie）
+3. 实现登录/登出/刷新 Token 接口
+
+### 实施步骤
+1. 安装 jsonwebtoken 依赖
+2. 创建 Token 工具类（生成、验证、刷新）
+3. 添加登录 API 接口
+4. 添加 Token 验证中间件
+5. 配置 Cookie 存储策略
+
+### 涉及文件
+- src/utils/jwt.ts（新增）
+- src/middleware/auth.ts（新增）
+- src/api/auth.ts（修改）
+
+### 风险
+- Token 泄露风险 → 使用 httpOnly Cookie 存储
+- Token 过期 → 实现 refresh token 机制
+
+请确认是否执行此计划。
+
+Weekly Installs
+19
+Repository
+bulls-cows/skills
+First Seen
+Mar 17, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

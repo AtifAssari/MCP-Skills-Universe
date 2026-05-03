@@ -1,0 +1,146 @@
+---
+title: yy-create-skill
+url: https://skills.sh/bulls-cows/skills/yy-create-skill
+---
+
+# yy-create-skill
+
+skills/bulls-cows/skills/yy-create-skill
+yy-create-skill
+Installation
+$ npx skills add https://github.com/bulls-cows/skills --skill yy-create-skill
+SKILL.md
+yy-create-skill
+
+帮助用户创建或更新规范的 Skill。
+
+Skill 本质
+
+Skill 是"可按需加载的任务说明书"，用于复用复杂流程。关键特点：
+
+自动发现：会被自动发现，只在相关时加载，避免上下文膨胀
+精确触发：description 要精确，避免误触发
+明确边界：必须有 When to use 和 Don't use when
+固定输出：输出格式要固定，便于自动化评测
+创建/更新流程
+1. 捕获意图
+
+首先理解用户的需求，确定是创建新技能还是更新现有技能。
+
+对于创建新技能，询问以下问题：
+
+这个技能应该让 AI 助手能做什么？
+何时应触发这个技能？（什么用户短语/上下文）
+预期的输出格式是什么？
+是否有不想触发的情况？
+
+对于更新现有技能，先读取现有 SKILL.md 内容，然后询问：
+
+想要更新技能的哪些部分？（description、When to use、Steps、Output contract 等）
+更新后的预期行为是什么？
+2. 确定技能目录
+
+创建新技能：使用小写、短横线分隔的命名方式，遵循以下原则：
+
+名词使用单数形式：如 create-skill 而非 create-skills
+优先动宾结构：如 create-skill、read-pdf、lint-code 而非 skills-creator、pdf-reader
+
+示例：
+
+create-rule
+read-pdf
+lint-and-commit
+
+更新现有技能：直接使用现有技能目录
+
+3. 编写 SKILL.md
+
+SKILL.md 的编写原则和模板请参考 templates/skill-template.md。
+
+其中 description 只用于给 AI 判断是否触发技能：
+
+只写技能用途和触发场景
+保持简短，避免堆叠步骤、规则、例外和实现细节
+具体约束写在正文，如 Steps、When to use、Don't use when、Output contract
+如果 description 已经开始解释“怎么做”，通常说明写宽了
+4. 创建/更新目录结构
+
+创建新技能的目录规则：
+
+如果用户指定了目录，则在用户指定目录下生成技能
+如果用户未指定目录，则在 .agents/skills 目录下生成（没有该目录则创建）
+
+更新现有技能：直接在现有目录中修改 SKILL.md 文件
+
+目录结构规范
+
+请参考 @resources/skill-specification-comparison.md
+
+5. 多 Skill 协作
+
+多个 skill 可以组合使用：
+
+需求: 代码检查后提交
+
+使用技能:
+- lint（代码质量检查）
+- commit（创建规范提交）
+
+先执行 lint 检查，通过后再执行 commit
+
+6. 验收清单
+
+创建技能后，检查：
+
+每个 Skill 都有明确边界与负例（Don't use when）
+Description 精确，不会误触发
+同一任务重复运行，输出结构稳定
+Skill 能单独被显式调用
+YAML 格式正确（使用多行字符串语法处理长 description）
+如果有参考文档需求，已添加 references/ 目录
+文件命名符合规范（kebab-case）
+使用中文描述
+代码示例包含语言标签
+如有脚本文件，遵循 snake_case 命名规范
+如有 evals 测试用例，格式正确
+
+更新技能后，检查：
+
+更新后的 description 仍然准确反映技能用途
+description 只保留触发判断所需信息，没有混入执行细节
+When to use 和 Don't use when 仍然明确
+Steps 步骤仍然完整可执行
+Output contract 仍然清晰定义
+YAML 格式正确
+如有参考文件，检查是否需要同步更新
+常见坑
+写成"知识百科"：Skill 文档必须包含执行步骤，不能只是知识文档
+缺少负例：没有 Don't use when，导致误触发
+输出格式不固定：结果不可自动评测
+Description 过宽：会在不相关的任务中被触发
+YAML 语法错误：长 description 需要使用多行字符串语法
+内嵌长模板：在 SKILL.md 中内嵌过长的模板代码，导致文档结构混乱、标题层级错乱
+路径格式规范
+使用正斜杠作为路径分隔符，路径包含空格时使用引号包裹，以确保跨平台兼容性和正确解析
+技能触发方式
+自动触发：当用户要执行的操作与技能的 description 内容相匹配时自动触发，如：请审查这个 PR 的风险。
+显式调用：当用户主动提及技能名称时触发，如：使用 pr-risk-check 技能来审查当前分支相对于 main 分支的差异。。
+相关资源
+
+本技能包含以下辅助资源：
+
+examples/input.md：输入示例，展示用户如何请求创建技能
+examples/output.md：输出示例，展示创建技能后的预期结果
+templates/skill-template.md：基础技能模板
+resources/skill-best-practices.md：技能编写最佳实践参考
+resources/skill-specification-comparison.md：各平台 Skill 规范对比分析
+Weekly Installs
+12
+Repository
+bulls-cows/skills
+First Seen
+Mar 17, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,206 @@
+---
+rating: ⭐⭐⭐
+title: design-system-architecture
+url: https://skills.sh/nickcrew/claude-ctx-plugin/design-system-architecture
+---
+
+# design-system-architecture
+
+skills/nickcrew/claude-ctx-plugin/design-system-architecture
+design-system-architecture
+Installation
+$ npx skills add https://github.com/nickcrew/claude-ctx-plugin --skill design-system-architecture
+SKILL.md
+Design System Architecture
+
+Comprehensive guide to building scalable design systems with proper token architecture, component APIs, and documentation strategies.
+
+When to Use This Skill
+Creating a new design system from scratch
+Evolving an existing component library
+Defining token architecture
+Establishing component API patterns
+Setting up design system documentation
+Token Architecture
+Three-Tier Token System
+┌─────────────────────────────────────┐
+│       Component Tokens              │  → button-primary-bg
+│     (Specific to components)        │
+├─────────────────────────────────────┤
+│       Semantic Tokens               │  → color-action-primary
+│     (Purpose-based naming)          │
+├─────────────────────────────────────┤
+│       Primitive Tokens              │  → blue-500
+│     (Raw values)                    │
+└─────────────────────────────────────┘
+
+Token Categories
+/* Primitive Tokens */
+--color-blue-500: #3b82f6;
+--spacing-4: 1rem;
+--font-size-base: 16px;
+--radius-md: 8px;
+
+/* Semantic Tokens */
+--color-action-primary: var(--color-blue-500);
+--color-text-primary: var(--color-gray-900);
+--spacing-component-gap: var(--spacing-4);
+
+/* Component Tokens */
+--button-bg: var(--color-action-primary);
+--button-padding-x: var(--spacing-4);
+--card-radius: var(--radius-md);
+
+Theme Support
+// tokens/themes.ts
+export const lightTheme = {
+  'color-bg-primary': 'var(--color-white)',
+  'color-text-primary': 'var(--color-gray-900)',
+  'color-border': 'var(--color-gray-200)',
+}
+
+export const darkTheme = {
+  'color-bg-primary': 'var(--color-gray-900)',
+  'color-text-primary': 'var(--color-gray-100)',
+  'color-border': 'var(--color-gray-700)',
+}
+
+Component API Patterns
+Prop API Design
+// ✅ Good: Clear, typed, with sensible defaults
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  isLoading?: boolean;
+  isDisabled?: boolean;
+  leftIcon?: React.ReactNode;
+  children: React.ReactNode;
+  onClick?: () => void;
+}
+
+// ✅ With defaults
+const Button = ({
+  variant = 'primary',
+  size = 'md',
+  isLoading = false,
+  isDisabled = false,
+  ...props
+}: ButtonProps) => { ... }
+
+Compound Component Pattern
+// Compound components for complex UIs
+const Tabs = ({ children, defaultValue }) => { ... }
+Tabs.List = ({ children }) => { ... }
+Tabs.Tab = ({ value, children }) => { ... }
+Tabs.Panel = ({ value, children }) => { ... }
+
+// Usage
+<Tabs defaultValue="tab1">
+  <Tabs.List>
+    <Tabs.Tab value="tab1">First</Tabs.Tab>
+    <Tabs.Tab value="tab2">Second</Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
+  <Tabs.Panel value="tab2">Content 2</Tabs.Panel>
+</Tabs>
+
+Polymorphic Components
+// Component that can render as different elements
+interface BoxProps<C extends React.ElementType> {
+  as?: C;
+  children?: React.ReactNode;
+}
+
+type PolymorphicProps<C extends React.ElementType> =
+  BoxProps<C> & Omit<React.ComponentPropsWithoutRef<C>, keyof BoxProps<C>>;
+
+const Box = <C extends React.ElementType = 'div'>({
+  as,
+  ...props
+}: PolymorphicProps<C>) => {
+  const Component = as || 'div';
+  return <Component {...props} />;
+};
+
+// Usage
+<Box as="section" className="...">Content</Box>
+<Box as="button" onClick={...}>Click me</Box>
+
+Component Categories (Atomic Design)
+Atoms (Primitives)
+Button, Input, Label, Icon
+Typography (Text, Heading)
+Box, Flex, Grid (layout primitives)
+Molecules (Compositions)
+FormField (Label + Input + Error)
+SearchInput (Input + Icon + Button)
+Card (Box + padding + border)
+Organisms (Features)
+Header (Logo + Nav + UserMenu)
+DataTable (Table + Pagination + Filters)
+Modal (Overlay + Card + Actions)
+Documentation Strategy
+Component Documentation
+# Button
+
+Buttons trigger actions or navigate users.
+
+## Usage
+
+\`\`\`jsx
+import { Button } from '@/components/ui'
+
+<Button variant="primary" size="md">
+  Click me
+</Button>
+\`\`\`
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| variant | 'primary' \| 'secondary' \| 'ghost' | 'primary' | Visual style |
+| size | 'sm' \| 'md' \| 'lg' | 'md' | Size preset |
+
+## Examples
+
+### Variants
+[Interactive examples]
+
+### With Icons
+[Interactive examples]
+
+## Accessibility
+
+- Uses `<button>` element by default
+- Supports keyboard activation
+- Loading state announced to screen readers
+
+Best Practices
+Design Principles
+Composition over configuration: Small, composable pieces
+Sensible defaults: Works out of the box
+Accessible by default: a11y is not optional
+Type-safe APIs: TypeScript guides usage
+Minimal API surface: Only expose what's needed
+Maintenance
+Semantic versioning for breaking changes
+Deprecation warnings before removal
+Migration guides for major versions
+Automated visual regression testing
+Resources
+Radix UI Primitives
+Chakra UI Component Patterns
+Design Tokens Community Group
+Weekly Installs
+33
+Repository
+nickcrew/claude…x-plugin
+GitHub Stars
+15
+First Seen
+Feb 27, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

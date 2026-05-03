@@ -1,0 +1,112 @@
+---
+title: sentry-integration
+url: https://skills.sh/blogic-cz/blogic-marketplace/sentry-integration
+---
+
+# sentry-integration
+
+skills/blogic-cz/blogic-marketplace/sentry-integration
+sentry-integration
+Installation
+$ npx skills add https://github.com/blogic-cz/blogic-marketplace --skill sentry-integration
+SKILL.md
+Sentry Integration
+
+Implement Sentry integration with a fixed operational sequence and explicit decision rules. Keep project-specific details in references so the skill remains cross-agent portable.
+
+Trigger Conditions
+
+Load this skill when requests involve any of the following:
+
+Sentry SDK setup or migration
+Error tracking, exception capture, or expected-error classification
+Instrumentation and span design
+Performance issues, slow requests, trace analysis, or sampling strategy
+Middleware wiring for TRPC, HTTP handlers, or server functions
+Sentry API usage for issues/projects/alerts
+Operational Workflow (Mandatory Order)
+Configure SDKs (server first, client second).
+Wire middleware at framework boundaries.
+Classify expected errors before capture and beforeSend.
+Add tracing only where default integrations are insufficient.
+Verify events, spans, tags, and noise filtering in non-production first.
+
+Execute steps in this order to avoid noisy telemetry and broken trace context.
+
+1) Configure SDK
+
+Define environment, release, and sampling explicitly. Keep health checks and synthetic traffic out of traces.
+
+Use the server/client initialization examples in references/sentry-code-samples.md.
+
+2) Wire Middleware
+
+Attach Sentry middleware at shared boundaries, not only one procedure export.
+
+Apply the same middleware rule to all procedure chains:
+
+publicProcedure
+authenticated/protected procedures
+admin or org-scoped procedures
+custom composed chains
+
+Use the TRPC and server-function examples in references/sentry-code-samples.md.
+
+3) Classify Expected Errors
+
+Mark expected business errors as handled to reduce alert noise while preserving observability.
+
+Classify expected errors in two places:
+
+custom captureException wrapper
+SDK beforeSend
+
+In beforeSend, always read the throwable from hint.originalException (or equivalent helper). Do not reference an undefined error variable.
+
+Use the fixed beforeSend example and helper functions in references/sentry-code-samples.md.
+
+4) Add Tracing
+
+Prefer built-in integrations first, then add manual tracing only for uncovered paths.
+
+Database Tracing Decision Rule
+Use postgresIntegration when using supported PostgreSQL drivers and standard query paths.
+Use manual/proxy tracing when queries bypass supported integrations, when wrapping Drizzle/custom builders, or when operation-level naming is required.
+Avoid running both strategies on the same query path to prevent duplicate spans.
+
+Use the manual and proxy tracing examples in references/sentry-code-samples.md.
+
+5) Verify
+
+Verify each integration change with a short checklist:
+
+Trigger one expected error and confirm warning-level handled event.
+Trigger one unexpected error and confirm error-level alerting path.
+Execute one instrumented request and confirm trace continuity.
+Confirm health-check routes are excluded.
+Confirm no duplicated DB spans.
+Sentry API Service Scope
+
+Treat Sentry API service work (issues/projects/token verification) as an optional advanced module. Keep it in the same skill only when implementation remains within Sentry integration boundaries; otherwise split into a dedicated operational skill.
+
+Use Effect-oriented API service examples in references/sentry-code-samples.md.
+
+Core Rules
+Follow workflow order: configure SDK → wire middleware → classify expected errors → add tracing → verify.
+Keep expected errors observable but marked handled.
+Keep middleware coverage consistent across all procedure chains.
+Prefer built-in DB integration before manual/proxy tracing.
+Validate integration behavior in non-production before rollout.
+Keep large code samples in references files; keep decision rules in SKILL.md.
+Weekly Installs
+71
+Repository
+blogic-cz/blogi…ketplace
+GitHub Stars
+3
+First Seen
+Feb 28, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

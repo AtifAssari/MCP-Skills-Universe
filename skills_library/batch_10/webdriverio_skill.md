@@ -1,0 +1,131 @@
+---
+title: webdriverio-skill
+url: https://skills.sh/lambdatest/agent-skills/webdriverio-skill
+---
+
+# webdriverio-skill
+
+skills/lambdatest/agent-skills/webdriverio-skill
+webdriverio-skill
+Installation
+$ npx skills add https://github.com/lambdatest/agent-skills --skill webdriverio-skill
+SKILL.md
+WebdriverIO Automation Skill
+Step 1 — Execution Target
+
+Default local. If mentions "cloud", "TestMu", "LambdaTest" → cloud via WDIO LambdaTest service.
+
+Step 2 — Framework
+Signal	Runner
+Default	Mocha
+"Jasmine"	Jasmine
+"Cucumber", "BDD"	Cucumber
+Core Patterns
+Selectors
+// ✅ Preferred
+await $('[data-testid="submit"]').click();
+await $('aria/Submit').click();
+await $('button=Submit').click(); // text-based
+
+// Chaining
+await $('form').$('input[name="email"]').setValue('test@test.com');
+
+// Multiple elements
+const items = await $$('.list-item');
+
+Basic Test (Mocha)
+describe('Login', () => {
+    it('should login successfully', async () => {
+        await browser.url('/login');
+        await $('[data-testid="email"]').setValue('user@test.com');
+        await $('[data-testid="password"]').setValue('password123');
+        await $('[data-testid="submit"]').click();
+        await expect(browser).toHaveUrl(expect.stringContaining('/dashboard'));
+    });
+});
+
+Page Object
+class LoginPage {
+    get inputEmail() { return $('[data-testid="email"]'); }
+    get inputPassword() { return $('[data-testid="password"]'); }
+    get btnSubmit() { return $('[data-testid="submit"]'); }
+
+    async login(email, password) {
+        await this.inputEmail.setValue(email);
+        await this.inputPassword.setValue(password);
+        await this.btnSubmit.click();
+    }
+}
+module.exports = new LoginPage();
+
+TestMu AI Cloud Config
+// wdio.conf.js
+exports.config = {
+    user: process.env.LT_USERNAME,
+    key: process.env.LT_ACCESS_KEY,
+    hostname: 'hub.lambdatest.com',
+    port: 80,
+    path: '/wd/hub',
+    services: ['lambdatest'],
+    capabilities: [{
+        browserName: 'Chrome',
+        browserVersion: 'latest',
+        'LT:Options': {
+            platform: 'Windows 11',
+            build: 'WDIO Build',
+            name: 'WDIO Test',
+            video: true,
+            network: true,
+        }
+    }],
+};
+
+Wait Strategies
+// Wait for element
+await $('[data-testid="result"]').waitForDisplayed({ timeout: 10000 });
+
+// Wait for condition
+await browser.waitUntil(
+    async () => (await $('[data-testid="count"]').getText()) === '5',
+    { timeout: 10000, timeoutMsg: 'Count did not reach 5' }
+);
+
+Quick Reference
+Task	Command
+Setup	npm init wdio@latest
+Run all	npx wdio run wdio.conf.js
+Run specific	npx wdio run wdio.conf.js --spec ./test/login.js
+Run suite	npx wdio run wdio.conf.js --suite smoke
+Parallel	Set maxInstances: 5 in config
+Screenshot	await browser.saveScreenshot('./screenshot.png')
+Reference Files
+File	When to Read
+reference/cloud-integration.md	LambdaTest service, parallel, capabilities
+reference/advanced-patterns.md	Custom commands, reporters, services
+Deep Patterns → reference/playbook.md
+§	Section	Lines
+1	Production Configuration	Multi-env, multi-browser configs
+2	Page Object Model	BasePage, LoginPage, DashboardPage
+3	Custom Commands	Browser + element commands, TypeScript
+4	Network Mocking	DevTools mock, abort, error simulation
+5	File Operations	Upload, download, drag & drop
+6	Multi-Tab, iFrame & Shadow DOM	Window handles, nested shadow
+7	Visual Regression	Image comparison service
+8	API Testing	Fetch-based, API+UI combined
+9	Mobile Testing	Appium service integration
+10	LambdaTest Integration	Cloud grid config
+11	CI/CD Integration	GitHub Actions, Docker Compose
+12	Debugging Quick-Reference	11 common problems
+13	Best Practices Checklist	14 items
+Weekly Installs
+56
+Repository
+lambdatest/agent-skills
+GitHub Stars
+247
+First Seen
+Mar 5, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,190 @@
+---
+title: excel-mcp
+url: https://skills.sh/sbroenne/mcp-server-excel/excel-mcp
+---
+
+# excel-mcp
+
+skills/sbroenne/mcp-server-excel/excel-mcp
+excel-mcp
+Installation
+$ npx skills add https://github.com/sbroenne/mcp-server-excel --skill excel-mcp
+Summary
+
+Automate Excel workbooks on Windows with 226 COM-based operations covering data, formulas, tables, Power Query, and DAX.
+
+Supports full Excel object model: ranges, tables, worksheets, PivotTables, charts, slicers, conditional formatting, and VBA macro execution
+Includes Power Query (M code evaluation and creation) and Data Model (DAX measures) for advanced analytics workflows
+Provides calculation mode control for batch write performance optimization when handling large data volumes
+Requires Windows host with Excel 2016+, full file paths, and exclusive file access; session-based with auto-discovery of 226 tools
+SKILL.md
+Excel MCP Server Skill
+
+Provides 227 Excel operations via Model Context Protocol. The MCP Server forwards all requests to the shared ExcelMCP Service, enabling session sharing with CLI. Tools are auto-discovered - this documents quirks, workflows, and gotchas.
+
+Workflow Checklist
+Step	Tool	Action	When
+1. Open file	file	open or create	Always first
+2. Create sheets	worksheet	create, rename	If needed
+3. Write data	range	set-values	Always (2D arrays)
+4. Format	range	set-number-format	After writing
+5. Structure	table	create	Convert data to tables
+6. Save & close	file	close with save: true	Always last
+Preconditions
+Windows host with Microsoft Excel installed (2016+)
+Use full Windows paths: C:\Users\Name\Documents\Report.xlsx
+Excel files must not be open in another Excel instance
+Calculation Mode Workflow (Batch Performance)
+
+Use calculation_mode for bulk write performance optimization. When writing many values or formulas, disable auto-recalc to avoid recalculating after every cell:
+
+1. calculation_mode(action: 'set-mode', mode: 'manual')  → Disable auto-recalc
+2. Perform all writes (range set-values, set-formulas)
+3. calculation_mode(action: 'calculate', scope: 'workbook')  → Recalculate once
+4. calculation_mode(action: 'set-mode', mode: 'automatic')  → Restore default
+
+
+Note: You do NOT need manual mode to read formulas - range get-formulas returns formula text regardless of calculation mode.
+
+CRITICAL: Execution Rules (MUST FOLLOW)
+Rule 1: NEVER Ask Clarifying Questions
+
+STOP. If you're about to ask "Which file?", "What table?", "Where should I put this?" - DON'T.
+
+Bad (Asking)	Good (Discovering)
+"Which Excel file should I use?"	file(list) → use the open session
+"What's the table name?"	table(list) → discover tables
+"Which sheet has the data?"	worksheet(list) → check all sheets
+"Should I create a PivotTable?"	YES - create it on a new sheet
+
+You have tools to answer your own questions. USE THEM.
+
+Rule 2: Always End With a Text Summary
+
+NEVER end your turn with only a tool call. After completing all operations, always provide a brief text message confirming what was done. Silent tool-call-only responses are incomplete.
+
+Rule 3: Format Data Professionally
+
+Always apply number formats after setting values:
+
+Data Type	Format Code	Result
+USD	$#,##0.00	$1,234.56
+EUR	€#,##0.00	€1,234.56
+Percent	0.00%	15.00%
+Date (ISO)	yyyy-mm-dd	2025-01-22
+
+Workflow:
+
+1. range set-values (data is now in cells)
+2. range set-number-format (apply format)
+
+Rule 4: Use Excel Tables (Not Plain Ranges)
+
+Always convert tabular data to Excel Tables:
+
+1. range set-values (write data including headers)
+2. table create tableName="SalesData" rangeAddress="A1:D100"
+
+
+Why: Structured references, auto-expand, required for Data Model/DAX.
+
+Rule 5: Session Lifecycle
+1. file(action: 'open', path: '...')  → sessionId
+2. All operations use sessionId
+3. file(action: 'close', save: true)  → saves and closes
+
+
+Unclosed sessions leave Excel processes running, locking files.
+
+Rule 6: Data Model Prerequisites
+
+DAX operations require tables in the Data Model:
+
+Step 1: Create table → Table exists
+Step 2: table(action: 'add-to-datamodel') → Table in Data Model
+Step 3: datamodel(action: 'create-measure') → NOW this works
+
+Rule 7: Power Query Development Lifecycle
+
+BEST PRACTICE: Test-First Workflow
+
+1. powerquery(action: 'evaluate', mCode: '...') → Test WITHOUT persisting
+2. powerquery(action: 'create', ...) → Store validated query
+3. powerquery(action: 'refresh', ...) → Load data
+
+
+Why evaluate first:
+
+Catches syntax errors and missing sources BEFORE creating permanent queries
+Better error messages than COM exceptions from create/update
+See actual data preview (columns + sample rows)
+No cleanup needed - like a REPL for M code
+Skip only for trivial literal tables
+
+Common mistake: Creating/updating without evaluate → pollutes workbook with broken queries
+
+Rule 8: Targeted Updates Over Delete-Rebuild
+Prefer: set-values on specific range (e.g., A5:C5 for row 5)
+Avoid: Deleting and recreating entire structures
+
+Why: Preserves formatting, formulas, and references.
+
+Rule 9: Follow suggestedNextActions
+
+Error responses include actionable hints:
+
+{
+  "success": false,
+  "errorMessage": "Table 'Sales' not found in Data Model",
+  "suggestedNextActions": ["table(action: 'add-to-data-model', tableName: 'Sales')"]
+}
+
+Tool Selection Quick Reference
+Task	Tool	Key Action
+Create/open/save workbooks	file	open, create, close
+Write/read cell data	range	set-values, get-values
+Format cells	range	set-number-format
+Create tables from data	table	create
+Add table to Power Pivot	table	add-to-data-model
+Create DAX formulas	datamodel	create-measure
+Create PivotTables	pivottable	create, create-from-datamodel
+Filter with slicers	slicer	set-slicer-selection
+Create charts	chart	create-from-range
+Control calculation mode	calculation_mode	get-mode, set-mode, calculate
+Visual verification	screenshot	capture, capture-sheet
+Reference Documentation
+
+See references/ for detailed guidance:
+
+Core execution rules and LLM guidelines
+Common mistakes to avoid
+Bulk write performance optimization
+Data Model constraints and patterns
+Charts and formatting
+Conditional formatting operations
+Dashboard and report best practices
+Data Model/DAX specifics
+DMV query reference for Data Model analysis
+Excel agent mode and advanced automation
+Gotchas and known limits
+Power Query M code syntax reference
+PivotTable operations
+Power Query specifics
+Range operations and number formats
+Screenshot and visual verification
+Slicer operations
+Table operations
+Window and visibility operations
+Worksheet operations
+Weekly Installs
+928
+Repository
+sbroenne/mcp-se…er-excel
+GitHub Stars
+147
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubWarn
+SocketPass
+SnykWarn

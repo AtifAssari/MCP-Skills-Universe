@@ -1,0 +1,184 @@
+---
+title: spec-product-clarify
+url: https://skills.sh/zixun-github/aisdlc/spec-product-clarify
+---
+
+# spec-product-clarify
+
+skills/zixun-github/aisdlc/spec-product-clarify
+spec-product-clarify
+Installation
+$ npx skills add https://github.com/zixun-github/aisdlc --skill spec-product-clarify
+SKILL.md
+spec-product-clarify（R1：需求澄清 + 方案决策）
+概述
+
+本技能用于把 {FEATURE_DIR}/requirements/raw.md 通过多轮最小澄清循环收敛为可评审的 {FEATURE_DIR}/requirements/solution.md（含 ## Impact Analysis）。
+澄清过程必须可追溯：每次用户裁决后，立刻回写到 raw.md/## 澄清记录。
+
+核心原则：先澄清，后产物；先产物，后路由。
+
+开始时宣布：「我正在使用 spec-product-clarify 技能澄清需求并产出 solution.md。」
+
+硬规则（用来防止“未澄清先路由”）
+澄清未完成时，禁止创建/更新 solution.md（包括模板/骨架）。
+澄清未完成时，禁止输出任何“下一步路由/候选下一步/让用户选阶段（R2/R3/I1/I2…）”的信息。
+澄清问题必须是“需求裁决”，禁止用“流程分岔/阶段选择”冒充澄清。（例如：不要问“要 PRD 还是原型还是开发”）
+本技能不输出下一步路由结论。（下一步由 Router：using-aisdlc 判定）
+仅在步骤 5：本技能必须调用 using-aisdlc，把 ROUTER_SUMMARY 作为路由输入交给 Router 自动推进。
+流程
+步骤 0：门禁检查（不通过就停止）
+
+REQUIRED SUB-SKILL：正在执行 spec-context 获取上下文，并在对话中回显 FEATURE_DIR=...（允许 (reuse)）。
+
+同时必须满足：
+
+{FEATURE_DIR}/requirements/raw.md 存在且非空
+
+若不满足任一条：立刻停止，只输出：
+
+阻断原因
+需要的最小输入（例如：spec-context 输出片段、或 raw.md 内容/路径）
+
+注意：停止时也不要输出“下一步走哪条路/哪个技能”。
+
+步骤 1：读取输入（建立澄清上下文）
+
+必读：
+
+{FEATURE_DIR}/requirements/raw.md
+
+强制尝试读取（读不到先记为 CONTEXT GAP，后续写入 solution.md/## Context Gaps，并添加验证项）：
+
+.aisdlc/project/memory/product.md
+.aisdlc/project/memory/glossary.md
+.aisdlc/project/products/index.md
+.aisdlc/project/components/index.md
+
+然后在对话中维护两段清单（对话可见即可，不要求回写过程状态）：
+
+已确认结论：已被用户裁决、可直接进入 solution.md 的要点
+剩余未澄清点：会造成方案分歧/影响面不确定的关键未知（建议 3–8 条）
+步骤 2：最小澄清循环（一次只问 1 个问题）
+
+重复以下闭环，直到进入步骤 3：
+
+从“剩余未澄清点”中选 1 个最高杠杆未知（最能减少方案分歧）
+问 1 个可裁决选择题（2–4 选项 + 你的推荐项 + “其他/不确定”兜底）
+题目必须是需求裁决类：目标/范围/用户/入口/数据口径/权限/性能/一致性/失败策略/验收口径
+题目禁止是流程分岔类：不要让用户选“下一步走哪个阶段/哪个技能/要不要做 PRD/原型/开发”
+得到回答后 立刻回写 raw.md/## 澄清记录
+更新两段清单（移除/拆分/替换该未知；若引入新未知则加入“剩余未澄清点”）
+
+当用户施压“只能回复一次/一次问完/别再问了”时：
+
+仍然只问 1 个最高杠杆选择题
+其余未知全部转入 solution.md 的验证清单（V-xxx），不要因此输出任何路由信息
+特别注意：这一题也必须是“需求裁决”，不要退化成“你想走哪个阶段”
+步骤 3：澄清完成确认（必须显式确认）
+
+只有同时满足以下条件，才允许进入步骤 4：
+
+你在对话中确认：剩余未澄清点 = 空
+用户明确确认：“无遗漏/可以进入方案决策”（用是/否选择题确认也算）
+
+任一不满足：回到步骤 2 继续澄清。
+
+步骤 4：产出/更新 solution.md（仅在澄清完成后）
+
+模板来源：assets/solution-template.md（只借结构，不把未知当已知）。
+
+solution.md 必须满足以下不变量：
+
+必须 1 个推荐方案：关键取舍明确；每个关键点能指向证据（raw.md 点位）或验证条目
+必须 2–3 个差异明显的备选方案：各自写清“何时会选 / 不选原因”（抓 1–2 个关键差异）
+必须有“决策依据（证据入口）”：明确引用 raw.md；缺证据的一律转验证清单
+必须有“验证清单”且可执行：每条包含 假设/风险 → 方法 → 成功/失败信号 → Owner → 截止 → 触发动作（编号 V-xxx）；禁止 TBD/待定/待指定
+正文 禁止出现 “待确认问题/待确认清单/To confirm” 等列表（不确定性只能进验证清单）
+必须显式写 ## Context Gaps：把读取失败/缺失项逐条标 CONTEXT GAP，并为每条缺口补对应验证项（V-xxx）
+必须包含 ## Impact Analysis：至少包含“受影响模块 / 需遵守的不变量 / 跨模块影响 / Context Gaps”
+迭代记录必须追加：每轮追加 3–5 条“改了什么 + 为什么改”
+步骤 5：结束输出（只交付本阶段结果，不做路由）
+
+完成落盘后，按顺序输出：
+
+产物清单（路径列表）
+ROUTER_SUMMARY（仅用于给 Router 消费）
+立即调用 using-aisdlc：把上述 ROUTER_SUMMARY 作为输入交给 Router，由 Router 判定下一步并在本轮对话内自动推进（除非触发硬中断）
+
+并明确声明：
+
+本技能已结束；
+using-aisdlc 将输出“下一步（唯一）”并执行对应 worker skill（若触发硬中断则停止并说明原因/所需输入）
+
+ROUTER_SUMMARY 参考格式：
+
+ROUTER_SUMMARY:
+  stage: R1
+  artifacts:
+    - "{FEATURE_DIR}/requirements/raw.md"
+    - "{FEATURE_DIR}/requirements/solution.md"
+  needs_human_review: false
+  blocked: false
+  block_reason: ""
+  notes: "软检查点：solution.md（尤其 #impact-analysis）建议评审"
+
+何时停止并寻求澄清（不要猜测）
+
+立即停止：
+
+未得到 FEATURE_DIR
+{FEATURE_DIR}/requirements/raw.md 不存在或为空
+指令互相冲突、或你不理解某条指令
+用户声明已更新/改写 raw.md，但你无法读取/确认最新版本
+
+停止时只输出：阻断原因 + 需要的最小输入。
+
+何时返回 earlier 步骤
+返回步骤 0：spec-context 上下文变化（分支/FEATURE_DIR 变更）或 raw 文件路径不再可信
+返回步骤 1：用户改写了 raw.md 或补充了关键约束（需要重新读取）
+返回步骤 2：写 solution.md 前发现“剩余未澄清点”仍不为空
+红旗（出现任意一条 = 立刻停止并纠正）
+未回显 FEATURE_DIR=...（含“我从目录/分支推断”的变体）
+raw.md 缺失/为空，或无法确认已读到最新版本
+一次问多题（含“把所有问题一次问完”）
+用“流程分岔/阶段选择题”代替需求澄清
+澄清未完成就创建/更新 solution.md（含“先写模板/骨架”）
+澄清未完成就输出“下一步路由/候选下一步/让用户选阶段”
+常见借口与反制（压测中最常见）
+借口（压力来源）	常见违规行为	必须的反制动作
+“我只能回复一次，你一次问完”	抛出一长串问题或流程分岔让用户选	只问 1 个最高杠杆“需求裁决”选择题；其余未知进验证清单（V-xxx）
+“你直接告诉我下一步走哪条路”	在澄清未完成时输出下一步/候选路由	明确拒绝：先澄清清零 + 用户确认；此阶段禁止路由输出
+“先给我 solution 模板，我回头填”	在 raw 缺失/未澄清时生成 solution.md（哪怕空）	直接阻断：澄清未完成 → 禁止创建/更新 solution.md
+澄清回写格式（写入 raw.md/## 澄清记录，每轮追加一条）
+本轮结论（可直接引用到 solution）：
+本轮新增/更新的约束（如有，列 1–5 条要点）：
+关键决策（如有：决策点 → 选择结果；可写 1–3 条）：
+遗留歧义（如有：假设/风险 → 对应验证编号 V-xxx）：
+
+回写必须发生在“拿到用户回答”之后；不要在 raw.md 里写占位符。回写以结论/约束/验证项为主。
+
+集成
+
+必需子技能：
+
+spec-context（获取上下文：回显 FEATURE_DIR=...）
+
+可选（仅当 Impact Analysis 因项目知识库缺口无法进行时）：
+
+project-discover-preflight-scope
+project-discover-memory-index
+project-discover-modules-contracts
+project-discover-products-ops-dod
+Weekly Installs
+104
+Repository
+zixun-github/aisdlc
+GitHub Stars
+7
+First Seen
+Feb 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,125 @@
+---
+title: unity-project
+url: https://skills.sh/besty0728/unity-skills/unity-project
+---
+
+# unity-project
+
+skills/besty0728/unity-skills/unity-project
+unity-project
+Installation
+$ npx skills add https://github.com/besty0728/unity-skills --skill unity-project
+SKILL.md
+Project Skills
+
+Project information and configuration.
+
+Guardrails
+
+Mode: Full-Auto required
+
+DO NOT (common hallucinations):
+
+project_save does not exist → use scene_save (scene module) or editor_execute_menu menuPath="File/Save"
+project_settings does not exist → use specific skills: project_get_render_pipeline, project_get_build_settings, etc.
+project_set_resolution / project_set_player_settings do not exist → Player Settings are read-only via project_get_player_settings; to edit, open Project Settings via editor_execute_menu with Edit/Project Settings...
+project_create does not exist → projects are created via Unity Hub, not REST API
+
+Routing:
+
+For Layer/Tag management → project_add_tag (this module); Layers are read-only via project_get_layers (edit via editor_execute_menu → Edit/Project Settings...)
+For build settings → project_get_build_settings (read-only; use editor_execute_menu → File/Build Settings... to edit)
+Skills
+project_get_info
+
+Get project information including render pipeline, Unity version, and settings. Parameters: None.
+
+project_get_render_pipeline
+
+Get current render pipeline type and recommended shaders. Parameters: None.
+
+project_list_shaders
+
+List all available shaders in the project. Parameters:
+
+filter (string, optional): Filter by name.
+limit (int, optional): Max results (default 50).
+project_get_quality_settings
+
+Get current quality settings. Parameters: None.
+
+project_get_build_settings
+
+Get build settings (platform, scenes).
+
+Parameters: None.
+
+Returns: { success, activeBuildTarget, buildTargetGroup, sceneCount, scenes }
+
+project_get_packages
+
+List installed UPM packages.
+
+Parameters: None.
+
+Returns: { success, manifest }
+
+project_get_layers
+
+Get all Layer definitions.
+
+Parameters: None.
+
+Returns: { success, count, layers }
+
+project_get_tags
+
+Get all Tag definitions.
+
+Parameters: None.
+
+Returns: { success, count, tags }
+
+project_add_tag
+
+Add a custom Tag.
+
+Parameter	Type	Required	Default	Description
+tagName	string	Yes	-	The tag name to add
+
+Returns: { success, tag }
+
+project_get_player_settings
+
+Get Player Settings.
+
+Parameters: None.
+
+Returns: { success, productName, companyName, bundleVersion, defaultScreenWidth, defaultScreenHeight, fullscreen, apiCompatibility, scriptingBackend }
+
+project_set_quality_level
+
+Switch quality level by index or name.
+
+Parameter	Type	Required	Default	Description
+level	int	No	-1	Quality level index
+levelName	string	No	null	Quality level name
+
+Returns: { success, level, name }
+
+Exact Signatures
+
+Exact names, parameters, defaults, and returns are defined by GET /skills/schema or unity_skills.get_skill_schema(), not by this file.
+
+Weekly Installs
+13
+Repository
+besty0728/unity-skills
+GitHub Stars
+894
+First Seen
+Mar 14, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

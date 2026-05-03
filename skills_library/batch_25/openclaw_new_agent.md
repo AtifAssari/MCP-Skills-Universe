@@ -1,0 +1,261 @@
+---
+title: openclaw-new-agent
+url: https://skills.sh/itzhouq/openclaw-new-agent/openclaw-new-agent
+---
+
+# openclaw-new-agent
+
+skills/itzhouq/openclaw-new-agent/openclaw-new-agent
+openclaw-new-agent
+Installation
+$ npx skills add https://github.com/itzhouq/openclaw-new-agent --skill openclaw-new-agent
+SKILL.md
+openclaw-new-agent
+
+在 OpenClaw 上丝滑创建多个独立的飞书机器人 Agent
+
+本 Skill 用于在已运行的 OpenClaw 实例上，新增一个独立的飞书机器人 Agent。
+
+前提条件
+
+用户需要提前准备好：
+
+飞书开放平台上的新应用（App ID + App Secret）
+新机器人在飞书中的名称
+工作区文件夹名称（与现有 workspace 平级，不是子文件夹）
+快速创建飞书机器人
+
+如果用户还没有飞书机器人，可通过以下方式快速创建：
+
+👉 推荐：一键创建模板应用 https://open.feishu.cn/page/openclaw?form=multiAgent
+
+使用此链接可直接生成包含 WebSocket 事件订阅配置的多账号模式模板应用，无需手动配置权限和事件订阅。
+
+Step 0：确认使用场景
+
+在开始之前，向用户确认以下信息：
+
+问题	说明
+新 Agent 的用途是什么？	用于记录到 SOUL.md，定义 Agent 角色
+工作区文件夹名称？	建议：workspace-{功能名}，如 workspace-codewriter
+App ID & App Secret？	新的飞书机器人凭证（格式：cli_xxx）
+Obsidian 相关（可选）	如涉及信息收集，记录 vault 路径和笔记结构
+
+账号获取说明：配置初期 allowFrom 可先留空，等用户向新机器人发送测试消息后，从日志中自动获取发送者 open_id 并补充到 allowFrom。
+
+Step 1：备份现有配置
+
+必须操作，所有配置变更前必须备份：
+
+cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.{日期标签}.bak
+
+
+常用备份标签：
+
+.beforemultiagentbak — 多机器人配置前
+.before-{agentId}bak — 新增特定 Agent 前
+Step 2：创建独立工作区
+
+工作区必须与主 workspace 平级，不是子文件夹：
+
+.openclaw/
+├── workspace/                  ← 主工作区
+└── workspace-{name}/           ← 新工作区（平级）
+    ├── SOUL.md                 # Agent 角色定义
+    ├── USER.md                 # 用户信息
+    ├── AGENTS.md               # 工作区说明
+    ├── MEMORY.md               # 长期记忆（可选）
+    ├── HEARTBEAT.md            # 心跳任务（默认空）
+    └── memory/                 # 每日工作日志
+        └── YYYY-MM-DD.md
+
+SOUL.md 模板
+# SOUL.md - {Agent名称}
+
+_我是 {Agent名称}，..._
+
+## 角色定位
+
+- **核心能力**：
+- **风格**：
+- **原则**：
+
+## 工作方式
+
+1.
+2.
+3.
+
+## 边界
+
+-
+
+USER.md 模板
+# USER.md - 用户信息
+
+- **Name:** {用户名}
+- **What to call them:** {称呼}
+- **Timezone:** Asia/Shanghai (GMT+8)
+
+## 相关信息（如适用）
+
+-
+
+Step 3：确认飞书机器人配置
+
+向用户收集以下信息：
+
+信息	必填	说明
+App ID	✅	格式：cli_xxx，来自飞书开放平台
+App Secret	✅	对应 App ID 的 Secret
+Bot Name	✅	机器人在飞书显示的名称
+允许的用户	⚠️	用户的 open_id（可能有多个账号）
+
+💡 没有飞书机器人？ 使用 一键创建链接，自动生成已配置好权限和事件订阅的模板应用。
+
+⚠️ 重要：allowFrom 自动获取
+
+allowFrom 不需要用户提前确认。配置时 allowFrom 可先留空，等用户向新机器人发送测试消息后，从日志中自动获取发送者 open_id：
+
+grep "{agentId}" ~/.openclaw/logs/gateway.log | grep "received message from"
+
+
+获取到 open_id 后，用 gateway config.patch 补充到 allowFrom 即可。
+
+Step 4：修改 openclaw.json
+
+使用 gateway config.patch 局部更新，不要覆盖整个文件。
+
+配置结构
+{
+  "channels": {
+    "feishu": {
+      "accounts": {
+        "default": { ... },                    // 现有账号，保持不变
+        "{agentId}": {                         // 新账号
+          "enabled": true,
+          "appId": "cli_xxx",
+          "appSecret": "xxx",
+          "domain": "feishu",
+          "connectionMode": "websocket",
+          "requireMention": true,
+          "dmPolicy": "allowlist",
+          "allowFrom": [
+            "ou_将使用此机器人的账号open_id"  // ⚠️ 只加实际会发消息的账号
+          ],
+          "groupAllowFrom": [
+            "ou_将使用此机器人的账号open_id"
+          ],
+          "groupPolicy": "allowlist",
+          "groups": {
+            "*": { "enabled": true }
+          }
+        }
+      }
+    }
+  },
+  "agents": {
+    // 【新增】default —— 新增的默认 Agent，保持不变
+    // 作用：作为主助手，处理所有未指定 Agent 的消息
+    // ────────────────────────────────────────────
+    "default": { ... },
+    "list": [
+      { "id": "main" },
+      { "id": "{agentId}", "workspace": "/path/to/workspace-{name}" }
+    ]
+  },
+  "session": {
+    // ────────────────────────────────────────────
+    // 【修改】dmScope
+    // 原值: "per-channel-peer"
+    // 新值: "per-account-channel-peer"
+    // 原因: 多账户模式下需要按「机器人账号 + 渠道 + 对话对象」
+    //       三者组合隔离会话记忆，否则不同机器人的会话会互相串
+    // ────────────────────────────────────────────
+    "dmScope": "per-account-channel-peer"
+  },
+  // ════════════════════════════════════════════════
+  // 【新增】bindings —— 整个字段都是新加的
+  // 作用：将不同飞书机器人账户的消息路由到对应的 agent
+  // 没有这个配置，gateway 无法正确分发消息，可能导致失联
+  // ════════════════════════════════════════════════
+  "bindings": [
+    {
+      "agentId": "main",                    // → 路由到主助手
+      "match": {
+        "channel": "feishu",
+        "accountId": "default"              // ← 对应 channels.feishu.accounts.default
+      }
+    },
+    {
+      "agentId": "{agentId}",           // → 路由到新 Agent
+      "match": {
+        "channel": "feishu",
+        "accountId": "{agentId}"        // ← 对应 channels.feishu.accounts.{agentId}
+      }
+    }
+  ]
+}
+
+
+⚠️ allowFrom 配置原则：只添加实际会发送消息的账号。不要添加主账号（它使用 default 机器人）。如果用户有多个账号，确保所有会向此机器人发送消息的账号都在 allowFrom 中。
+
+Step 5：验证创建结果
+5.1 检查配置
+openclaw doctor --non-interactive
+
+
+确认输出中包含新 agent：
+
+Agents: main (default), {agentId}
+
+5.2 检查日志
+grep "{agentId}" ~/.openclaw/logs/gateway.log
+
+
+确认无错误，特别是：
+
+WebSocket 连接成功
+消息接收正常
+5.3 功能测试
+
+让用户通过飞书向新机器人发送消息，验证：
+
+消息是否到达（查看日志）
+是否在白名单中
+是否正确路由到对应 workspace
+常见问题 Checklist
+
+开始前逐项确认，避免创建失败：
+
+ 备份已完成：cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.beforemultiagentbak
+ 工作区目录已创建：与 workspace 平级，不是子文件夹
+ App ID 和 App Secret 正确：格式为 cli_xxx 和对应的 Secret
+ allowFrom 已正确配置：只添加实际会向此机器人发送消息的账号（通常不是主账号）
+ Gateway 已重启：配置更新后等待 2-3 秒
+ 飞书开放平台已配置：机器人已启用、权限已开通、事件订阅已配置（可使用 一键创建链接 快速完成）
+回滚方案
+
+如果创建失败，执行以下回滚：
+
+# 恢复配置
+cp ~/.openclaw/openclaw.json.beforemultiagentbak ~/.openclaw/openclaw.json
+
+# 重启 Gateway
+openclaw gateway restart
+
+相关文档
+OpenClaw 官方文档：~/.nvm/versions/node/v22.22.1/lib/node_modules/openclaw/docs/
+飞书插件文档：~/.openclaw/extensions/openclaw-lark/
+Weekly Installs
+20
+Repository
+itzhouq/opencla…ew-agent
+GitHub Stars
+29
+First Seen
+Mar 26, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

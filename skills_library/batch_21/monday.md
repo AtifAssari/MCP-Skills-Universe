@@ -1,0 +1,233 @@
+---
+title: monday
+url: https://skills.sh/vm0-ai/vm0-skills/monday
+---
+
+# monday
+
+skills/vm0-ai/vm0-skills/monday
+monday
+Installation
+$ npx skills add https://github.com/vm0-ai/vm0-skills --skill monday
+SKILL.md
+Troubleshooting
+
+If requests fail, run zero doctor check-connector --env-name MONDAY_TOKEN or zero doctor check-connector --url https://api.monday.com/v2 --method POST
+
+How to Use
+
+All examples below assume you have MONDAY_TOKEN set.
+
+1. Get Current User
+
+Query the authenticated user's info:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "query { me { id name email } }"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+2. List All Boards
+
+Get all boards in your account:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "query { boards (limit: 10) { id name state items_count } }"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+3. Get Board Details
+
+Get a specific board with its groups and columns:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "query { boards (ids: <your-board-id>) { id name groups { id title } columns { id title type } } }"
+}
+
+
+Replace <your-board-id> with an actual board ID from the "List All Boards" response (example 2).
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+4. Get Items from a Board
+
+Get items (rows) from a specific board:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "query { boards (ids: <your-board-id>) { items_page (limit: 10) { items { id name column_values { id text value } } } } }"
+}
+
+
+Replace <your-board-id> with an actual board ID from the "List All Boards" response (example 2).
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+5. Create a New Item
+
+Create a new item in a board:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "mutation { create_item (board_id: <your-board-id>, group_id: \"<your-group-id>\", item_name: \"<your-item-name>\") { id name } }"
+}
+
+
+Replace the following values:
+
+<your-board-id>: An actual board ID from the "List All Boards" response (example 2)
+<your-group-id>: A group ID from the "Get Board Details" response (example 3, groups array)
+<your-item-name>: Your desired name for the new item
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+6. Create Item with Column Values
+
+Create an item with specific column values:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "mutation ($boardId: ID!, $groupId: String!, $itemName: String!, $columnValues: JSON!) { create_item (board_id: $boardId, group_id: $groupId, item_name: $itemName, column_values: $columnValues) { id name } }",
+  "variables": {
+    "boardId": "<your-board-id>",
+    "groupId": "<your-group-id>",
+    "itemName": "<your-item-name>",
+    "columnValues": "{\"status\": {\"label\": \"Working on it\"}, \"date\": {\"date\": \"2025-01-15\"}}"
+  }
+}
+
+
+Replace the following values:
+
+<your-board-id>: An actual board ID from the "List All Boards" response (example 2)
+<your-group-id>: A group ID from the "Get Board Details" response (example 3, groups array)
+<your-item-name>: Your desired name for the new item
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+7. Update an Item
+
+Update an existing item's column values:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "mutation ($boardId: ID!, $itemId: ID!, $columnValues: JSON!) { change_multiple_column_values (board_id: $boardId, item_id: $itemId, column_values: $columnValues) { id name } }",
+  "variables": {
+    "boardId": "<your-board-id>",
+    "itemId": "<your-item-id>",
+    "columnValues": "{\"status\": {\"label\": \"Done\"}}"
+  }
+}
+
+
+Replace the following values:
+
+<your-board-id>: An actual board ID from the "List All Boards" response (example 2)
+<your-item-id>: An item ID from the "Get Items from a Board" response (example 4)
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+8. Delete an Item
+
+Delete an item from a board:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "mutation { delete_item (item_id: <your-item-id>) { id } }"
+}
+
+
+Replace <your-item-id> with an actual item ID from the "Get Items from a Board" response (example 4).
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+9. Create a New Board
+
+Create a new board:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "mutation { create_board (board_name: \"My New Board\", board_kind: public) { id name } }"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+10. Search Items
+
+Search for items across boards:
+
+Write to /tmp/monday_request.json:
+
+{
+  "query": "query { items_page_by_column_values (limit: 10, board_id: <your-board-id>, columns: [{column_id: \"name\", column_values: [\"Task\"]}]) { items { id name } } }"
+}
+
+
+Replace <your-board-id> with an actual board ID from the "List All Boards" response (example 2).
+
+Then run:
+
+curl -s -X POST "https://api.monday.com/v2" --header "Authorization: $MONDAY_TOKEN" --header "API-Version: 2024-10" --header "Content-Type: application/json" -d @/tmp/monday_request.json
+
+Common Column Types
+Column Type	Value Format
+Status	{"label": "Done"}
+Date	{"date": "2025-01-15"}
+Text	"Your text here"
+Number	"123"
+Person	{"id": 12345678}
+Dropdown	{"labels": ["Option1", "Option2"]}
+Checkbox	{"checked": true}
+Guidelines
+Use variables for complex queries: GraphQL variables make escaping easier
+Check column IDs: Use the board query to get exact column IDs before updating
+API versioning: Always include API-Version header for consistent behavior
+Rate limits: API has rate limits; add delays for bulk operations
+Column values are JSON strings: When using column_values, pass as escaped JSON string
+Weekly Installs
+85
+Repository
+vm0-ai/vm0-skills
+GitHub Stars
+57
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

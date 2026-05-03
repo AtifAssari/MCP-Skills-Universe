@@ -1,0 +1,359 @@
+---
+rating: ⭐⭐
+title: recallloom
+url: https://skills.sh/frappucc1no/recall-loom/recallloom
+---
+
+# recallloom
+
+skills/frappucc1no/recall-loom/recallloom
+recallloom
+Installation
+$ npx skills add https://github.com/frappucc1no/recall-loom --skill recallloom
+SKILL.md
+RecallLoom
+
+RecallLoom is a portable context harness for session-based agents.
+
+It provides a lightweight file model for project continuity across sessions without requiring heavy infrastructure.
+
+The goal is not to remember everything. The goal is to keep the right project state durable, readable, and recoverable across sessions.
+
+Package Scope
+
+This file is the agent-facing entrypoint for the installable recallloom/ skill package.
+
+Install and trigger this package through your host agent's normal skill discovery flow. RecallLoom itself does not require a custom host-specific launcher inside the package. The package may still ship optional native wrapper templates for supported hosts.
+
+This installable package is intentionally kept lean. Human-facing repository landing pages and marketing docs may exist upstream, but they are not bundled into the installed skill directory.
+
+For package inventory, protocol details, and helper-script behavior, rely on the files that ship inside the package itself:
+
+package-metadata.json
+references/file-contracts.md
+references/operation-playbooks.md
+references/package-support-policy.md
+references/protocol.md
+Package Facts
+package version: 0.3.4
+protocol version: 1.0
+supported protocol versions:
+1.0
+Runtime Assumptions
+Python 3.10 or newer
+supported workspace languages:
+en
+zh-CN
+supported bridge targets:
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+Package Support Gate
+
+RecallLoom package support is separate from project sidecar protocol compatibility.
+
+Helpers perform a lightweight daily package-support check, scoped by installed package path and cached in the user cache. Support state is not written into project .recallloom/.
+
+If the current package is readonly_only, mutating helpers are blocked while diagnostic and read-only helpers remain available. If it is diagnostic_only, only diagnostic helpers should continue. If the advisory cannot be refreshed and no usable cache exists, helpers use unknown_offline and do not hard-block solely because the network failed.
+
+When the gate blocks an action, it returns the shared failure contract with blocked_reason: package_support_blocked and a package_support object. See references/package-support-policy.md for the advisory schema, action levels, cache behavior, and environment overrides.
+
+When To Use It
+
+Use RecallLoom when you need to:
+
+continue an existing project after a pause
+restore project context from maintained files
+maintain current-state project memory
+record meaningful milestone progress
+reduce context drift across sessions or tools
+
+Typical triggers include:
+
+continue this project
+restore project context
+pick up where we left off
+rl-init
+update the project memory
+record today’s progress
+prepare a clean next-step handoff inside the maintained project files
+First Attach Behavior
+
+On first explicit invocation in a project, RecallLoom should not assume the workspace is already initialized.
+
+The correct flow is:
+
+detect whether a valid RecallLoom sidecar already exists
+if it exists, continue normally without making initialization into extra ceremony
+if it does not exist, explain that the project is not initialized yet and ask whether initialization should be performed
+if the user explicitly confirms, or directly says rl-init, run the standard initialization action
+if the environment cannot provide Python 3.10+, stop with a blocked runtime result instead of hand-building a sidecar
+
+For this package, the intended initialization action is:
+
+initialize the sidecar
+validate the workspace
+return the next recommended actions
+
+This means rl-init should be treated as a stable high-level action name, even in hosts that do not expose it as a native slash command.
+
+Current Action Surface
+
+For the current package line, the stable action names are:
+
+rl-init
+rl-resume
+rl-validate
+rl-status
+rl-bridge
+
+rl-init is the primary operator-friendly first-attach action name. The others are operator-facing stable action names that can be interpreted by the host agent or mapped into native custom commands when the host supports that surface.
+
+Initialized-Project Restore Contract
+
+When a host or agent sees a generic initialized-project restore request:
+
+check for a valid RecallLoom sidecar before broad skill fan-out
+if the sidecar is valid, route into the normal RecallLoom fast path
+let broader memory or workflow systems participate only when the sidecar is missing, conflicting, clearly insufficient, or the user explicitly asks for deeper review
+
+For the current package line, rl-resume is the single stable operator-facing action name for that initialized-project restore checkpoint. Natural-language restore requests are still the primary public path. Do not invent a manual sidecar fallback or a host-local restore alias that is not backed by the package contract.
+
+Public Interaction Rules
+
+RecallLoom should default to user task language, not implementation language.
+
+Prefer “initialize”, “restore”, “import existing project reality”, “continue”, and “record progress”.
+Do not lead with helper names, section keys, or the internal coldstart label unless the user is explicitly doing operator/debug work.
+Keep the first response result-first and action-light: one clear next move is better than exposing internal flow.
+Do not invent a manual sidecar fallback when runtime requirements are missing; surface the blocked state and stop.
+Fast And Deep Paths
+
+RecallLoom should treat fast path as the default interaction mode.
+
+Fast path: smallest trustworthy source set, shortest interaction, lowest interruption cost.
+Deep path: only when sources conflict, source coverage is insufficient, risk is too high for a direct recommendation, or the user explicitly asks for deeper review.
+Host-memory inputs remain opt-in and hint-only; their presence should bias the agent toward explicit review instead of silent promotion.
+Core File Model
+
+RecallLoom uses three primary memory layers:
+
+STORAGE_ROOT/context_brief.md: stable project framing
+STORAGE_ROOT/rolling_summary.md: overwrite-style current-state snapshot
+STORAGE_ROOT/daily_logs/YYYY-MM-DD.md: append-only milestone evidence
+STORAGE_ROOT/config.json: machine-readable workspace settings
+STORAGE_ROOT/state.json: machine-readable sidecar state for concurrency-aware helpers
+STORAGE_ROOT/update_protocol.md: recommended project-local override layer for read and write behavior
+
+File responsibilities in one sentence:
+
+context_brief.md explains what this project is and how it should be approached.
+rolling_summary.md explains what is true right now.
+daily_logs/ explain what happened at milestone level.
+config.json keeps storage and language settings stable.
+state.json tracks workspace revision and helper-visible sidecar state.
+update_protocol.md, when present, can narrow or strengthen the default read/write rules for this specific project.
+
+STORAGE_ROOT is one of:
+
+PROJECT_ROOT/.recallloom/ (default)
+PROJECT_ROOT/recallloom/ (optional visible sidecar)
+
+Exactly one valid STORAGE_ROOT may exist for a project at a time.
+
+If both sidecars exist, that is a conflict and tools should stop rather than guess.
+
+See references/file-contracts.md for the detailed contract.
+
+Machine-readable markers, not heading labels, are the normative file contract.
+
+This allows workspace files to stay localizable without breaking validation or integration.
+
+For protocol 1.0, supported workspace languages are limited to en and zh-CN.
+
+Minimum Cold-Start Flow
+Find the project root.
+Read STORAGE_ROOT/config.json.
+Read STORAGE_ROOT/state.json.
+Read STORAGE_ROOT/rolling_summary.md.
+If STORAGE_ROOT/update_protocol.md exists, surface it before expanding beyond the minimum continuity set.
+Read STORAGE_ROOT/context_brief.md only when the current task needs framing, scope, source-of-truth, or phase context that the summary does not already cover.
+Read the latest active daily log only when milestone evidence, workday judgment, or external-writer reconciliation requires it.
+Run a quick freshness check before trusting older context or before a major write.
+
+Cold start should restore and judge first. It should not automatically continue next_step or execute project work just because continuity files were read.
+
+See references/operation-playbooks.md for the full flow.
+
+Current Read-Side Helpers
+
+The current 0.3.4 line now has three read-side helper directions worth knowing:
+
+preflight_context_check.py
+revision-aware freshness review before formal writes
+returns handoff-first digests, suggested read targets, write-tier guidance, and trust/drift state
+summarize_continuity_status.py
+ambient continuity status surface using the same freshness baseline
+returns the same handoff-first digest family plus shared workday-state and trust/drift guidance for quick orientation
+query_continuity.py
+read-only continuity recall surface
+returns answer-first recall with answer, supporting citations, and a risk/freshness note
+also returns hits, token estimate, budget hint, freshness/conflict state, trust/drift state, an output variant label, and override review targets
+daily-log citations include explicit date values
+prefers current-state files over historical daily logs when match strength ties
+defaults to the quick freshness path, but can explicitly upgrade to a fuller freshness scan when needed
+can explicitly surface freshness conflicts when the workspace has moved beyond the current summary
+explicitly surfaces freshness risk via freshness_risk_level and freshness_risk_note
+surfaces update_protocol.md as a review target before recall should drive write decisions
+keeps supporting_context_window bounded instead of expanding every matching excerpt
+
+All attach-safe continuity text returned through these read-side surfaces is expected to respect the shared attached-text scan rules.
+
+Minimum Write Rules
+Before choosing a write target, read STORAGE_ROOT/update_protocol.md if it exists.
+Update the rolling summary for current-state changes.
+Update context_brief.md only for high-level framing changes.
+Update the daily log only for milestone-level events.
+Do not update context files for trivial reads or minor edits with no durable change.
+
+Practical interpretation:
+
+stable_rule: usually context_brief.md
+current_state: usually rolling_summary.md
+New current-state fact or next-step change: usually rolling_summary.md
+High-level mission or phase change: maybe context_brief.md
+milestone_evidence: daily log only when a milestone actually happened
+Deliverable completion or end-of-day milestone: daily log
+
+Default exits before any write should stay explicit:
+
+no_write is a normal successful result
+merge_current_state updates rolling_summary.md
+append_milestone appends to the daily log
+confirm and blocked stop automatic writes rather than guessing
+
+Read-side trust notes:
+
+sidecar_trust_state stays in helper JSON, not in protocol 1.0
+continuity_drift_risk_level is a review signal, not proof that the sidecar is damaged
+allowed_operation_level helps hosts route low-risk read vs review-first vs write-after-preflight flows
+
+Project-local overrides may narrow the default read order, write order, or archive behavior, but they do not replace the core file contract.
+
+Agent Layered Write Judgment
+
+Before writing continuity content, the agent should make the layer decision itself. Helpers can provide safe write context and static write-tier guidance, but they must not replace agent judgment about what the content means.
+
+Use this quick internal check before editing managed files:
+
+Is there a new durable fact, or is no_write the right result?
+If writing is needed, is the main content a stable_rule, current_state, or milestone_evidence?
+Does the event contain different facts that need a multi_layer_split?
+Does the target layer already contain the same fact, so the right action is merge instead of duplicate?
+Is the layer uncertain enough to defer or confirm rather than guess?
+
+Layer defaults:
+
+stable_rule: long-lived workflow rules, source-of-truth routing, project boundaries, or recovery facts that should be known before reading current state. Default target: context_brief.md.
+current_state: what is true now, including current phase, active risks, active judgments, and next steps. Default target: rolling_summary.md.
+milestone_evidence: completed validations, approvals, releases, accepted decisions, or other durable evidence. Default target: daily log.
+no_write, defer, and confirm are valid outcomes when no durable fact changed, the discussion is unstable, or the boundary needs explicit user approval.
+
+When more than one layer is valid, split different facts across layers. Do not copy the same sentence into multiple files.
+
+For the detailed rules, conflict order, self-review template, and anonymized calibration cases, see references/operation-playbooks.md.
+
+For protocol 1.0, update_protocol.md is a human-reviewed override layer. Preflight, archive guidance, and thin-bridge guidance should surface it clearly, but helpers do not automatically execute its natural-language rules.
+
+RecallLoom prefers the smallest valid write set, not maximal updating.
+
+When deterministic write safety matters, keep the roles separate:
+
+the agent decides what should change and prepares the content
+the packaged helper scripts decide whether the write is still safe to apply
+
+For overwrite-style files, use revision-aware helper commits instead of blind file replacement whenever possible.
+
+Revision-aware write helpers protect against stale writes, but they do not automatically reread update_protocol.md on every commit or append.
+
+Preflight checks may keep context_brief.md and existing daily logs out of the primary write-target list, but they should still surface them as conditional review targets when framing drift or milestone logging needs to be considered.
+
+When generating or maintaining workspace files, prefer the user's workspace language when it is one of the supported protocol 1.0 workspace languages (en, zh-CN).
+
+When Not To Update Context
+
+Do not update context files just because:
+
+you performed a cold start
+you answered a short question with no durable project change
+you explored without reaching a stable conclusion
+you made wording-only edits
+
+The protocol is designed to reduce noise, not to turn every session into documentation work.
+
+Profiles
+
+RecallLoom currently provides four profiles:
+
+profiles/general-project-continuity.md
+profiles/research-writing.md
+profiles/product-doc-collaboration.md
+profiles/software-project-coordination.md
+
+Profiles do not replace the core protocol. They are thin guidance layers that refine emphasis, evidence handling, and common drift risks for different project shapes.
+
+Default rule:
+
+use general-project-continuity.md by default
+switch to a specialized profile only when the project shape is a high-confidence match
+if you are unsure, do not guess; stay on the general profile
+
+Use the specialized profiles only when the primary artifact, working style, and likely drift risks clearly line up:
+
+research-writing.md
+use when the work is driven by sources, claims, evidence, and long-form analytical writing
+product-doc-collaboration.md
+use when the work is driven by PRDs, RFCs, strategy docs, scope decisions, or stakeholder-aligned product writing
+software-project-coordination.md
+use when the work is driven by engineering planning, spec-to-implementation coordination, or repo-level software project continuity
+
+Use general-project-continuity.md when:
+
+the project mixes multiple artifact types
+the project is cross-functional rather than domain-pure
+no specialized profile is an obvious fit
+you need a stable fallback that preserves continuity without over-assuming the project shape
+What RecallLoom Does Not Try To Be
+
+RecallLoom does not try to be:
+
+a general-purpose memory server
+a full agent execution runtime
+a replacement for platform-specific instruction files
+a heavy autonomous coding framework
+
+It is the project continuity layer, not the whole agent stack.
+
+Where To Read More
+references/protocol.md
+references/file-contracts.md
+references/operation-playbooks.md
+references/anti-patterns.md
+references/profiles.md
+License
+
+This package is released under Apache License 2.0.
+
+Weekly Installs
+8
+Repository
+frappucc1no/recall-loom
+GitHub Stars
+11
+First Seen
+4 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

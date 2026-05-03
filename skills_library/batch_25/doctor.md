@@ -1,0 +1,182 @@
+---
+title: doctor
+url: https://skills.sh/yonatangross/orchestkit/doctor
+---
+
+# doctor
+
+skills/yonatangross/orchestkit/doctor
+doctor
+Installation
+$ npx skills add https://github.com/yonatangross/orchestkit --skill doctor
+SKILL.md
+Contains Hooks
+
+This skill uses Claude hooks which can execute code automatically in response to events. Review carefully before installing.
+
+OrchestKit Health Diagnostics
+Argument Resolution
+FLAGS = "$ARGUMENTS"         # Full argument string, e.g., "--verbose" or "--json"
+FLAG = "$ARGUMENTS[0]"       # First token: -v, --verbose, --json, --category=X
+# $ARGUMENTS[0], $ARGUMENTS[1] for indexed access (CC 2.1.59)
+
+STEP 0: Choose Scope (AskUserQuestion — M118 #1464)
+
+A full doctor run takes ~20s. Most invocations only need one slice. Ask the user up-front so voice-flow shortcuts ("just the MCPs") map cleanly:
+
+# Skip the prompt when an explicit scope arg or env override is present:
+#   /ork:doctor cc      → skip, use cc-only
+#   /ork:doctor mcp     → skip, use mcp-only
+#   /ork:doctor plugin  → skip, use plugin-only
+#   ORK_DOCTOR_SCOPE=all (or any of the above) → skip, use the env value
+#
+# Otherwise, ask:
+AskUserQuestion(questions=[{
+  "question": "What should doctor check?",
+  "header": "Scope",
+  "options": [
+    {"label": "Everything (default)", "description": "Full system health — ~20s; runs all 14 categories"},
+    {"label": "CC version & features only", "description": "Categories 10 + 13 + 14; ~3s — for 'is my CC up to date?'"},
+    {"label": "MCP servers only", "description": "Category 12 (incl. pinning sub-check); ~5s — for 'are MCPs working?'"},
+    {"label": "Plugin health only", "description": "Categories 0-3 + 5 (skills, agents, hooks, build); ~8s — for 'after npm run build'"}
+  ]
+}])
+
+
+Skip the prompt entirely when the scope is unambiguous from the invocation. The fast scopes (3-8s) are 3-7× faster than the full run — voice users say "just the MCPs" and get a 5s answer.
+
+Overview
+
+The /ork:doctor command performs comprehensive health checks on your OrchestKit installation. It auto-detects installed plugins and validates 14 categories:
+
+Installed Plugins - Detects ork plugin
+Skills Validation - Frontmatter, references, token budget (dynamic count)
+Agents Validation - Frontmatter, tool refs, skill refs (dynamic count)
+Hook Health - Registration, bundles, async patterns
+Permission Rules - Detects unreachable rules
+Schema Compliance - Validates JSON files against schemas
+Coordination System - Checks lock health and registry integrity
+Context Budget - Monitors token usage against budget
+Memory System - Graph memory health
+Claude Code Version & Channel - Validates CC >= 2.1.111, detects release channel (stable/beta/alpha), recommends 2.1.111+ for xhigh effort, /ultrareview, stream-json plugin_errors
+External Dependencies - Checks optional tool availability (agent-browser)
+MCP Status - Active vs disabled vs misconfigured, API key presence for paid MCPs. CC 2.1.110: detects duplicate definitions across config scopes. Sub-check warns when HIGH-tier servers resolve to @latest in .mcp.json (closes #1462)
+Plugin Validate - Runs claude plugin validate for official CC frontmatter + hooks.json validation (CC >= 2.1.77)
+Effort/Model Compatibility - Warns when xhigh effort is requested without Opus 4.7 (silent fallback otherwise)
+When to Use
+After installing or updating OrchestKit
+When hooks aren't firing as expected
+Before deploying to a team environment
+When debugging coordination issues
+After running npm run build
+Quick Start
+/ork:doctor           # Standard health check
+/ork:doctor -v        # Verbose output
+/ork:doctor --json    # Machine-readable for CI
+
+CLI Options
+Flag	Description
+-v, --verbose	Detailed output per check
+--json	JSON output for CI integration
+--category=X	Run only specific category
+Health Check Categories
+
+Detailed check procedures: Load Read("${CLAUDE_SKILL_DIR}/rules/diagnostic-checks.md") for bash commands and validation logic per category.
+
+MCP-specific checks: Load Read("${CLAUDE_SKILL_DIR}/rules/mcp-status-checks.md") for credential validation and misconfiguration detection.
+
+Output examples: Load Read("${CLAUDE_SKILL_DIR}/references/health-check-outputs.md") for sample output per category.
+
+Categories 0-3: Core Validation
+Category	What It Checks	Reference
+0. Installed Plugins	Auto-detects ork plugin, counts skills/agents	load ${CLAUDE_SKILL_DIR}/rules/diagnostic-checks.md
+1. Skills	Frontmatter, context field, token budget, links	load ${CLAUDE_SKILL_DIR}/references/skills-validation.md
+2. Agents	Frontmatter, model, skill refs, tool refs	load ${CLAUDE_SKILL_DIR}/references/agents-validation.md
+3. Hooks	hooks.json schema, bundles, async patterns	load ${CLAUDE_SKILL_DIR}/references/hook-validation.md
+Categories 4-5: System Health
+Category	What It Checks	Reference
+4. Memory	.claude/memory/ exists, decisions.jsonl integrity, queue depth	load ${CLAUDE_SKILL_DIR}/references/memory-health.md
+5. Build	plugins/ sync with src/, manifest counts, orphans	load ${CLAUDE_SKILL_DIR}/rules/diagnostic-checks.md
+Categories 6-9: Infrastructure
+Category	What It Checks
+6. Permission Rules	Unreachable rules detection
+7. Schema Compliance	JSON files against schemas
+8. Coordination	Multi-worktree lock health, stale locks, sparse paths config
+9. Context Budget	Token usage against budget
+Categories 10-14: Environment
+Category	What It Checks	Reference
+10. CC Version & Channel	Runtime version against minimum required, release channel (stable/beta/alpha)	load ${CLAUDE_SKILL_DIR}/references/version-compatibility.md
+11. External Deps	Optional tools (agent-browser, portless)	load ${CLAUDE_SKILL_DIR}/rules/diagnostic-checks.md
+12. MCP Status	Enabled/disabled state, credential checks, HIGH-tier @latest pinning warn	load ${CLAUDE_SKILL_DIR}/rules/mcp-status-checks.md + ${CLAUDE_SKILL_DIR}/references/mcp-pinning-check.md
+13. Plugin Validate	Official CC frontmatter + hooks.json validation (CC >= 2.1.77)	load ${CLAUDE_SKILL_DIR}/rules/diagnostic-checks.md
+14. Effort/Model	Detects xhigh effort configured without Opus 4.7 — see below	inline
+Category 14: Effort/Model Compatibility (CC 2.1.111+)
+
+CC 2.1.111 added xhigh effort (Opus 4.7 only). Using it with any other model silently falls back to high — producing no error but losing the extra deepening pass documented in the affected skills.
+
+Detection:
+
+If the active model is NOT Opus 4.7, check whether /effort is set to xhigh:
+Read .claude/settings.json → effort field
+Read $ORCHESTKIT_EFFORT env var (populated by the effort-detector hook)
+Check for any skill invocation under .claude/chain/*.json that explicitly set effort: xhigh with a non-4.7 model in scope
+
+Warning format:
+
+WARNING: xhigh effort requires Opus 4.7.
+  Current model: <model-id>
+  Configured effort: xhigh
+  Impact: Skills fall back to high — xhigh's extra deepening pass is lost silently.
+  Fix: Either switch to Opus 4.7 (`claude --model opus-4.7`) or lower effort to `high`.
+
+
+Exit code: Non-zero in --json mode; soft warning in interactive mode.
+
+Report Format
+
+Load Read("${CLAUDE_SKILL_DIR}/references/report-format.md") for ASCII report templates, JSON CI output schema, and exit codes.
+
+Interpreting Results & Troubleshooting
+
+Load Read("${CLAUDE_SKILL_DIR}/references/remediation-guide.md") for the full results interpretation table and troubleshooting steps for common failures (skills validation, build sync, memory).
+
+After you fix an issue
+
+CC 2.1.69+: Run /reload-plugins to activate plugin changes in the current session without restarting.
+
+CC 2.1.116+: /reload-plugins and background plugin auto-update now auto-install missing plugin dependencies from marketplaces you've already added. If ork:doctor flagged a plugin-load failure due to a missing dep, /reload-plugins resolves it in place — no manual plugin install step needed.
+
+Related Skills
+ork:configure - Configure plugin settings
+ork:quality-gates - CI/CD integration
+security-scanning - Comprehensive audits
+References
+
+Load on demand with Read("${CLAUDE_SKILL_DIR}/references/<file>") or Read("${CLAUDE_SKILL_DIR}/rules/<file>"):
+
+File	Content
+rules/diagnostic-checks.md	Bash commands and validation logic per category
+rules/mcp-status-checks.md	Credential validation and misconfiguration detection
+references/remediation-guide.md	Results interpretation and troubleshooting steps
+references/health-check-outputs.md	Sample output per category
+references/skills-validation.md	Skills frontmatter and structure checks
+references/agents-validation.md	Agents frontmatter and tool ref checks
+references/hook-validation.md	Hook registration and bundle checks
+references/memory-health.md	Memory system integrity checks
+references/permission-rules.md	Permission rule detection
+references/schema-validation.md	JSON schema compliance
+references/report-format.md	ASCII report templates and JSON CI output
+references/version-compatibility.md	CC version and channel validation
+references/mcp-pinning-check.md	HIGH-tier MCP @latest warning logic + tier source-of-truth
+Weekly Installs
+123
+Repository
+yonatangross/orchestkit
+GitHub Stars
+162
+First Seen
+Jan 22, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,269 @@
+---
+title: easysdd-feature-design
+url: https://skills.sh/liuzhengdongfortest/easysdd/easysdd-feature-design
+---
+
+# easysdd-feature-design
+
+skills/liuzhengdongfortest/easysdd/easysdd-feature-design
+easysdd-feature-design
+Installation
+$ npx skills add https://github.com/liuzhengdongfortest/easysdd --skill easysdd-feature-design
+SKILL.md
+easysdd-feature-design
+
+这一阶段的产出是一份方案文件 {slug}-design.md，加上从中抽出的行动清单 {slug}-checklist.yaml。这两份东西后面会被两个阶段消费——implement 照着推进、acceptance 照着核对，所以这里写错或写漏，下游就跟着错。
+
+共享路径和命名约定看 easysdd/reference/shared-conventions.md。本阶段一般 feature 目录已经由 brainstorm 创建好了；没有的话在这一步建。
+
+本阶段有两个入口：
+
+正式起草：用户已经能讲清楚需求（或已经填好 {slug}-intent.md），直接进"流程"一节走完整起草。
+初始化模式：用户说"开一个新需求 / 起个草稿 / 新建一个 feature"，但想自己先写半成品方案而不是口述。走下一节"初始化模式"，建好目录和空 {slug}-intent.md 就结束本轮，等用户填完再回来。
+初始化模式：帮用户建目录和 intent 草稿
+
+触发：用户想自己写一份半成品方案（{slug}-intent.md）作为后续 design 的输入，但不想手动建目录。
+
+动作：
+
+和用户快速对齐两件事——一句话需求概要 + 敲定 slug（小写字母、数字、连字符；user-auth、export-csv 这种）。日期取当天（frontmatter 用 currentDate 即可）。feature 目录命名是 YYYY-MM-DD-{slug}。
+
+创建 easysdd/features/{YYYY-MM-DD}-{slug}/ 目录。
+
+写一份空的 {slug}-intent.md 作为草稿骨架，内容就是下面这段：
+
+---
+doc_type: feature-intent
+feature: {YYYY-MM-DD}-{slug}
+status: draft
+summary: {一句话需求，AI 按和用户对齐的结果填}
+---
+
+# {slug} intent
+
+## 背景 / 为什么做
+
+（一句话就够）
+
+## 大致怎么做
+
+（100 字左右描述想法，含关键步骤 / 数据流）
+
+## 相关数据结构 / 类型
+
+（贴相关 types、接口签名、或指向代码位置）
+
+## 已知不做 / 待定
+
+（可选：明确的边界或自己也没想清楚的地方）
+
+
+告知用户"骨架已建好，填完后再来找我，我基于 intent 写正式 design"，然后本轮结束，不继续推进 design 流程。
+
+为什么在这里停？intent 的价值就是让用户离线思考、把脑子里的东西落到纸面。AI 继续问会把 intent 模式退化成 brainstorm，失去意义。
+
+方案文件是给人扫的，不是给人读的
+
+整个 design 的写作风格都围绕这个原则。读者打开 {slug}-design.md 是想 5 分钟内抓到要点，需要细节时知道去哪查——不是要逐字精读。这条原则推出几条具体做法：
+
+每节超过 1 屏就该砍或拆。一屏装不下意味着读者会失去定位感。
+术语先锁死。所有新增术语在动笔前做一遍 grep，覆盖代码、架构中心目录、所有 feature 的方案文件。术语冲突的代价是后面别人查代码找错地方——预防的成本远低于事后理顺的成本。
+示例优先于定义。接口行为先用具体示例（API 用输入→输出，组件用 Props→渲染 / Events 示例），复杂时再补正式类型。读者看到具体输入输出比看一段抽象描述更快建立模型。
+推进按"功能可见度"走，不按代码文件顺序。先做最小闭环（一条端到端能跑通的路径），再叠细节。这样每一步都能独立验证，途中发现走偏也只损失一步。
+新逻辑默认放新文件。新增的内聚逻辑单元默认建独立文件，而不是往已有文件追加。改动计划里每条都标"新建文件"或"追加到已有文件（理由）"。原因是文件越大越难分清职责，往老文件加东西会让后人查 git blame 时把不相关的改动也读一遍。
+同一条信息只在最自然的位置出现一次。重复表述会让读者反复确认"这两条是不是同一件事"，比缺一条还烦。
+流程归流程，模板归模板。先按下文流程走完再按模板填内容，不要边写边切流程。
+起草时的两条判断纪律
+
+写作风格之外还有两条更前置的纪律，决定了这份方案能不能真撑得起 implement / acceptance——不是看起来像方案、实际全是模糊承诺。
+
+1. 别替用户做决定，把不确定明着写出来
+
+写方案时碰到"用户没说清的角落"，默认动作是停下来问，不是自己挑一个填上去。具体落在几件事上：
+
+声明假设：每条不是用户原话讲过的判断（输入边界、错误处理、边角行为）都写成"假设：……"，让用户能精确反驳。
+给选项不要自选：发现一个点有 2-3 种合理做法，先把候选都摆出来再讲自己的倾向，让用户在 review 时能换。
+顺手提一句更简的可能：用户给的方向看起来能用更轻的方式达到同样目标时，明着说"还有一种更简的做法是 ……，要不要先排除它"。别因为用户已经说了方向就闭嘴。
+看不懂就停下来：碰到自己也没把握理解对的需求，直接说"这一段我没把握"，不要硬猜着写下去。
+
+代价很具体：偷偷做的决定到了 implement 会变成"AI 自作主张引入的特殊逻辑"，到了 acceptance 阶段对不上验收点。design 是把所有"以为大家都懂"的事翻到台面上的最后一道关。
+
+2. 目标和约束都写成可验证的
+
+design 的产出要被 implement 照着推进、被 acceptance 照着核对——所以方案里每一条目标和约束都得能独立验证：
+
+不写"让它能跑"这种弱标准。"完成 X 功能" / "处理好错误" / "用户体验顺畅"这类话本质上是把验证责任推回下游。改写成"输入 A 时返回 B"、"错误 X 时显示提示 Y"。
+每一步推进顺序都带退出信号。光写"实现 XX"不够，要写"完成后能通过 {具体测试 / 操作步骤}"。
+"明确不做"也要可验证。"不做 XX"要具体到能被 grep 或测试反向核对，不能写成"不过度设计"这种空话。
+
+退出条件里"每步可独立验证"、"测试设计按功能点组织"就是这条纪律落实下来的检查项——这两节写虚了，等于这条纪律没落地。
+
+流程：什么时候做什么
+1. 启动检查
+
+进入这一阶段先过这几条，没过别动笔：
+
+是不是接续之前的工作——先 Glob easysdd/features/{feature}/{slug}-design.md，看有没有同名方案文件：
+
+没有 → 跳到第 2 条
+有，但是空模板或只有 frontmatter → 当新建处理，跳到第 2 条
+有，status=draft 且各节基本完整 → 上次写完了还没 review，直接跳到本流程"5. 整体 review"步骤
+有，部分节缺失 → 汇报"上次方案写到第 X 节，我补齐剩下的再统一给你 review"，只补缺失的，不重写已完成的
+有，status=approved → 不要默默覆盖，问用户是接着改、还是另起一份新 slug
+
+看有没有前置输入文件——先 Glob easysdd/features/{feature}/{slug}-intent.md 和 {slug}-brainstorm.md：
+
+有 {slug}-intent.md：读完当作用户方案输入，后续不再重复问用户已经在 intent 里讲清楚的东西，只追问 intent 里没覆盖的角落
+有 {slug}-brainstorm.md：读完当作对话沉淀输入
+两者都没有：按用户当前对话里给的信息走
+
+需求输入是否清晰——确认至少有用户目标、核心行为、成功标准、明确不做这四项（可以从 intent / brainstorm / 对话任意来源汇总）。缺了就先补；用户自己也说不清就回退到 brainstorm。
+
+对齐复杂度档位——打开 easysdd/reference/code-dimensions.md，按本 feature 的场景猜一个默认组合（文档末尾有"常用默认组合"表）。然后根据已知需求和上下文，判断哪几个维度可能偏离默认，把偏离点和理由列成清单问用户确认。典型偏离信号：需求里提到"对外 SDK" → 可读性从 team 升到 public；需求里提到"高并发 / 低延迟" → 性能从 reasonable 升到 budgeted；纯探索脚本 → 健壮性从 L2 降到 L1。用户没明确说的维度按默认走，不要把全部 4+4 维度都摆出来让用户挨个选。确认后的结果写进第 1 节"决策与约束"的"复杂度档位"子节，只记偏离默认的维度。
+
+读前置资料——动笔前必读 AGENTS.md、项目架构总入口、架构索引、与需求相关的现有代码和子系统架构 doc。读这一步是为了让你写的方案和现有代码能接得上，不读直接动手大概率写出脱离实际的方案。
+
+对齐 requirement——本 feature 是在实现 / 修改哪个能力？到 easysdd/requirements/ 下 Glob + grep 一遍，三种情况分别处理：
+
+已有对应 req：把 slug 记进方案 frontmatter 的 requirement 字段；动笔前读一遍 req 的"用户故事"和"边界"两节，方案不能和它们冲突。
+没有对应 req，但本 feature 确实新增 / 改变了一个用户可感的能力：停下来，提示用户先触发 easysdd-requirements 起草或更新 req，之后再回来继续 design。
+纯内部重构 / 技术债 / 工具链改造，不新增用户可感能力：不强制要 req，frontmatter requirement 字段留空，在第 1 节"决策与约束"里写一句"本 feature 不新增能力，无对应 requirement"。
+
+归档检索——值不值得搜、优先搜哪些目录，规则在 easysdd/reference/shared-conventions.md 第 5 节。本阶段至少考虑这两个目录：
+
+沉淀目录（统一搜一次，按需按 doc_type 过滤）：
+一把搜：python easysdd/tools/search-yaml.py --dir easysdd/compound --query "{关键词}"
+只看决策：追加 --filter doc_type=decision --filter status=active
+只看技巧：追加 --filter doc_type=trick --filter status=active
+只看经验：追加 --filter doc_type=learning
+只看探索：追加 --filter doc_type=explore
+已有 feature 方案：python easysdd/tools/search-yaml.py --dir easysdd/features --filter doc_type=feature-design --query "{关键词}"
+
+命中后优先复用，并在方案文件里记下引用来源——这样后人看到这份方案能顺着引用一路追回去。
+
+2. 想清楚这功能该放在哪儿
+
+动笔写改动计划前，先想清楚一个更根本的问题：这次要加的东西，在项目整体结构里属于哪儿？
+
+具体问几件事：
+
+这件事是某个现有模块本该承担的吗？是的话在那个模块里扩展，别在外面另起一份。
+这件事横跨多个模块——是不是该抽出一层公共的东西放在中间，还是让某一方主导、其他方依赖它？
+这件事和现有任何模块都不太像？那可能要新建一个独立模块 / 子系统——新模块放哪儿、对外暴露什么、跟别人怎么交互，得提前想清楚。
+已经有模块在做类似的事但名字不一样、你没注意到？grep 项目一下，别因为叫法不同就重复造轮子。
+
+错的放置方式代价很具体：放进本不该承担这件事的模块，那个模块慢慢变成"什么都装的筐"，职责越来越糊；每次都新建平行实现，几个版本的同一件事在项目里共存，后人维护时得猜用哪个。
+
+结论写进方案文件第 1 节"决策与约束"——至少明确一句"本 feature 放在 {模块/层} 里，原因是 {简述}"。涉及新建模块或跨模块接口时，同步写进第 4 节"与项目级架构文档的关系"，并提示要在架构总入口 DESIGN.md 里加指向。
+
+AI 在这一步默认会翻的车是不思考就往眼前最顺手的文件里加——绕过这步直接进步骤 3 就会掉进去。
+
+3. 扫一眼要改的文件现在什么状况
+
+步骤 2 想清楚了放在哪个模块，动手写改动计划前再下沉一层，看这个文件（或类）现在的状态——能不能干净地接住新代码？
+
+看几个维度：
+
+这个文件现在多长？承担了几件事？新加的东西是已有职责的延伸，还是第 N+1 件事？
+这个类有多少方法？新加的方法是同一个职责的自然扩展，还是把这个类推向"什么都能干"？
+涉及前端时还要看组件树层级是不是过深、状态归属是不是清晰（本地 state / props 传递 / 全局 store）。
+
+按严重程度分流：
+
+情况	处理
+状态健康，直接加	正常推进，不用额外动作
+该先收拾一下（把一个太长的文件拆成几个、把一个太重的函数抽出来）	纳入第 3 节"实现提示"里推进顺序子节的第 1 步，范围锁死为"只搬不改行为"，退出信号是"搬完后既有功能不变"
+结构性问题（职责需要重划、模块需要拆合、接口需要重设计）	在第 1 节记为前置依赖，建议拆成独立 feature 先解决；当前 feature 暂缓或标"等前置完成后再推进"
+
+为什么要做这一步？硬塞功能进一个本来就长得不干净的文件，得到的是一个更长更不干净的文件，下一次改动就更难。提前把"该不该先收拾一下"放到台面上，让用户做决定，而不是 AI 偷偷在 PR 里夹带。
+
+结论写进方案文件第 3 节"实现提示"里改动计划子节开头（具体格式见同目录 reference.md）。"健康，直接加"的情况不用写——只在有动作时才记。
+
+4. 补齐剩下各节，整稿一次性给 review
+
+步骤 2 和 3 已经把第 1 节"决策与约束"、第 3 节"实现提示"的关键结论先写进文件了。这一步把剩下的节（第 0 / 2 / 4 节，以及第 1 / 3 节里步骤 2/3 没覆盖的部分）按下文模板补齐，整稿成型后再交给用户看，不要分批让用户看半成品。初稿的 YAML frontmatter 里 status 写 draft。
+
+注意"一次性"是指给用户的 review 次数，不是指写文件的次数——文件本身可以分几轮写完，但只在整稿都齐了之后才发出去。
+
+为什么不分批 review？分批的问题是用户每次只看到局部，发现不了"第 1 节的范围跟第 3 节的推进步骤对不上"这种跨节问题。只有完整初稿摆出来，用户才能扫到全局一致性。
+
+5. 整体 review
+
+向用户发一次整体 review 提示。用户对任意部分提修改意见，你按意见改完再次确认，反复直到用户明确"方案可以了"。用户放行后把 frontmatter 的 status 从 draft 改成 approved。
+
+6. 生成 {slug}-checklist.yaml
+
+方案确认后，从 {slug}-design.md 里抽出行动清单，落到同目录 {slug}-checklist.yaml。这份清单的生命周期看 easysdd/reference/shared-conventions.md：本阶段负责生成，implement 只推进 steps，acceptance 只核对 checks。三个阶段各管一段，互不越界——这样每个阶段都能从 yaml 上看出自己的工作进度。
+
+{slug}-design.md 和 {slug}-checklist.yaml 的完整模板、frontmatter 示例、节锚点、提取格式都在同目录 reference.md 里。本技能只保留提取原则：
+
+steps：从第 3 节"实现提示"里推进顺序子节逐步抽，一步一条
+checks：从这几处综合抽——
+第 1 节"明确不做"的每条 → 范围守护检查项
+第 2 节关键接口契约 → 接口一致性检查项
+第 3 节"实现提示"里测试设计子节的每条测试约束 → 测试验证检查项
+
+落盘后用 validate-yaml.py --file {slug-checklist.yaml 路径} --yaml-only 校验语法。
+
+7. 退出
+
+按下文退出条件清单核对完，引导用户进入阶段 2 实现。
+
+模板和格式
+
+{slug}-design.md / {slug}-checklist.yaml 的完整参考拆到了同目录 reference.md：
+
+YAML frontmatter 示例
+顶层节锚点要求
+{slug}-checklist.yaml 完整格式与状态语义
+第 0-4 节各自该写什么
+
+本技能只保留流程层面的约束：按那份参考一次性起草完整初稿，不分批吐半成品。
+
+整体 review 的提示词同样在 reference.md。规则不变：只发一次整体 review，不要逐节拆开确认。
+
+退出条件
+
+用户整体 review 通过，并且下面这些都满足：
+
+ 做过术语 grep 防冲突并记录结果
+ 已对齐复杂度档位：偏离默认的维度已记入第 1 节"复杂度档位"子节，或明确确认全部走默认
+ 已对齐 requirement：要么 frontmatter 的 requirement 填了对应 slug，要么方案里明确写了"本 feature 不新增能力，无对应 requirement"
+ YAML frontmatter 存在，doc_type / feature / status / summary / tags 都填了
+ 需求摘要含"不做什么"，且后文没有偷偷扩范围
+ 记录了关键决策和被拒方案
+ 每个关键接口有具体示例（API：输入→输出；组件：Props→渲染 / Events），覆盖正常路径和主要错误路径
+ 示例通过注释标了来源位置（文件路径 + 函数 / 组件名）
+ 推进步骤 4-8 步，每步可独立验证
+ 测试设计按功能点组织，每个功能点都有测试约束 / 验证方式 / 关键用例骨架
+ 记录了高风险实现约束
+ 用户确认通过后，frontmatter 的 status 改成了 approved
+ {slug}-checklist.yaml 已从 {slug}-design.md 抽出生成，且通过 validate-yaml.py 校验
+ {slug}-checklist.yaml 的 steps 条目数和第 3 节"实现提示"里推进顺序子节一致
+
+文件路径：方案文件在 easysdd/features/{feature}/ 下；feature 目录不存在就在这一步建。命名约定看 easysdd/reference/shared-conventions.md 第 0 节。
+
+容易踩的坑
+
+下面这些是过去反复出现的反模式，遇到就停一下问自己是不是又掉进去了：
+
+没读 AGENTS.md 和相关架构文档就动笔——写出来的方案大概率跟现有代码对不上
+术语没做防冲突检查——冲突之后 git blame 找原因要花十倍时间
+用散文描述接口行为，没给具体示例——读者建不起模型，review 时没法判断
+把契约层写成全字段百科——已经存在且不变的接口别重复抄
+强行画图——模块就 ≤ 2 个、调用又是线性的，画图反而模糊重点
+推进步骤拆得太细（>8 步）——细到每步都没什么独立价值
+只给半份文档让用户先 review——用户看不出全局一致性
+在需求摘要或改动计划里偷偷扩范围——后面验收时对不上
+Weekly Installs
+97
+Repository
+liuzhengdongfor…/easysdd
+GitHub Stars
+147
+First Seen
+11 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

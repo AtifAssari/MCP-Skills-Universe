@@ -1,0 +1,350 @@
+---
+title: testing-python
+url: https://skills.sh/quick-brown-foxxx/coding_rules_python/testing-python
+---
+
+# testing-python
+
+skills/quick-brown-foxxx/coding_rules_python/testing-python
+testing-python
+Installation
+$ npx skills add https://github.com/quick-brown-foxxx/coding_rules_python --skill testing-python
+SKILL.md
+Testing Python
+
+Tests prove features work. Coverage is secondary. E2e tests beat unit tests. Real beats mocked.
+
+Philosophy
+Trustworthiness > coverage. A test that mocks away the tested thing proves nothing.
+5 good e2e tests > 100 unit tests with heavy mocking.
+Pareto principle. Write the fewest tests that cover 80% of what matters. E2e tests naturally do this.
+Unit tests for pure logic only. Functions that transform data honestly.
+Real over mocked. Real HTTP servers (pytest-httpserver), real tmp dirs, real processes.
+Test Planning
+
+When writing new tests, plan before coding:
+
+List all potential test cases for the feature
+Categorize each as critical, medium, or small importance
+Discard small-importance cases — not worth the maintenance cost
+Write remaining cases in plain text to docs/plans/test-cases-<feature>.md
+Only then write test code
+Test Priority
+CLI / e2e tests — run actual commands, check output + exit codes
+Integration tests — component interaction through public API
+Unit tests — pure data transformation functions
+Skip — framework glue, UI layout, trivial getters
+Project Setup
+Directory Structure
+tests/
+├── unit/              # Pure function tests
+├── integration/       # CLI tests, component interaction
+├── fixtures/          # Shared test data and helpers
+└── conftest.py        # Shared fixtures
+
+pyproject.toml Configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = ["-n", "auto", "--dist", "worksteal"]
+
+markers = [
+    "unit: unit tests",
+    "integration: integration tests",
+]
+
+Dependencies
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "pytest-xdist>=3.5.0",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.3.0",
+    # "pytest-qt>=4.5.0",          # For Qt apps
+    # "pytest-httpserver>=1.1.0",  # For HTTP mocking
+]
+
+Test Examples
+CLI Test Example
+import subprocess
+
+def test_list_profiles_empty() -> None:
+    result = subprocess.run(
+        ["uv", "run", "poe", "app", "list"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0
+    assert "No profiles found" in result.stdout
+
+def test_create_and_list_profile(tmp_path: Path) -> None:
+    env = {**os.environ, "APP_DATA_DIR": str(tmp_path)}
+    subprocess.run(
+        ["uv", "run", "poe", "app", "create", "test-profile"],
+        env=env, check=True,
+    )
+    result = subprocess.run(
+        ["uv", "run", "poe", "app", "list"],
+        capture_output=True, text=True, env=env,
+    )
+    assert "test-profile" in result.stdout
+
+Result Pattern Test Example
+def test_load_config_missing_file() -> None:
+    result = load_config(Path("/nonexistent"))
+    assert result.is_err
+    assert "not found" in result.unwrap_err()
+
+def test_load_config_valid() -> None:
+    result = load_config(Path("tests/fixtures/valid_config.yaml"))
+    assert result.is_ok
+    config = result.unwrap()
+    assert config.name == "test"
+
+Async Test Example
+@pytest.mark.asyncio
+async def test_fetch_data() -> None:
+    result = await fetch_data("https://httpbin.org/get")
+    assert result.is_ok
+
+Fixtures
+Temporary Directories
+@pytest.fixture
+def app_data_dir(tmp_path: Path) -> Path:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    return data_dir
+
+Environment Override
+@pytest.fixture
+def isolated_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> tuple[Path, Path]:
+    config = tmp_path / "config"
+    data = tmp_path / "data"
+    config.mkdir()
+    data.mkdir()
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config))
+    monkeypatch.setenv("XDG_DATA_HOME", str(data))
+    return config, data
+
+Sample Data
+@pytest.fixture
+def sample_audio_16khz() -> np.ndarray:
+    return np.zeros(16000, dtype=np.float32)  # 1 second of silence
+
+HTTP Server Mock (Real Server, Not Patched)
+@pytest.fixture
+def mock_api(httpserver: HTTPServer) -> HTTPServer:
+    httpserver.expect_request("/api/data").respond_with_json({"status": "ok"})
+    return httpserver
+
+def test_fetch_from_api(mock_api: HTTPServer) -> None:
+    result = fetch_data(mock_api.url_for("/api/data"))
+    assert result.is_ok
+
+Running Tests
+
+Tests run in parallel by default (-n auto via addopts). Override with -n0 (sequential) or -n4 (exact count).
+
+uv run poe test                    # All tests (parallel, auto workers)
+uv run pytest tests/unit/          # Unit only
+uv run pytest -n0                  # Force sequential (debugging)
+uv run pytest --cov                # With coverage report
+
+Test Isolation
+
+Every test must set up its own state and clean up after itself. Use tmp_path for files, monkeypatch for env vars, yield fixtures for teardown. Never rely on test ordering or shared mutable state. For heavy setup (containers, DB), isolate between groups — scope fixtures to session/module and use non-overlapping namespaces.
+
+Tests that pass alone but fail in parallel are broken tests — fix isolation, don't disable parallelism.
+
+Flaky Tests
+
+A flaky test is worse than a broken one — broken tests block immediately, flaky tests erode trust silently. Never ignore a flaky test. Fix it, rewrite it, or if the root cause is complex — file a bug and report to the user. No other options.
+
+Coverage Guidelines
+
+Not targets to chase, but sanity checks:
+
+Area	Guideline
+Core business logic	>70%
+CLI commands	>70%
+UI components	>40%
+Utilities	As needed
+
+If coverage is low but e2e tests cover the workflows, that's fine.
+
+Test Validation
+
+After all tests are written and passing, dispatch a separate sub-agent to validate test quality. The validation agent must check:
+
+Meaningful coverage — are tests verifying real behavior, or just producing green checkmarks by testing getters/setters/trivial glue?
+Correctness — are assertions actually testing the right thing? No tautologies, no asserting mocks return what they were told to return.
+No source code compromises — was production code incorrectly adjusted just to make tests pass? Logic changes that serve tests rather than users are bugs.
+No shortcuts — no # type: ignore to silence test failures, no overly broad exception catching, no tests that pass regardless of input.
+
+This step is mandatory before submitting work as complete.
+
+Heavyweight Testing
+
+When lightweight testing isn't enough. Same philosophy, higher infrastructure complexity.
+
+Status: Design document. Not yet fully implemented.
+
+When to Use
+Project has external dependencies (APIs, databases, system services)
+Features depend on specific system state (installed binaries, running daemons)
+Integration failures are costly or hard to debug
+Project is long-lived and maintained by multiple people
+Investment Decision
+
+Ask before building heavyweight infrastructure:
+
+Will this project live long enough to justify the setup time?
+Are integration failures actually happening or just theoretical?
+Can lightweight testing (real tmp dirs, pytest-httpserver) cover 80% of the risk?
+
+If yes to all three: build it. If not: stick with lightweight.
+
+Core Idea
+Instead of...	Use...
+@patch("requests.get")	Real HTTP server (pytest-httpserver or custom)
+@patch("subprocess.run")	Custom lightweight binary that mimics the real one
+unittest.mock.Mock() for DB	Real database in container
+Monkeypatched file operations	Real filesystem in tmp_path or container volume
+Mocked system services (DBus)	Real daemon instance for tests
+Containerized Test Environments
+tests/
+├── containers/
+│   ├── Dockerfile.test-env        # Base test environment
+│   ├── Dockerfile.mock-api        # Mock API server
+│   ├── docker-compose.test.yml    # Orchestration
+│   └── mock-bins/                 # Custom mock binaries
+│       ├── mock-telegram          # Fake Telegram Desktop
+│       └── mock-ffmpeg            # Fake ffmpeg (returns predefined output)
+├── integration/
+│   └── test_with_containers.py
+└── conftest.py                    # Container lifecycle fixtures
+
+Docker Compose for Test Services
+# tests/containers/docker-compose.test.yml
+services:
+  mock-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock-api
+    ports:
+      - "18080:8080"
+
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - "15432:5432"
+
+Container Lifecycle Fixture
+@pytest.fixture(scope="session")
+def test_services():
+    """Start all test containers, yield, then tear down."""
+    compose_file = Path(__file__).parent / "containers" / "docker-compose.test.yml"
+    subprocess.run(
+        ["podman-compose", "-f", str(compose_file), "up", "-d", "--wait"],
+        check=True,
+    )
+    yield
+    subprocess.run(
+        ["podman-compose", "-f", str(compose_file), "down", "-v"],
+        check=True,
+    )
+
+Mock Binaries
+
+Instead of patching subprocess.run(), provide a real binary that behaves predictably:
+
+#!/bin/env python3
+# tests/containers/mock-bins/mock-telegram
+import sys, time, os
+
+print("Telegram Desktop Mock v1.0")
+print(f"Working directory: {os.getcwd()}")
+
+if "-many" in sys.argv and "-workdir" in sys.argv:
+    print(f"Mock Telegram started in {sys.argv[sys.argv.index('-workdir') + 1]}")
+    time.sleep(int(os.environ.get("MOCK_TELEGRAM_LIFETIME", "5")))
+    sys.exit(0)
+
+print("Unknown arguments", sys.argv, file=sys.stderr)
+sys.exit(1)
+
+@pytest.fixture
+def mock_telegram_bin(tmp_path: Path) -> Path:
+    mock_bin = tmp_path / "telegram"
+    mock_bin.write_text(MOCK_TELEGRAM_SCRIPT)
+    mock_bin.chmod(0o755)
+    return mock_bin
+
+async def test_start_instance(mock_telegram_bin: Path) -> None:
+    result = await start_instance(profile, binary_path=mock_telegram_bin)
+    assert result.is_ok
+    pid = result.unwrap()
+    assert pid > 0
+
+Stateful Mock API
+
+For APIs that need to maintain state across requests:
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading, json
+
+class MockAPIHandler(BaseHTTPRequestHandler):
+    profiles: dict[str, dict[str, str | int | bool]] = {}
+
+    def do_POST(self) -> None:
+        if self.path == "/api/profiles":
+            data = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            self.profiles[data["id"]] = data
+            self.send_response(201)
+            self.end_headers()
+            self.wfile.write(json.dumps(data).encode())
+
+    def do_GET(self) -> None:
+        if self.path == "/api/profiles":
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(json.dumps(list(self.profiles.values())).encode())
+
+@pytest.fixture(scope="session")
+def mock_api() -> Generator[str, None, None]:
+    server = HTTPServer(("127.0.0.1", 0), MockAPIHandler)
+    port = server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{port}"
+    server.shutdown()
+
+Real Service Testing (DBus)
+@pytest.fixture(scope="session")
+def dbus_session() -> Generator[str, None, None]:
+    """Start a real DBus session daemon for tests."""
+    process = subprocess.Popen(
+        ["dbus-daemon", "--session", "--print-address", "--nofork"],
+        stdout=subprocess.PIPE,
+    )
+    address = process.stdout.readline().decode().strip()
+    os.environ["DBUS_SESSION_BUS_ADDRESS"] = address
+    yield address
+    process.terminate()
+    process.wait()
+
+Weekly Installs
+17
+Repository
+quick-brown-fox…s_python
+First Seen
+Mar 8, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

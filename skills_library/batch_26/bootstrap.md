@@ -1,0 +1,204 @@
+---
+title: bootstrap
+url: https://skills.sh/boshu2/agentops/bootstrap
+---
+
+# bootstrap
+
+skills/boshu2/agentops/bootstrap
+bootstrap
+Installation
+$ npx skills add https://github.com/boshu2/agentops --skill bootstrap
+SKILL.md
+/bootstrap
+
+Quick Ref: One command to set up the full AgentOps product layer. Progressive — bare repos get everything, existing repos fill gaps only.
+
+YOU MUST EXECUTE THIS WORKFLOW. Do not just describe it.
+
+Quick Start
+/bootstrap
+
+
+That is it. One command. Every step below is idempotent — existing artifacts are never overwritten.
+
+External Tools
+ao (optional) — AgentOps CLI. Required only for hook activation (Step 5). Bootstrap skips hooks gracefully when missing.
+bd (optional, recommended) — beads CLI. Bootstrap probes for bd in Step 0.5 and, when missing, points the user at scripts/install-bd.sh with a copy-paste command. Bootstrap never installs bd on the user's behalf.
+Flags
+Flag	Effect
+--dry-run	Report what would be created without doing anything
+--force	Recreate artifacts even if they already exist
+Execution Steps
+Step 0: Detect Repo State
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "NOT_A_GIT_REPO"; exit 1; }
+HAS_GOALS=$([[ -f GOALS.md ]] && echo true || echo false)
+HAS_PRODUCT=$([[ -f PRODUCT.md ]] && echo true || echo false)
+HAS_README=$([[ -f README.md ]] && echo true || echo false)
+HAS_AGENTS=$([[ -d .agents ]] && echo true || echo false)
+HAS_HOOKS=$(grep -q "agentops" .claude/settings.json 2>/dev/null && echo true || echo false)
+HAS_AO=$(command -v ao >/dev/null && echo true || echo false)
+HAS_BD=$(command -v bd >/dev/null && echo true || echo false)
+
+
+Classify the repo:
+
+State	Condition
+bare	No GOALS.md, no PRODUCT.md, no .agents/
+partial	Some artifacts present, some missing
+complete	All artifacts present
+
+If --dry-run is set: report the state and what would be created, including whether bd would be recommended (when HAS_BD is false), then stop. Do not proceed to Steps 1-6.
+
+If the repo is complete and --force is not set: report "Repo is fully bootstrapped. Nothing to do." and stop.
+
+Step 0.5: Recommend bd
+
+If HAS_BD is true: skip. Report "bd: present."
+
+If HAS_BD is false: report "bd: not installed (recommended). Install with: bash scripts/install-bd.sh" and continue. Bootstrap does NOT run the installer — bd is optional, the user decides.
+
+If scripts/install-bd.sh is absent at the repo root, drop the install hint and just report "bd: not installed (recommended). See https://github.com/steveyegge/beads".
+
+Step 1: GOALS.md
+
+If HAS_GOALS is false (or --force is set):
+
+Run the goals skill to initialize GOALS.md interactively:
+
+Skill(skill="goals", args="init")
+
+
+If HAS_GOALS is true and --force is not set: skip. Report "GOALS.md exists -- skipped."
+
+Step 2: PRODUCT.md
+
+If HAS_PRODUCT is false (or --force is set):
+
+Run the product skill to generate PRODUCT.md interactively:
+
+Skill(skill="product")
+
+
+If HAS_PRODUCT is true and --force is not set: skip. Report "PRODUCT.md exists -- skipped."
+
+Step 3: README.md
+
+If HAS_README is false (or --force is set) AND PRODUCT.md now exists:
+
+Run the readme skill to generate README.md:
+
+Skill(skill="readme")
+
+
+If HAS_README is true and --force is not set: skip. Report "README.md exists -- skipped."
+
+If PRODUCT.md does not exist (Step 2 was skipped or failed): skip. Report "README.md skipped -- PRODUCT.md required first."
+
+Step 4: .agents/ Structure
+
+If HAS_AGENTS is false (or --force is set):
+
+Create the directory structure:
+
+mkdir -p .agents/learnings .agents/council .agents/research .agents/plans .agents/rpi
+
+
+Create .agents/AGENTS.md if it does not exist:
+
+# Agent Knowledge Store
+
+This directory contains accumulated knowledge from agent sessions.
+
+## Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `learnings/` | Extracted lessons and patterns |
+| `council/` | Council validation artifacts |
+| `research/` | Research phase outputs |
+| `plans/` | Implementation plans |
+| `rpi/` | RPI execution packets and phase logs |
+
+## Usage
+
+Knowledge is automatically managed by the AgentOps flywheel:
+- `/inject` surfaces relevant prior knowledge at session start
+- `/post-mortem` extracts and processes new learnings
+- `/compile` runs maintenance (mine, grow, defrag)
+
+
+If HAS_AGENTS is true and --force is not set: skip. Report ".agents/ exists -- skipped."
+
+Step 5: Hook Activation
+
+If HAS_AO is true AND HAS_HOOKS is false (or --force is set):
+
+ao init --hooks
+
+
+If HAS_AO is false: skip. Report "Hooks skipped -- ao CLI not installed. Run: brew tap boshu2/agentops https://github.com/boshu2/homebrew-agentops && brew install agentops"
+
+If HAS_HOOKS is true and --force is not set: skip. Report "Hooks already configured -- skipped."
+
+Step 6: Report
+
+Output a summary table:
+
+Bootstrap complete.
+
+| Artifact      | Status  |
+|---------------|---------|
+| GOALS.md      | created / skipped / failed |
+| PRODUCT.md    | created / skipped / failed |
+| README.md     | created / skipped / failed |
+| .agents/      | created / skipped / failed |
+| Hooks         | activated / skipped / failed |
+| bd            | present / recommended (not installed) |
+
+Repo is now AgentOps-ready. Next: /rpi "your first goal"
+
+Examples
+Bare Repo
+
+User says: /bootstrap
+
+What happens: Agent detects no AgentOps artifacts. Runs /goals init, /product, /readme, creates .agents/ structure, activates hooks. Reports all five artifacts created.
+
+Partial Repo (has GOALS.md and .agents/)
+
+User says: /bootstrap
+
+What happens: Agent detects existing artifacts. Skips GOALS.md and .agents/. Runs /product, /readme. Activates hooks if needed. Reports two created, three skipped.
+
+Dry Run
+
+User says: /bootstrap --dry-run
+
+What happens: Agent detects repo state and reports what would be created. No files are written.
+
+Troubleshooting
+Problem	Cause	Solution
+"Not a git repo"	No .git directory	Run git init first
+Goals skill fails	No project context	Provide a one-line project description when prompted
+Product skill fails	No goals defined	Run /goals init manually first, then re-run /bootstrap
+Hooks not activating	ao CLI not installed	Install: brew tap boshu2/agentops https://github.com/boshu2/homebrew-agentops && brew install agentops
+bd not installed	Recommended but optional	Install with bash scripts/install-bd.sh if you want issue tracking; otherwise ignore
+Want to start over	Existing artifacts blocking	Use --force to recreate all artifacts
+See Also
+goals -- Fitness specification and directive management
+product -- Product definition generation
+readme -- README generation
+quickstart -- New user onboarding (lighter than bootstrap)
+Weekly Installs
+28
+Repository
+boshu2/agentops
+GitHub Stars
+323
+First Seen
+Mar 31, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

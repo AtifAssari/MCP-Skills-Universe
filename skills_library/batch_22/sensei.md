@@ -1,0 +1,358 @@
+---
+title: sensei
+url: https://skills.sh/spboyer/sensei/sensei
+---
+
+# sensei
+
+skills/spboyer/sensei/sensei
+sensei
+Installation
+$ npx skills add https://github.com/spboyer/sensei --skill sensei
+SKILL.md
+Sensei
+
+"A true master teaches not by telling, but by refining."
+
+Automates skill frontmatter improvement using the Ralph loop pattern - iteratively improving skills until they reach Medium-High compliance with passing tests.
+
+Help
+
+When user says "sensei help" or asks how to use sensei:
+
+╔══════════════════════════════════════════════════════════════════╗
+║  SENSEI - Skill Frontmatter Compliance Improver                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║  USAGE:                                                          ║
+║    Run sensei on <skill-name>              # Single skill        ║
+║    Run sensei on <skill-name> --fast       # Skip tests          ║
+║    Run sensei on <skill1>, <skill2>        # Multiple skills     ║
+║    Run sensei on all Low-adherence skills  # Batch by score      ║
+║    Run sensei on all skills                # All skills          ║
+║                                                                  ║
+║  WHAT IT DOES:                                                   ║
+║    1. READ    - Load skill's SKILL.md and count tokens           ║
+║    2. SCORE   - Check compliance (Low/Medium/Medium-High/High)   ║
+║    3. SCAFFOLD- Create tests from template if missing            ║
+║    4. IMPROVE - Add WHEN: triggers (cross-model optimized)       ║
+║    5. TEST    - Run tests, fix if needed                         ║
+║    6. TOKENS  - Check token budget                               ║
+║    7. SUMMARY - Show before/after comparison                     ║
+║    8. PROMPT  - Ask: Commit, Create Issue, or Skip?              ║
+║    9. REPEAT  - Until Medium-High score achieved                 ║
+║                                                                  ║
+║  TARGET SCORE: Medium-High                                       ║
+║    ✓ Description > 150 chars, ≤ 60 words                         ║
+║    ✓ Has "WHEN:" trigger phrases (preferred)                     ║
+║    ✓ No "DO NOT USE FOR:" (risky in multi-skill envs)             ║
+║    ✓ Has "INVOKES:" for tool relationships (optional)            ║
+║    ✓ SKILL.md < 500 tokens (soft limit)                          ║
+║                                                                  ║
+║  MCP INTEGRATION (when INVOKES present):                         ║
+║    ✓ Has "MCP Tools Used" table                                  ║
+║    ✓ Has Prerequisites section                                   ║
+║    ✓ Has CLI fallback pattern                                    ║
+║    ✓ No skill-tool name collision                                ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Configuration
+
+Sensei uses these defaults (override by specifying in your prompt):
+
+Setting	Default	Description
+Skills directory	skills/ or .github/skills/	Where SKILL.md files live
+Tests directory	tests/	Where test files live
+Token soft limit	500	Target for SKILL.md
+Token hard limit	5000	Maximum for SKILL.md
+Target score	Medium-High	Minimum compliance level
+Max iterations	5	Per-skill loop limit
+
+Auto-detect skills directory by checking (in order):
+
+skills/ in project root
+.github/skills/
+User-specified path
+Invocation Modes
+Single Skill
+Run sensei on my-skill-name
+
+Multiple Skills
+Run sensei on skill-a, skill-b, skill-c
+
+By Adherence Level
+Run sensei on all Low-adherence skills
+Run sensei on all Medium-adherence skills
+
+All Skills
+Run sensei on all skills
+
+Fast Mode (Skip Tests)
+Run sensei on my-skill --fast
+
+GEPA Mode (Deep Optimization)
+Run sensei on my-skill --gepa
+Run sensei on my-skill --gepa --fast
+Run sensei on all skills --gepa
+
+
+When --gepa is used, Step 5 (IMPROVE) is replaced with GEPA evolutionary optimization. Instead of template-based improvements, GEPA uses the existing test harness as a fitness function and an LLM to propose and evaluate many candidate improvements automatically.
+
+GEPA score-only mode (no LLM calls, just evaluate current quality):
+
+Run sensei score my-skill
+Run sensei score all skills
+
+The Ralph Loop
+
+For each skill, execute this loop until score >= Medium-High:
+
+Step 1: READ
+
+Load the skill's current state:
+
+{skills-dir}/{skill-name}/SKILL.md
+{tests-dir}/{skill-name}/ (if exists)
+
+
+Run token count:
+
+npm run tokens -- count {skills-dir}/{skill-name}/SKILL.md
+
+Step 2: SCORE
+
+Assess compliance by checking the frontmatter for:
+
+Description length (>= 150 chars, ≤ 60 words)
+"WHEN:" trigger phrases (preferred) or "USE FOR:"
+Routing clarity ("INVOKES:", "FOR SINGLE OPERATIONS:")
+No "DO NOT USE FOR:" anti-triggers (risky in multi-skill environments)
+
+See references/scoring.md for detailed criteria.
+
+Step 3: CHECK
+
+If score >= Medium-High AND tests pass → go to SUMMARY step.
+
+Step 4: SCAFFOLD (if needed)
+
+If {tests-dir}/{skill-name}/ doesn't exist, create test scaffolding using templates from references/test-templates/.
+
+Step 5: IMPROVE FRONTMATTER
+
+Enhance the SKILL.md description to include:
+
+Lead with action verb - First sentence: unique action verb + domain
+Trigger phrases - "WHEN:" (preferred) or "USE FOR:" with 3-5 distinctive quoted phrases
+Keep description under 60 words and 1024 characters
+
+⚠️ "DO NOT USE FOR:" carries context-dependent risk. In multi-skill environments (10+ skills with overlapping domains), anti-trigger clauses introduce the very keywords that cause wrong-skill activation on Claude Sonnet and fast-pattern-matching models (evidence). For small, isolated skill sets (1-5 skills), the risk is low. When in doubt, use positive routing with WHEN: and distinctive quoted phrases.
+
+Template (cross-model optimized):
+
+---
+name: skill-name
+description: "[ACTION VERB] [UNIQUE_DOMAIN]. [One clarifying sentence]. WHEN: \"[phrase1]\", \"[phrase2]\", \"[phrase3]\", \"[phrase4]\", \"[phrase5]\"."
+---
+
+
+Template (with routing clarity for High score):
+
+---
+name: skill-name
+description: "**WORKFLOW SKILL** — [ACTION VERB] [UNIQUE_DOMAIN]. [Clarifying sentence]. WHEN: \"[phrase1]\", \"[phrase2]\", \"[phrase3]\". INVOKES: [tools/MCP servers used]. FOR SINGLE OPERATIONS: [when to bypass this skill]."
+---
+
+Step 5-GEPA: IMPROVE WITH GEPA (when --gepa flag is set)
+
+Replaces Step 5 with automated evolutionary optimization. Step 6 (IMPROVE TESTS) still runs normally.
+
+Auto-discover test harness: Read {tests-dir}/{skill-name}/triggers.test.ts and extract shouldTriggerPrompts and shouldNotTriggerPrompts arrays automatically.
+
+Build evaluator: Construct a GEPA evaluator that scores candidates on:
+
+Content quality (has ## Triggers, ## Rules, ## Steps, USE FOR, WHEN)
+Frontmatter description compliance (length, trigger phrases)
+Trigger accuracy (keywords extracted from description match test prompts correctly)
+
+Run optimization: Call the GEPA auto-evaluator script:
+
+python scripts/src/gepa/auto_evaluator.py optimize \
+  --skill {skill-name} \
+  --skills-dir {skills-dir} \
+  --tests-dir {tests-dir} \
+  --iterations 80
+
+
+Review output: GEPA produces an optimized SKILL.md body. Show the diff to the user. The GEPA evaluator auto-generates from existing tests — no manual configuration needed.
+
+Key: GEPA wraps existing tests as its fitness function. It does NOT replace or modify tests. The LLM proposes improved SKILL.md text, and the evaluator scores each candidate against the same test prompts the CI already uses. Only improvements that score higher are kept.
+
+Step 6: IMPROVE TESTS
+
+Update test prompts to match new frontmatter:
+
+shouldTriggerPrompts - 5+ prompts matching "WHEN:" or "USE FOR:" phrases
+shouldNotTriggerPrompts - 5+ prompts for unrelated topics and different-skill scenarios
+Step 7: VERIFY
+
+Run tests (skip if --fast flag):
+
+# Framework-specific command based on project
+npm test -- --testPathPattern={skill-name}  # Jest
+pytest tests/{skill-name}/                   # pytest
+waza run tests/{skill-name}/trigger_tests.yaml  # Waza
+
+Step 8: TOKENS
+
+Check token budget:
+
+npm run tokens -- check {skills-dir}/{skill-name}/SKILL.md
+
+
+Budget guidelines:
+
+SKILL.md: < 500 tokens (soft), < 5000 (hard)
+references/*.md: < 1000 tokens each
+Step 8b: MCP INTEGRATION (if INVOKES present)
+
+When description contains INVOKES:, check:
+
+MCP Tools Used table - Does skill body have the table?
+Prerequisites section - Are requirements documented?
+CLI fallback - Is there a fallback when MCP unavailable?
+Name collision - Does skill name match an MCP tool?
+
+If checks fail, add missing sections using patterns from mcp-integration.md.
+
+Step 9: SUMMARY
+
+Display before/after comparison:
+
+╔══════════════════════════════════════════════════════════════════╗
+║  SENSEI SUMMARY: {skill-name}                                    ║
+╠══════════════════════════════════════════════════════════════════╣
+║  BEFORE                          AFTER                           ║
+║  ──────                          ─────                           ║
+║  Score: Low                      Score: Medium-High              ║
+║  Tokens: 142                     Tokens: 385                     ║
+║  Triggers: 0                     Triggers: 5                     ║
+║  Anti-triggers: 0                Anti-triggers: 3                ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Step 10: PROMPT USER
+
+Ask how to proceed:
+
+[C] Commit - Save with message sensei: improve {skill-name} frontmatter
+[I] Create Issue - Open issue with summary and suggestions
+[S] Skip - Discard changes, move to next skill
+Step 11: REPEAT or EXIT
+If score < Medium-High AND iterations < 5 → go to Step 2
+If iterations >= 5 → timeout, show summary, move to next skill
+Scoring Quick Reference
+Score	Requirements
+Invalid	Description > 1024 chars (exceeds spec hard limit)
+Low	Description < 150 chars OR no triggers
+Medium	Description >= 150 chars AND has triggers but >60 words
+Medium-High	Has "WHEN:" (preferred) or "USE FOR:" with ≤60 words
+High	Medium-High + routing clarity (INVOKES/FOR SINGLE OPERATIONS)
+
+⚠️ "DO NOT USE FOR:" is risky in multi-skill environments (10+ overlapping skills) — causes keyword contamination on fast-pattern-matching models. Safe for small, isolated skill sets. Use positive routing with WHEN: for cross-model safety.
+
+MCP Integration Score (when INVOKES present)
+Check	Status
+MCP Tools Used table	✓/✗
+Prerequisites section	✓/✗
+CLI fallback pattern	✓/✗
+No name collision	✓/✗
+
+See references/scoring.md for full criteria. See references/mcp-integration.md for MCP patterns.
+
+Frontmatter Patterns
+Skill Classification Prefix
+
+Add a prefix to clarify the skill type:
+
+**WORKFLOW SKILL** - Multi-step orchestration
+**UTILITY SKILL** - Single-purpose helper
+**ANALYSIS SKILL** - Read-only analysis/reporting
+Routing Clarity (for High score)
+
+When skills interact with MCP tools or other skills, add:
+
+INVOKES: - What tools/skills this skill calls
+FOR SINGLE OPERATIONS: - When to bypass this skill
+Quick Example
+
+Before (Low):
+
+description: 'Process PDF files'
+
+
+After (High with routing, cross-model optimized):
+
+description: "**WORKFLOW SKILL** — Extract, rotate, merge, and split PDF files. WHEN: \"extract PDF text\", \"rotate PDF pages\", \"merge PDFs\", \"split PDF\". INVOKES: pdf-tools MCP for extraction, file-system for I/O. FOR SINGLE OPERATIONS: Use pdf-tools MCP directly for simple extractions."
+
+
+See references/examples.md for more before/after transformations.
+
+Commit Messages
+sensei: improve {skill-name} frontmatter
+
+Reference Documentation
+scoring.md - Detailed scoring criteria and algorithm
+mcp-integration.md - MCP tool integration patterns
+loop.md - Ralph loop workflow details
+examples.md - Before/after transformation examples
+configuration.md - Project setup patterns
+test-templates/ - Test scaffolding templates
+test-templates/waza.md - Waza trigger test format
+Built-in Scripts
+
+Run npm run tokens help for full usage.
+
+Token Commands
+npm run tokens count              # Count all markdown files
+npm run tokens check              # Check against token limits
+npm run tokens suggest            # Get optimization suggestions
+npm run tokens compare            # Compare with git history
+
+GEPA Commands
+
+Requires: pip install gepa (or uv pip install gepa). See requirements.
+
+# Score a single skill (no LLM calls, instant)
+python scripts/src/gepa/auto_evaluator.py score --skill azure-deploy --skills-dir skills --tests-dir tests
+
+# Score all skills
+python scripts/src/gepa/auto_evaluator.py score-all --skills-dir skills --tests-dir tests
+
+# Optimize a skill (requires LLM API — uses GitHub Models via gh auth token)
+python scripts/src/gepa/auto_evaluator.py optimize --skill azure-deploy --skills-dir skills --tests-dir tests
+
+# JSON output (for CI pipelines)
+python scripts/src/gepa/auto_evaluator.py score-all --skills-dir skills --tests-dir tests --json
+
+Configuration
+
+Create .token-limits.json to customize limits:
+
+{
+  "defaults": { "SKILL.md": 500, "references/**/*.md": 1000 },
+  "overrides": { "README.md": 3000 }
+}
+
+Weekly Installs
+48
+Repository
+spboyer/sensei
+GitHub Stars
+34
+First Seen
+Feb 14, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykPass

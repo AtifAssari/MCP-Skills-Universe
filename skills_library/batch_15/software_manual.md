@@ -1,0 +1,178 @@
+---
+title: software-manual
+url: https://skills.sh/catlog22/claude-code-workflow/software-manual
+---
+
+# software-manual
+
+skills/catlog22/claude-code-workflow/software-manual
+software-manual
+Installation
+$ npx skills add https://github.com/catlog22/claude-code-workflow --skill software-manual
+SKILL.md
+Software Manual Skill
+
+Generate comprehensive, interactive software manuals in TiddlyWiki-style single-file HTML format.
+
+Architecture Overview
+┌─────────────────────────────────────────────────────────────────┐
+│  Context-Optimized Architecture                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Phase 1: Requirements      → manual-config.json                │
+│           ↓                                                      │
+│  Phase 2: Exploration       → exploration-*.json                │
+│           ↓                                                      │
+│  Phase 3: Parallel Agents   → sections/section-*.md             │
+│           ↓ (6 Agents)                                          │
+│  Phase 3.5: Consolidation   → consolidation-summary.md          │
+│           ↓                                                      │
+│  Phase 4: Screenshot        → screenshots/*.png                 │
+│           Capture              (via Chrome MCP)                 │
+│           ↓                                                      │
+│  Phase 5: HTML Assembly     → {name}-使用手册.html              │
+│           ↓                                                      │
+│  Phase 6: Refinement        → iterations/                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+Key Design Principles
+主 Agent 编排，子 Agent 执行: 所有繁重计算委托给 universal-executor 子 Agent
+Brief Returns: Agents return path + summary, not full content (avoid context overflow)
+System Agents: 使用 cli-explore-agent (探索) 和 universal-executor (执行)
+成熟库内嵌: marked.js (MD 解析) + highlight.js (语法高亮)，无 CDN 依赖
+Single-File HTML: TiddlyWiki-style interactive document with embedded resources
+动态标签: 根据实际章节自动生成导航标签
+Execution Flow
+┌─────────────────────────────────────────────────────────────────┐
+│  Phase 1: Requirements Discovery (主 Agent)                     │
+│  → AskUserQuestion: 收集软件类型、目标用户、文档范围             │
+│  → Output: manual-config.json                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 2: Project Exploration (cli-explore-agent × N)           │
+│  → 并行探索: architecture, ui-routes, api-endpoints, config     │
+│  → Output: exploration-*.json                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 2.5: API Extraction (extract_apis.py)                    │
+│  → 自动提取: FastAPI/TypeDoc/pdoc                                │
+│  → Output: api-docs/{backend,frontend,modules}/*.md             │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 3: Parallel Analysis (universal-executor × 6)            │
+│  → 6 个子 Agent 并行: overview, ui-guide, api-docs, config,     │
+│    troubleshooting, code-examples                               │
+│  → Output: sections/section-*.md                                │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 3.5: Consolidation (universal-executor)                  │
+│  → 质量检查: 一致性、交叉引用、截图标记                          │
+│  → Output: consolidation-summary.md, screenshots-list.json      │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 4: Screenshot Capture (universal-executor + Chrome MCP)  │
+│  → 批量截图: 调用 mcp__chrome__screenshot                        │
+│  → Output: screenshots/*.png + manifest.json                    │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 5: HTML Assembly (universal-executor)                    │
+│  → 组装 HTML: MD→tiddlers, 嵌入 CSS/JS/图片                     │
+│  → Output: {name}-使用手册.html                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  Phase 6: Iterative Refinement (主 Agent)                       │
+│  → 预览 + 用户反馈 + 迭代修复                                    │
+│  → Output: iterations/v*.html                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+Agent Configuration
+Agent	Role	Output File	Focus Areas
+overview	Product Manager	section-overview.md	Product intro, features, quick start
+ui-guide	UX Expert	section-ui-guide.md	UI operations, step-by-step guides
+api-docs	API Architect	section-api-reference.md	REST API, Frontend API
+config	DevOps Engineer	section-configuration.md	Env vars, deployment, settings
+troubleshooting	Support Engineer	section-troubleshooting.md	FAQs, error codes, solutions
+code-examples	Developer Advocate	section-examples.md	Beginner/Intermediate/Advanced examples
+Agent Return Format
+interface ManualAgentReturn {
+  status: "completed" | "partial" | "failed";
+  output_file: string;
+  summary: string;                    // Max 50 chars
+  screenshots_needed: Array<{
+    id: string;                       // e.g., "ss-login-form"
+    url: string;                      // Relative or absolute URL
+    description: string;              // "Login form interface"
+    selector?: string;                // CSS selector for partial screenshot
+    wait_for?: string;                // Element to wait for
+  }>;
+  cross_references: string[];         // Other sections referenced
+  difficulty_level: "beginner" | "intermediate" | "advanced";
+}
+
+HTML Features (TiddlyWiki-style)
+Search: Full-text search with result highlighting
+Collapse/Expand: Per-section collapsible content
+Tag Navigation: Filter by category tags
+Theme Toggle: Light/Dark mode with localStorage persistence
+Single File: All CSS/JS/images embedded as Base64
+Offline: Works without internet connection
+Print-friendly: Optimized print stylesheet
+Directory Setup
+// Generate timestamp directory name
+const timestamp = new Date().toISOString().slice(0,19).replace(/[-:T]/g, '');
+const dir = `.workflow/.scratchpad/manual-${timestamp}`;
+
+// Windows
+Bash(`mkdir "${dir}\\sections" && mkdir "${dir}\\screenshots" && mkdir "${dir}\\api-docs" && mkdir "${dir}\\iterations"`);
+
+Output Structure
+.workflow/.scratchpad/manual-{timestamp}/
+├── manual-config.json              # Phase 1
+├── exploration/                    # Phase 2
+│   ├── exploration-architecture.json
+│   ├── exploration-ui-routes.json
+│   └── exploration-api-endpoints.json
+├── sections/                       # Phase 3
+│   ├── section-overview.md
+│   ├── section-ui-guide.md
+│   ├── section-api-reference.md
+│   ├── section-configuration.md
+│   ├── section-troubleshooting.md
+│   └── section-examples.md
+├── consolidation-summary.md        # Phase 3.5
+├── api-docs/                       # API documentation
+│   ├── frontend/                   # TypeDoc output
+│   └── backend/                    # Swagger/OpenAPI output
+├── screenshots/                    # Phase 4
+│   ├── ss-*.png
+│   └── screenshots-manifest.json
+├── iterations/                     # Phase 6
+│   ├── v1.html
+│   └── v2.html
+└── {软件名}-使用手册.html           # Final Output
+
+Reference Documents
+Document	Purpose
+phases/01-requirements-discovery.md	用户配置收集
+phases/02-project-exploration.md	项目类型检测
+phases/02.5-api-extraction.md	API 自动提取
+phases/03-parallel-analysis.md	6 Agent 并行分析
+phases/03.5-consolidation.md	整合与质量检查
+phases/04-screenshot-capture.md	Chrome MCP 截图
+phases/05-html-assembly.md	HTML 组装
+phases/06-iterative-refinement.md	迭代优化
+specs/quality-standards.md	质量标准
+specs/writing-style.md	写作风格
+templates/tiddlywiki-shell.html	HTML 模板
+templates/css/wiki-base.css	基础样式
+templates/css/wiki-dark.css	暗色主题
+scripts/bundle-libraries.md	库文件打包
+scripts/api-extractor.md	API 提取说明
+scripts/extract_apis.py	API 提取脚本
+scripts/screenshot-helper.md	截图辅助
+Weekly Installs
+19
+Repository
+catlog22/claude…workflow
+GitHub Stars
+1.9K
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubWarn
+SocketPass
+SnykPass

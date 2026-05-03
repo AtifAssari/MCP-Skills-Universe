@@ -1,0 +1,67 @@
+---
+rating: ⭐⭐
+title: careers-page-generator
+url: https://skills.sh/kostja94/marketing-skills/careers-page-generator
+---
+
+# careers-page-generator
+
+skills/kostja94/marketing-skills/careers-page-generator
+careers-page-generator
+Installation
+$ npx skills add https://github.com/kostja94/marketing-skills --skill careers-page-generator
+SKILL.md
+Pages: Careers
+
+Guides careers page content, structure, and employer branding for recruitment.
+
+When invoking: On first use, if helpful, open with 1–2 sentences on what this skill covers and why it matters, then provide the main output. On subsequent use or when the user asks to skip, go directly to the main output.
+
+Initial Assessment
+
+Check for project context first: If .claude/project-context.md or .cursor/project-context.md exists, read it for company values, culture, and differentiators.
+
+Identify:
+
+Audience: Job seekers, passive candidates
+Open roles: List or link to ATS
+Employer brand: Culture, benefits, perks
+Best Practices
+Essential Elements
+Element	Purpose
+Open positions	List or link to job board/ATS
+Company culture	Values, team, work environment
+Benefits	Health, remote, PTO, learning
+Process	What to expect when applying
+CTA	Apply, view roles, contact recruiting
+Structure
+Hero: Employer value proposition; "Join us"
+Open roles: List or embed; filter by department/location
+Why us: Culture, benefits, growth
+Team: Photos, quotes, diversity
+Process: Application steps
+SEO
+Target "company name careers," "jobs at company"
+Schema: JobPosting for each role
+Internal links from About, Home
+Output Format
+Structure outline
+Employer brand messaging
+Open roles section approach
+SEO metadata and schema
+Related Skills
+about-page-generator: Culture and team overlap
+schema-markup: JobPosting schema
+title-tag, meta-description, page-metadata: Careers page metadata
+Weekly Installs
+517
+Repository
+kostja94/market…g-skills
+GitHub Stars
+413
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

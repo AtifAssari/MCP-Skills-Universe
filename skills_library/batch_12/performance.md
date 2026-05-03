@@ -1,0 +1,147 @@
+---
+title: performance
+url: https://skills.sh/duc01226/easyplatform/performance
+---
+
+# performance
+
+skills/duc01226/easyplatform/performance
+performance
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill performance
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Understand Code First — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+
+Search 3+ similar patterns (grep/glob) — cite file:line evidence
+Read existing files in target area — understand structure, base classes, conventions
+Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists
+Map dependencies via connections or callers_of — know what depends on your target
+Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files)
+Re-read analysis file before implementing — never work from memory alone
+NEVER invent new patterns when existing ones work — match exactly or document deviation
+
+BLOCKED until: - [ ] Read target files - [ ] Grep 3+ patterns - [ ] Graph trace (if graph.db exists) - [ ] Assumptions verified with evidence
+
+Evidence-Based Reasoning — Speculation is FORBIDDEN. Every claim needs proof.
+
+Cite file:line, grep results, or framework docs for EVERY claim
+Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+Cross-service validation required for architectural changes
+"I don't have enough evidence" is valid and expected output
+
+BLOCKED until: - [ ] Evidence file path (file:line) - [ ] Grep search performed - [ ] 3+ similar patterns found - [ ] Confidence level stated
+
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because" If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+docs/project-reference/domain-entities-reference.md — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+
+Evidence Gate: MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires file:line proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+External Memory: For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in plans/reports/ — prevents context loss and serves as deliverable.
+
+Quick Summary
+
+Goal: Analyze and optimize performance bottlenecks in database queries, API endpoints, or frontend rendering.
+
+Workflow:
+
+Profile — Identify bottlenecks using profiling data or metrics
+Analyze — Trace hot paths and measure impact
+Optimize — Apply targeted optimizations with before/after measurements
+
+Key Rules:
+
+Analysis Mindset: measure before and after, never optimize blindly
+Evidence-based: every claim needs profiling data or benchmarks
+Focus on highest-impact bottlenecks first
+
+$ARGUMENTS
+
+Analysis Mindset (NON-NEGOTIABLE)
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Do NOT assume a bottleneck location — verify with actual code traces and profiling evidence
+Every performance claim must include file:line evidence
+If you cannot prove a bottleneck with a code trace, state "suspected, not confirmed"
+Question assumptions: "Is this really slow?" → trace the actual execution path and query plan
+Challenge completeness: "Are there other bottlenecks?" → check the full request pipeline
+No "should improve performance" without proof — measure before and after
+
+[IMPORTANT] Database Performance Protocol (MANDATORY):
+
+Paging Required — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded GetAll(), ToList(), or Find() without Skip/Take or cursor-based paging.
+Index Required — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+⚠️ MANDATORY: Confidence & Evidence Gate
+
+MANDATORY IMPORTANT MUST ATTENTION declare Confidence: X% with profiling data + file:line proof for EVERY claim. 95%+ recommend freely | 80-94% with caveats | 60-79% list unknowns | <60% STOP — gather more evidence.
+
+Activate arch-performance-optimization skill and follow its workflow.
+
+CRITICAL: Present findings and optimization plan. Wait for explicit user approval before making changes.
+
+Graph-Assisted Investigation — MANDATORY when .code-graph/graph.db exists.
+
+HARD-GATE: MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
+
+Pattern: Grep finds files → trace --direction both reveals full system flow → Grep verifies details
+
+Task	Minimum Graph Action
+Investigation/Scout	trace --direction both on 2-3 entry files
+Fix/Debug	callers_of on buggy function + tests_for
+Feature/Enhancement	connections on files to be modified
+Code Review	tests_for on changed functions
+Blast Radius	trace --direction downstream
+
+CLI: python .claude/scripts/code_graph {command} --json. Use --node-mode file first (10-30x less noise), then --node-mode function for detail.
+
+Run python .claude/scripts/code_graph query callers_of <function> --json on hot functions to understand call frequency.
+
+Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If .code-graph/graph.db exists, enhance analysis with structural queries:
+
+Identify hot paths calling bottleneck: python .claude/scripts/code_graph query callers_of <function> --json
+Batch analysis: python .claude/scripts/code_graph batch-query file1 file2 --json
+Graph-Trace for Hot Path Analysis
+
+When graph DB is available, use trace to map execution paths for performance analysis:
+
+python .claude/scripts/code_graph trace <bottleneck-file> --direction both --json — full call chain: what triggers this code + what it triggers downstream
+python .claude/scripts/code_graph trace <bottleneck-file> --direction downstream --json — downstream cascade (N+1 queries, excessive event handlers)
+Cross-service MESSAGE_BUS edges reveal distributed performance bottlenecks
+Workflow Recommendation
+
+MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS: If you are NOT already in a workflow, you MUST ATTENTION use AskUserQuestion to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+
+Activate quality-audit workflow (Recommended) — performance → sre-review → test
+Execute /performance directly — run this skill standalone
+Next Steps
+
+MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS after completing this skill, you MUST ATTENTION use AskUserQuestion to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+"/sre-review (Recommended)" — Production readiness review after optimization
+"/changelog" — Document performance changes
+"Skip, continue manually" — user decides
+Closing Reminders
+
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting. MANDATORY IMPORTANT MUST ATTENTION validate decisions with user via AskUserQuestion — never auto-decide. MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality. MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+
+MANDATORY IMPORTANT MUST ATTENTION search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+MANDATORY IMPORTANT MUST ATTENTION run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
+Weekly Installs
+36
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

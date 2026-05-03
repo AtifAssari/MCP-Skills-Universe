@@ -1,0 +1,217 @@
+---
+title: screenclaw
+url: https://skills.sh/ginsing1226/screenclaw/screenclaw
+---
+
+# screenclaw
+
+skills/ginsing1226/screenclaw/screenclaw
+screenclaw
+Installation
+$ npx skills add https://github.com/ginsing1226/screenclaw --skill screenclaw
+SKILL.md
+screenclaw
+你的目标
+
+深入学习本技能，结合用户需求，拆解任务步骤，模拟人类通过视觉操控软件，实现用户目标
+
+核心原则
+目标驱动：明确自己为什么要做某个行动，并告诉用户，让他跟上你思路，不要让他疑惑你在干什么。提高主观能动性，主动尝试多种解法实现目标，多重阅本文档
+规划-执行-验证：先规划任务步骤，以待办跟进行动。以截图验证结果，结果不佳就重新读文档，重新行动。多次不佳就重新规划
+在任务中学习。在任务过程中，你通过理解图片、行动案例里持续学习。例如，某元素的涵义、坐标等
+坐标决定成败。视觉操作的核心，在于精准控制。看得准，你才能帮到用户
+关键内容要显性复述。你学到的内容、坐标、关键行动，都要输出给用户看。显示输出能抵抗上下文膨胀和压缩
+谦卑，不怕困难。保持谦虚，不能依赖直觉，不要偷懒，重读文档能解决你很多问题。不要害怕失败，不要追求简单，准确地实现目标是唯一要求，必要时向用户提问。
+核心概念
+1. 坐标
+
+ScreenClaw 对软件截图时，会在截图上叠加一层坐标网格。在网格交叉点上，有坐标数字。即，图片上自带了坐标，不需要你计算或归一化模型内部坐标，你只需要读出来。 坐标格式为 XxY（如 50x35），表示截图中距左边界X%、距上边界Y%的位置。
+
+目标元素的坐标，就是某个网格交叉点覆盖到它，这个交叉点的坐标就是目标元素的坐标。坐标的准确性取决于网格参数（密度、透明度、颜色）、数字参数等。
+
+注意：坐标数字通过"x"字符来分隔，X坐标 x Y坐标。坐标数字范围是0-100
+
+2. 窗口
+
+窗口是展示视觉页面GUI的容器，是我们的操作对象。一个软件进程可能有多个窗口，操作过程中也会产生新窗口。不同窗口可能有不同内容。
+
+3. 操作模式
+模式	说明	使用场景
+background	通过PostMessage/SendMessage注入事件，不激活窗口，不抢夺用户鼠标和键盘	优先使用，大多数场景
+hijack	短暂激活目标窗口，闪电劫持用户的键鼠操作，执行完后会恢复劫持前原样。持续性操作会被打断，例如恢复后中文输入法候选面板会消失	满足下方3个条件才能切换
+delegated	接管电脑，物理输入，不恢复焦点和鼠标，无需逐次确认。持续性操作能保持，例如中文输入法候选面板会保持	用户主动要求时进入， 会话级持续到退出
+任务步骤
+1. 理解需求
+目标：明确用户要操作哪些软件、达成什么目标
+输入：用户需求
+处理：分析需求，结合screenclaw的能力，形成对任务的理解
+输出：结合screenclaw，精简描述任务目标，告诉用户你的理解
+异常：需求不清晰 → 向用户提问，与用户讨论确认，不要猜
+2. 拆解待办
+目标：明确任务的具体步骤和要求，防止在执行过程中迷失或走偏
+输入：步骤1的具体需求
+处理：将目标拆解成可执行的步骤序列，用 TodoWrite 创建待办清单。
+守则行格式（始终 in_progress，抗压缩）：
+守则：遵守screenclaw技能，忘记就重新查阅skill.md | 脚本py→ps1→sh→curl | 关键内容显性复述
+
+步骤行格式（状态 in_progress → done，记录步骤内容）。步骤需要足够具体，能指导你执行。例如，不要写“获取坐标”，而是写“在截图上找到目标元素，读出覆盖它的网格交叉点的坐标数字”
+一个步骤里如果还包含多个步骤，就继续拆解，直到每个步骤都足够具体可执行
+步骤可以随着任务进展不断调整，但要保持待办清单的更新，确保它始终反映你的下一步行动计划
+输出：完整的待办清单，守则行在最前面，每步记录在案
+异常：
+任务有变更 → 回到步骤1重新理解需求，回到步骤2重新拆解待办
+人机协同/人在回路干预后，要重新回到待办并调整。不要被带着走
+3. 健康检查
+目标：操作前确认服务可用，避免无效行动
+输入：任务开始信号
+处理：调用 health API，确认服务状态
+输出：服务状态、服务器时间
+异常：服务不可用 → 详见 references/api/health.md
+4. 检查场景模板
+目标：搜索是否有匹配当前任务的场景模板，有则复用，减少重复劳动
+输入：任务目标
+处理：搜索 references/scenarios/ 下的场景模板，匹配任务目标和步骤，找到则复用
+输出：匹配的场景模板，按照模板执行
+异常：没有匹配的场景模板 → 继续后续步骤
+5. 生成配置
+目标：生成API所需的全局参数，为后续调用做准备
+输入：任务开始信号
+处理：查阅 references/config.md 获取 api_url 和 token；生成ai_app_type 和 session_id
+输出：全局参数，每次API调用时需传入
+异常：配置缺失 → 向用户询问
+6. 获取并评估目标窗口
+目标：获取与任务相关的软件窗口列表，了解其内容。记录候选窗口，用于后续调整全局的窗口参数
+输入：全局参数
+处理：
+调用 get_window_list API，筛选出符合任务要求的主窗口、子窗口作为初步候选窗口列表
+对初步窗口列表，逐个调用 screenshot API 获取截图，评估内容，确认各个窗口有哪些内容
+输出：候选窗口列表，包含window_id、main_window_id、窗口内容等信息。后续调整窗口id时，从候选窗口里选择，减少重复调用
+异常：任务开始时找不到窗口、任务过程中找不到窗口等，重读 references/api/get_window_list.md
+7. 截图（循环起点）
+
+每个操作指令，都从这里开始，直到步骤10验证通过。
+
+目标：对目标窗口截图，以便后续读坐标和验证操作结果
+输入：任务需求、API全局参数
+处理：查阅 references/api/screenshot.md，根据任务需求，选择合适的参数调用 screenshot API 获取截图
+如果要读坐标，就带网格截图
+如果需要了解窗口内容，或将图片作为输出材料供用户查看，就不带网格截图
+如果需要预览某坐标位置，就带标记点截图（可以传多个标记点）
+如果需要整体了解窗口内容，且窗口内容很多很长，就滚动长截图 scroll_screenshot
+如果需要看清图片细节，就裁剪放大截图 crop_zoom_screenshot
+输出：截图图片路径
+异常：截图参数极大影响读坐标的准确性。重新读并深入理解 references/api/screenshot.md ，分析应该调整哪个参数获取更合适的截图
+8. 读坐标
+目标：在截图或裁剪放大后的图片上，找到目标元素，读出其坐标数字，以便后续操作指令使用
+输入：截图图片
+处理：通过你的多模态能力直接读图。
+全局理解：找到目标元素的大概位置（如在窗口的哪个区域，靠近哪个明显元素等），学习目标元素的特征（直到目标元素应该长什么样）。获取大概坐标
+全局先看有没有目标元素，不急着读。没有目标就换窗口，或者换参数重试截图。找到目标元素了，再读坐标数字
+目标元素必须被网格交叉点覆盖到，才能读出坐标数字
+如果全局的坐标足够清晰，可以直接读出坐标数字，可跳过局部读图。但如果失败了，必须局部读图
+局部读图：基于大概目标，调用 crop_zoom_screenshot ,裁剪并放大局部，基于全局理解的目标元素特征，在局部中寻找目标元素。
+放大后还找不到，就是大概坐标找错了。重新全局找或裁剪更大区域。
+读出数字：为了避免数字太多而遮挡内容，网格不是每个交叉点都有数字，你需要基于网格密度、目标附近的其它交叉点上的坐标数字，计算出目标元素的坐标数字
+标记点验证（反验思维）：回到步骤7，带坐标标记点截图。读图找到标记点，再在标记点附近寻找目标元素。如果目标元素与标记点重合，则坐标正确。否则需要重新读坐标（步骤8）
+正验：先找目标再读坐标。反验：先读标记坐标再找目标。两者结合，能提高坐标的准确性
+务必遵守：要基于网格参数和坐标数字科学计算。不要猜，也不要输出你内部归一化的坐标
+如果你没有读图能力，就使用相关MCP，将图片、坐标概念、读坐标方法传给其它工具，由它们读出坐标
+输出：通过裁剪放大、标记等方法，最终确认的目标元素的坐标值 (x, y)
+异常：
+看不清数字、看不清元素、坐标标记点不在期望位置、坐标错误等 → 裁剪放大，重新全局-局部-读准坐标
+不了解目标元素 → 找周边参照元素排除歧义；多个候选目标逐个尝试操作，截图验证；向用户询问目标相关的知识
+目标元素没有被网格交叉点覆盖到、或放大后仍看不清数字/元素 → 调整网格参数重新截图（回到步骤7）
+重读 references/api/screenshot.md 、references/api/crop_zoom_screenshot.md
+9. 操作
+目标：调用对应API执行操作（click/input_text/press_key等），实现对软件的控制，达成用户目标
+输入：坐标值 (x, y), 操作指令、action_method等
+处理：调用脚本执行操作，
+如果操作失败，先查对应API文档的常见问题排查原因，再进入重试
+必须截图验证结果。指令已发送，不代表操作真实成功
+操作模式，优先 background 模式，满足条件才切换 hijack 模式，用户主动要求时进入 delegated 模式
+熟悉后的固定流程才用batch，探索阶段用单步。单步操作更灵活，能更好地适应不断学习变化的坐标和窗口内容
+输出：API返回结果
+异常：
+操作无效，结果不佳 → 换坐标、换窗口、调参数重试，最后才是换操作模式
+重读对应API文档
+10. 截图验证（循环终点）
+目标：操作后，截图验证操作结果，符合预期就下一个步骤，不符合就重试当前步骤
+输入：操作完成信号
+处理：对比操作前后的截图，找出差异，判断操作结果是否符合预期。主要处理方式同步骤7
+输出：同步骤7
+异常：
+重复步骤7-9，按照这些步骤的异常处理逐个排查，直到验证通过。
+重试5次，重新规划任务步骤，回到步骤2重新拆解待办
+11. 沉淀复盘
+目标：将任务经验沉淀为场景模板，供未来复用
+输入：任务完成后，主动询问用户是否沉淀场景模板
+处理：用户确认后，阅读 /references/scenarios/README.md ，总结当前任务的目标、步骤、参数，生成场景模板，保存到 references/scenarios/
+输出：场景模板
+异常：用户拒绝 → 跳过
+API索引
+
+执行API前先读对应文档 references/api/{endpoint}.md
+
+API	method	适用场景	参考文档
+health	GET	任务开始前检查服务	references/api/health.md
+get_window_list	POST	找出需要被控制的目标窗口	references/api/get_window_list.md
+screenshot	POST	带网格可定位坐标。不带网格可分析界面、留存记录。带标记点可预览坐标位置	references/api/screenshot.md
+crop_zoom_screenshot	POST	裁剪任意截图并放大，看清细节（如坐标数字）	references/api/crop_zoom_screenshot.md
+scroll_screenshot	POST	滚动长截图，记录长页面、长内容，整体理解目标窗口	references/api/scroll_screenshot.md
+click	POST	单击，触发按钮/进入页面	references/api/click.md
+long_press	POST	长按，触发某些功能	references/api/long_press.md
+swipe	POST	触摸式滑动，上下左右移动页面	references/api/swipe.md
+drag	POST	拖拽元素，按住鼠标并移动	references/api/drag.md
+scroll	POST	鼠标滚轮滚动，上下移动页面	references/api/scroll.md
+right_click	POST	右键，打开上下文菜单	references/api/right_click.md
+hover	POST	触发悬停效果，配合截图获取hover效果	references/api/hover.md
+mouse_move	POST	鼠标移动，游戏视角控制，仅hijack/托管	references/api/mouse_move.md
+input_text	POST	输入文本。带坐标会先单击再输入。不带坐标直接输入	references/api/input_text.md
+press_key	POST	按键/组合键。带坐标会先单击再按键。不带坐标直接按键	references/api/press_key.md
+wait	POST	等待UI动画/页面加载	references/api/wait.md
+batch	POST	组合指令，执行连续步骤。多个单步的操作可组合执行，提高效率	references/api/batch.md
+delegated	POST	用户主动要求进入/退出托管模式	references/api/delegated.md
+脚本报错
+
+降级路径：py → ps1 → sh → 手动curl
+
+降级前提：先看错误原因
+
+错误类型	处理方式
+参数错误	修正参数，重跑同一脚本，不降级
+环境错误（Python不存在等）	降级
+API业务错误	查文档排查，不降级
+
+脚本分工：
+
+截图 → scripts/fetch_screenshot_cli.py（专用，处理base64）
+裁剪放大 → scripts/crop_zoom_screenshot_cli.py（专用，处理base64）
+滚动长截图 → scripts/scroll_screenshot_cli.py（专用）
+batch（PowerShell）→ scripts/api_call_batch.ps1
+其他所有API → scripts/api_call.py
+
+详细用法 → scripts/README.md
+
+初始化
+用户语言检查：基于用户与你对话的语言（如中文、英文），调整你的思考和输出语言
+UTF-8读取文档：用UTF-8编码读取所有文档，确保中文内容正确显示
+获取配置：阅读 references/config.md 获取API地址和Token；生成 session_id；阅读 scripts/README.md
+检索场景模板：搜索 references/scenarios/ 下是否有匹配当前任务的模板，有则复用
+创建待办：用 TodoWrite 创建待办清单，守则行在最前面，每步记录在案
+参考文档
+references/config.md — 连接配置（地址、Token、ai_app_type、session_id规则）
+references/api/*.md — 各API详细文档（参数、示例、常见问题）
+references/scenarios/*/*.md — 场景模板
+scripts/README.md — 脚本使用说明
+Weekly Installs
+22
+Repository
+ginsing1226/screenclaw
+GitHub Stars
+35
+First Seen
+Mar 30, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

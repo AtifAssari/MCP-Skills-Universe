@@ -1,0 +1,151 @@
+---
+rating: ⭐⭐⭐
+title: toggl-cli
+url: https://skills.sh/correctroadh/toggl-cli/toggl-cli
+---
+
+# toggl-cli
+
+skills/correctroadh/toggl-cli/toggl-cli
+toggl-cli
+Installation
+$ npx skills add https://github.com/correctroadh/toggl-cli --skill toggl-cli
+SKILL.md
+Toggl CLI Skill
+Install: npm install -g @correctroadh/toggl-cli
+Auth: toggl auth login [TOKEN] [--api-type official|opentoggl] [--api-url URL]
+Auth (OpenToggl): toggl auth login <TOKEN> --api-type opentoggl --api-url https://your-server.com
+Command Shapes
+
+Time entries:
+
+toggl entry start [-d DESCRIPTION] [-p PROJECT] [--task TASK] [-t TAG...] [-b] [--start DATETIME] [--end DATETIME] [-j]
+toggl entry stop [-j]
+toggl entry continue [-i] [-j]
+toggl entry running [-j]
+toggl entry show [ID] [--current] [-j]
+toggl entry edit [ID] [--current] [-d DESCRIPTION] [--billable true|false] [-p PROJECT] [--task TASK] [-t TAG...] [--start DATETIME] [--end DATETIME|""] [-j]
+toggl entry delete [ID] [--current] [-j]
+toggl entry bulk-edit <ID...> --json '<JSON_PATCH>'
+toggl entry list [--since DATETIME] [--until DATETIME] [-n NUMBER] [-j]
+toggl entry search [QUERY] [-p PROJECT|--no-project] [-t TAG...|--no-tag] [--since DATE] [--until DATE] [-n NUMBER] [--order-by date|duration|description|last_update|user] [--order-dir ASC|DESC] [-j]
+
+Resources:
+
+toggl project list [-j]
+toggl project create <name> [--color HEX]
+toggl project rename <old_name> <new_name>
+toggl project delete <name>
+toggl tag list [-j]
+toggl tag create <name>
+toggl tag rename <old_name> <new_name>
+toggl tag delete <name>
+toggl client list [-j]
+toggl client create <name>
+toggl client rename <old_name> <new_name>
+toggl client delete <name>
+toggl task list [-j]
+toggl task create -p PROJECT <name> [--active true|false] [--estimated-seconds N] [--user-id ID]
+toggl task update -p PROJECT <name> [--new-name NAME] [--active true|false] [--estimated-seconds N] [--user-id ID]
+toggl task rename -p PROJECT <old_name> <new_name>
+toggl task delete -p PROJECT <name>
+toggl workspace list [-j]
+toggl workspace create <organization_id> <name>
+toggl workspace rename <old_name> <new_name>
+toggl org list [-j]
+toggl org show <id> [-j]
+toggl auth login [TOKEN] [--api-type official|opentoggl] [--api-url URL]
+toggl auth status [-j]
+toggl me [-j]
+toggl preferences read
+toggl preferences update '<json>'
+toggl config init|active|-e|-p|-d
+
+Reports (--since/--until are optional, default to this_week/today):
+
+toggl report summary [--since DATE] [--until DATE] [-j] [--group-by projects|clients|users] [--sub-group-by time_entries|tasks|projects|users]
+toggl report detailed [--since DATE] [--until DATE] [-j] [-n NUMBER] [--order-by date|user|duration|description] [--order-dir ASC|DESC]
+toggl report weekly [--since DATE] [--until DATE] [-j]
+Know-How
+entry search for finding past entries: Server-side search via Reports API v3. Filters combine (AND): positional QUERY matches description (substring); -p NAME|ID restricts to a project (or --no-project for entries missing a project); -t NAME restricts to a tag (repeatable, or --no-tag for untagged entries). --no-project/--no-tag are mutually exclusive with -p/-t. Project/tag names are resolved to IDs in the default workspace; pass numeric IDs to skip lookup. Default date range is the last 365 days — use --since 2024-01-01 to reach further back. Prefer this over entry list | grep when searching history.
+IMPORTANT: Always scope entry list with --since or -n to avoid dumping 90 days of entries. Use --since today, --since this_week, or -n 10. Never run bare toggl entry list — the output can be hundreds of entries and waste tokens.
+Natural language dates: --since and --until accept today, yesterday, now, this_week, last_week in addition to YYYY-MM-DD and full datetime formats. Works in both entry list and all report commands.
+JSON on all mutations: entry start, entry stop, entry edit, entry continue all support -j/--json and return the full entry with real ID, hydrated project, and "running" boolean.
+entry running --json returns {"running": false} when nothing is running (not null). Same for entry stop --json when idle.
+Report defaults: toggl report summary with no args defaults to current week (this_week to today). No date flags required.
+Project by name: -p "ProjectName" resolves by name first, then by numeric ID. Non-existent names show available projects. Project is validated before stopping any running timer.
+Entry list output: Human mode shows ID DATE HH:MM–HH:MM [duration] – description @project. Cross-day entries show the end date (e.g. 23:35–03-29 12:01). Entries are sorted by start time. Use IDs directly for entry show, entry edit, entry delete.
+Names with spaces: Quote names containing spaces in all commands: toggl tag create "2 象限", toggl project create "My Project", -p "My Project", -d "Fix login bug". Without quotes, each word is treated as a separate argument.
+Multiple tags: pass multiple values to -t, for example -t dev review, not one quoted string like -t "dev review" if you want two separate tags.
+Clear tags on update: use toggl entry edit [ID] -t "".
+Remove project or task on update: use -p "" or --task "".
+If entry start gets both --start and --end, it creates a closed historical entry and does not stop the currently running entry.
+If entry start omits --end, it stops any currently running entry first.
+--end requires --start, and end time must be later than start time.
+entry edit --current edits the currently running entry without needing its ID.
+entry edit with no field flags (-d, -p, -t, etc.) exits 1 with a helpful message listing valid flags.
+Bulk edit: entry bulk-edit accepts multiple IDs and a --json flag with a JSON Patch array. All entries must belong to the same workspace. Example: toggl entry bulk-edit 123 456 789 --json '[{"op":"replace","path":"/description","value":"standup"}]'.
+entry start uses config defaults when flags are omitted, including default project, task, tags, and billable state.
+For entry list, a date-only --since YYYY-MM-DD means local 00:00:00 at the start of that day.
+For entry list, a date-only --until YYYY-MM-DD includes the whole local day by using the next day's 00:00:00 as the exclusive upper bound.
+Empty results: human mode prints "No entries found." to stderr; JSON mode returns [].
+Performance: Read-only API responses are cached on disk (per-endpoint TTL, e.g. 15s for time entries, 60s for projects). Cache can be disabled with TOGGL_DISABLE_HTTP_CACHE=1.
+Minimal Examples
+# Time entries
+toggl entry start -d "Feature work" -p "App" -t dev review -b
+toggl entry start -d "Backfill" --start "2026-03-05 09:00" --end "2026-03-05 10:30"
+toggl entry start -d "Quick meeting" --start 09:00 --end 10:00
+toggl entry start -d "Task" -p "App" --json   # returns real ID in JSON
+toggl entry stop --json                        # returns stopped entry as JSON
+toggl entry running --json                     # check if running, get entry data
+toggl entry edit --current -d "Updated" -p "" -t ""
+toggl entry list --since today
+toggl entry list --since yesterday --until today
+toggl entry list --since this_week --json | jq '.[].description'
+toggl entry list --since last_week --until yesterday
+toggl entry search "login bug"                          # description search, last 365 days
+toggl entry search --no-project --since last_week       # untriaged entries from last week
+toggl entry search "standup" -p "Work" -t daily         # combine description + project + tag
+toggl entry search --no-tag --since 2025-01-01 -j       # JSON, all untagged entries this year
+toggl entry search --order-by duration --order-dir DESC -n 20  # longest entries in the last year
+toggl entry bulk-edit 123 456 --json '[{"op":"replace","path":"/description","value":"standup"}]'
+
+# Reports (no args = current week)
+toggl report summary
+toggl report summary --since today --until today
+toggl report summary --since last_week --until yesterday --json
+toggl report weekly --since this_week --until today
+toggl report detailed --since 2026-03-01 --until 2026-03-27 -n 50
+
+# Resources (quote names with spaces)
+toggl project list -j
+toggl project create "My Project" --color "#06aaf5"
+toggl tag create "2 象限"
+toggl entry start -d "Fix login bug" -p "My Project" -t urgent
+toggl me --json
+
+Output And Time
+Time-entry list format: ID DATE HH:MM–HH:MM [$] [HH:MM:SS]* – description @Project #[tag1, tag2]
+Start–end time range is shown inline. Cross-day entries show the end date (e.g. 23:35–03-29 12:01).
+Running entries show HH:MM–… for the end time.
+$ means billable; * means currently running.
+JSON single-entry output includes "running": true/false and hydrated "project" object.
+Accepted datetime input for --start, --end, --since, --until:
+Natural language: today, yesterday, now, this_week, last_week
+RFC3339: 2026-03-05T09:00:00+08:00
+Local datetime: 2026-03-05 09:00 or 2026-03-05T09:00:00
+Date only: 2026-03-05 meaning local 00:00:00
+Time only: 09:00 or 14:30:00 meaning that time today in local timezone
+entry edit time-only resolution: When editing with --start or --end using time-only values (e.g. 18:30), the date is inferred from the entry's existing start date, not today. Use a full datetime to specify a different date.
+Weekly Installs
+29
+Repository
+correctroadh/toggl-cli
+GitHub Stars
+9
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykFail

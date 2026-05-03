@@ -1,0 +1,217 @@
+---
+title: claude-code
+url: https://skills.sh/duc01226/easyplatform/claude-code
+---
+
+# claude-code
+
+skills/duc01226/easyplatform/claude-code
+claude-code
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill claude-code
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Critical Thinking Mindset — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act. Anti-hallucination: Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+AI Mistake Prevention — Failure modes to avoid on every task:
+
+Check downstream references before deleting. Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+Verify AI-generated content against actual code. AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+Trace full dependency chain after edits. Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+Trace ALL code paths when verifying correctness. Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+When debugging, ask "whose responsibility?" before fixing. Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+Assume existing values are intentional — ask WHY before changing. Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+Verify ALL affected outputs, not just the first. Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+Holistic-first debugging — resist nearest-attention trap. When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+Surgical changes — apply the diff test. Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+Surface ambiguity before coding — don't pick silently. If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+Quick Summary
+
+Goal: Help users install, configure, troubleshoot, and extend Claude Code CLI (hooks, MCP, skills, commands).
+
+Workflow:
+
+Categorize — Identify problem type (Setup, Hooks, MCP, Context, Extensibility, Config)
+Diagnose — Follow category-specific diagnostic steps
+Fix & Verify — Apply solution and confirm it resolves the issue
+
+Key Rules:
+
+Not for writing application code -- use feature/fix/refactor skills instead
+Never modify settings without user approval
+For hooks: check event type, script executability, and JSON output format
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Claude Code
+Purpose
+
+Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthropic's agentic coding tool with skills, hooks, MCP servers, and slash commands.
+
+When to Use
+Setting up Claude Code for the first time (installation, authentication)
+Troubleshooting hooks that don't fire or produce errors
+Diagnosing MCP server connection failures
+Understanding or resolving context window limits
+Creating or modifying slash commands and agent skills
+Configuring settings (model, allowed tools, output style)
+When NOT to Use
+Writing application code -- use feature-implementation, fix, or refactoring skills
+Creating MCP servers from scratch -- use mcp-builder skill
+Managing existing MCP server connections -- use mcp-management skill
+AI prompt engineering -- use ai-artist skill
+Prerequisites
+Access to .claude/ directory in the project root
+For hooks: read .claude/hooks/ directory structure
+For skills: read .claude/skills/ directory structure
+Workflow
+Step 1: Identify the Problem Category
+User Says	Category	Go To
+"install", "set up", "authenticate"	Setup	Step 2A
+"hook not firing", "hook error"	Hook Issues	Step 2B
+"MCP not connecting", "MCP error"	MCP Issues	Step 2C
+"context too long", "compaction", "token limit"	Context Issues	Step 2D
+"create skill", "create command"	Extensibility	Step 2E
+"configure", "settings", "model"	Configuration	Step 2F
+Step 2A: Setup
+Check prerequisites: Node.js 18+, npm
+Verify authentication: claude auth status
+IF auth fails: guide through claude auth login
+Verify project detection: check for CLAUDE.md in project root
+Step 2B: Hook Issues
+Read the hook file causing issues
+Check hook event type matches expected trigger (PreToolUse, PostToolUse, SessionStart, Stop, SubagentStop)
+Verify hook script is executable and has correct shebang
+Check .claude/settings.json for hook registration
+Test hook in isolation: run the script directly with mock input
+Check for syntax errors in hook output (must be valid JSON for PreToolUse/PostToolUse)
+
+Common fixes:
+
+Hook not firing: wrong event name or tool matcher pattern
+Hook errors: script not finding dependencies (check relative paths)
+Hook blocks unexpectedly: PreToolUse returning { "decision": "block" } incorrectly
+Step 2C: MCP Issues
+Check .claude/settings.json for MCP server configuration
+Verify the MCP server process can start: run the command manually
+Check environment variables (API keys, tokens) are set
+Test connectivity: claude mcp list to see registered servers
+IF timeout: increase timeout in config or check network
+
+Common fixes:
+
+"Connection refused": MCP server not running or wrong port
+"Authentication failed": expired or missing API token
+"Tool not found": MCP server registered but tool name mismatch
+Step 2D: Context Issues
+Check current context usage (Claude will report when near limit)
+IF approaching limit: suggest /compact command
+Review if large files are being read unnecessarily
+Check for recovery files in /tmp/ck/swap/ after compaction
+Verify post-compact-recovery hook is configured for session continuity
+Step 2E: Extensibility
+For skills: read references/agent-skills.md for structure
+For custom slash commands: create skills in .claude/skills/{name}/SKILL.md
+Verify SKILL.md frontmatter has required fields (name, version, description)
+Test: invoke the skill/command and verify it loads
+Step 2F: Configuration
+Read references/configuration.md for settings hierarchy
+Settings locations: .claude/settings.json (project), ~/.claude/settings.json (user)
+IMPORTANT: Never modify settings without user approval
+Common settings: model selection, allowed tools, output verbosity
+Step 3: Verification
+Confirm the fix resolves the user's issue
+Document any configuration changes made
+Warn if changes affect other team members (project-level settings)
+Output Format
+## Claude Code: [Issue/Task Summary]
+
+### Problem
+
+[What was wrong or what was requested]
+
+### Solution
+
+[Step-by-step fix or setup instructions]
+
+### Files Changed
+
+[List any config files modified, with before/after]
+
+### Verification
+
+[How to confirm the fix works]
+
+Examples
+Example 1: Hook Not Firing
+
+User: "My PreToolUse hook for blocking large file reads isn't triggering"
+
+Diagnosis:
+
+Read .claude/settings.json -- hook registered under hooks.PreToolUse
+Check tool matcher: "matcher": "Read" -- correct
+Run script directly: node .claude/hooks/block-large-reads.cjs -- works
+Found: Hook command uses %CLAUDE_PROJECT_DIR% but runs from wrong CWD
+
+Fix: Update hook command to use absolute path or verify %CLAUDE_PROJECT_DIR% resolves correctly. Check that the hook entry in settings uses the correct variable syntax for the platform (Windows vs Unix).
+
+Example 2: Setting Up a New Slash Command
+
+User: "I want a /deploy command that runs our staging deployment"
+
+Steps:
+
+Create .claude/skills/deploy/SKILL.md:
+Deploy to staging environment.
+
+Run the following steps:
+
+1. Verify all tests pass: `npm test`
+2. Build the project: `npm run build`
+3. Deploy: `npm run deploy:staging`
+4. Report deployment status
+
+Test: type /deploy in Claude Code CLI
+Verify: command appears in autocomplete and executes the workflow
+Reference Files
+
+Load these for detailed guidance on specific topics:
+
+Topic	File
+Installation	references/getting-started.md
+Slash commands	references/slash-commands.md
+Skills creation	references/agent-skills.md
+MCP servers	references/mcp-integration.md
+Hooks system	references/hooks-comprehensive.md
+Configuration	references/configuration.md
+Troubleshooting	references/troubleshooting.md
+Enterprise	references/enterprise-features.md
+Related Skills
+mcp-builder -- for creating new MCP servers from scratch
+mcp-management -- for managing existing MCP server connections
+skill-creator -- for creating new agent skills with best practices
+Closing Reminders
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+MANDATORY IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+MUST ATTENTION apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+MUST ATTENTION apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+[TASK-PLANNING] Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+Weekly Installs
+53
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykWarn

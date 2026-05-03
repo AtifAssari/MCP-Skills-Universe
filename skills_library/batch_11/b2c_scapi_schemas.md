@@ -1,0 +1,136 @@
+---
+title: b2c-scapi-schemas
+url: https://skills.sh/salesforcecommercecloud/b2c-developer-tooling/b2c-scapi-schemas
+---
+
+# b2c-scapi-schemas
+
+skills/salesforcecommercecloud/b2c-developer-tooling/b2c-scapi-schemas
+b2c-scapi-schemas
+Installation
+$ npx skills add https://github.com/salesforcecommercecloud/b2c-developer-tooling --skill b2c-scapi-schemas
+SKILL.md
+B2C SCAPI Schemas Skill
+
+Use the b2c CLI plugin to browse and retrieve SCAPI OpenAPI schema specifications.
+
+Tip: If b2c is not installed globally, use npx @salesforce/b2c-cli instead (e.g., npx @salesforce/b2c-cli scapi schemas list).
+
+Configuration
+
+Values like tenantId and shortCode resolve from dw.json / SFCC_* env vars / the active instance. Examples below show minimal usage; add flags only to override configured values. If a required value is missing, the CLI emits an actionable error pointing at the flag, env var, and config key. See the b2c-config skill for precedence details.
+
+Tenant ID vs. Organization ID
+
+The tenant ID identifies your B2C Commerce instance for SCAPI calls. It is not the same as the organization ID:
+
+Tenant ID: zzxy_prd (the tenantId value in dw.json, or --tenant-id override)
+Organization ID: f_ecom_zzxy_prd (used in SCAPI URLs, has f_ecom_ prefix)
+Deriving Tenant ID from Hostname
+
+For sandbox instances, derive the tenant ID from the hostname by replacing hyphens with underscores:
+
+Hostname	Tenant ID
+zzpq-013.dx.commercecloud.salesforce.com	zzpq_013
+zzxy-001.dx.commercecloud.salesforce.com	zzxy_001
+abcd-dev.dx.commercecloud.salesforce.com	abcd_dev
+
+For production instances, use your realm and instance identifier (e.g., zzxy_prd).
+
+Examples
+List Available Schemas
+# list all available SCAPI schemas (uses configured tenant)
+b2c scapi schemas list
+
+# list with JSON output
+b2c scapi schemas list --json
+
+# target a different tenant than the active config
+b2c scapi schemas list --tenant-id zzxy_prd
+
+Filter Schemas
+# filter by API family (e.g., product, checkout, search)
+b2c scapi schemas list --api-family product
+
+# filter by API name
+b2c scapi schemas list --api-name shopper-products
+
+# filter by status
+b2c scapi schemas list --status current
+
+Get Schema (Collapsed/Outline - Default)
+
+By default, schemas are output in a collapsed format optimized for context efficiency. This is ideal for agentic use cases and LLM consumption.
+
+# get collapsed schema (paths show methods, schemas show names only)
+b2c scapi schemas get product shopper-products v1
+
+# save to file
+b2c scapi schemas get product shopper-products v1 > schema.json
+
+Get Schema with Selective Expansion
+
+Expand only the parts of the schema you need:
+
+# expand specific paths
+b2c scapi schemas get product shopper-products v1 --expand-paths /products,/products/{productId}
+
+# expand specific schemas
+b2c scapi schemas get product shopper-products v1 --expand-schemas Product,ProductResult
+
+# combine expansions
+b2c scapi schemas get product shopper-products v1 --expand-paths /products --expand-schemas Product
+
+Get Full Schema
+# get full schema without any collapsing
+b2c scapi schemas get product shopper-products v1 --expand-all
+
+List Available Paths/Schemas/Examples
+
+Discover what's available in a schema before expanding:
+
+# list all paths in the schema
+b2c scapi schemas get product shopper-products v1 --list-paths
+
+# list all schema names
+b2c scapi schemas get product shopper-products v1 --list-schemas
+
+# list all examples
+b2c scapi schemas get product shopper-products v1 --list-examples
+
+Output Formats
+# output as YAML
+b2c scapi schemas get product shopper-products v1 --yaml
+
+# output wrapped JSON with metadata (apiFamily, apiName, apiVersion, schema)
+b2c scapi schemas get product shopper-products v1 --json
+
+Custom Properties
+# include custom properties (default behavior)
+b2c scapi schemas get product shopper-products v1
+
+# exclude custom properties
+b2c scapi schemas get product shopper-products v1 --no-expand-custom-properties
+
+Configuration Overrides
+
+The tenant ID and short code can be overridden via flags or environment variables:
+
+--tenant-id / SFCC_TENANT_ID / tenantId in dw.json
+--short-code / SFCC_SHORTCODE / shortCode in dw.json
+More Commands
+
+See b2c scapi schemas --help for a full list of available commands and options.
+
+Weekly Installs
+83
+Repository
+salesforcecomme…-tooling
+GitHub Stars
+39
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

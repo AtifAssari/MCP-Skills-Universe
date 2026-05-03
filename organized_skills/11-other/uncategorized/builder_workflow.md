@@ -1,0 +1,266 @@
+---
+rating: ⭐⭐
+title: builder-workflow
+url: https://skills.sh/darraghh1/my-claude-setup/builder-workflow
+---
+
+# builder-workflow
+
+skills/darraghh1/my-claude-setup/builder-workflow
+builder-workflow
+Installation
+$ npx skills add https://github.com/darraghh1/my-claude-setup --skill builder-workflow
+SKILL.md
+Builder Phase Workflow
+
+You have been assigned a full phase to implement. Your spawn prompt contains the phase file path and plan folder. This skill teaches you how to handle the entire phase end-to-end.
+
+Why This Workflow Exists
+
+The user experienced builders that guessed at patterns, skipped tests, and produced inconsistent code. Each step below prevents a specific failure:
+
+Step	Prevents
+Load project rules	Building code that violates coding conventions (teammates don't inherit parent rules)
+Read phase completely	Missing requirements, user has to re-explain
+Pre-flight test check	Cascading failures from broken previous phases
+Find reference file	Guessing at patterns, code doesn't match codebase
+Invoke domain skill	Missing project-specific conventions
+TDD first (Step 0)	Untested code, bugs discovered in production
+Step 0: Load Project Rules
+
+Teammates don't inherit all parent rules — only alwaysApply rules load natively. File-scoped rules (coding conventions, patterns) must be read explicitly.
+
+Read these two files (they contain universal conventions for all code):
+
+Read ~/.claude/rules/coding-style.md
+Read ~/.claude/rules/patterns.md
+
+
+If either file doesn't exist, skip it — the project may not have those rules configured.
+
+These rules cover import ordering, error handling, server-only guards, data fetching patterns, service patterns, and route structure. Follow them throughout your implementation.
+
+Step 1: Read the Phase
+
+Read the phase file from your spawn prompt. Extract:
+
+Prerequisites & Clarifications — check for unanswered questions first
+Requirements (Functional + Technical)
+Implementation Steps (Step 0 through Step N)
+Acceptance Criteria (your success metrics)
+
+If ANY prerequisite question is unanswered:
+
+SendMessage({
+  type: "message",
+  recipient: "team-lead",
+  content: "Phase has unanswered prerequisite questions. Cannot proceed.",
+  summary: "Blocked: unanswered prerequisites"
+})
+
+
+Then STOP and wait for instructions.
+
+Step 2: Pre-Flight Test Check
+
+Skip for Phase 01 — no previous phases exist.
+
+For Phase 02+:
+
+pnpm test
+
+Exit code 0 → proceed to Step 3
+Exit code ≠ 0 → check if failures are from current phase's TDD (expected) or previous phases
+Previous phase failures: fix them first, re-run to confirm green, then proceed
+Current phase TDD failures: expected, proceed
+
+IMPORTANT — "pre-existing" is not an excuse. After a context compact, you may not know whether failures existed before your work started. It doesn't matter. You own every failure present when you report completion. If tests or typecheck are failing, fix them — regardless of who caused them.
+
+Step 3: Invoke Domain Skill and Find Reference
+
+Your spawn prompt includes a Skill: field (extracted from the phase frontmatter by the orchestrator). If present, use that value. Otherwise, check the phase frontmatter for a skill field, or determine from content:
+
+Phase Focus	Skill	Reference Glob
+Database schema, migrations, RLS	postgres-expert	supabase/migrations/*.sql
+Server actions, services, API	server-action-builder	app/home/[account]/**/*server-actions*.ts
+React forms with validation	react-form-builder	app/home/[account]/**/_components/*.tsx
+E2E tests	playwright-e2e	e2e/tests/**/*.spec.ts
+React components, pages	vercel-react-best-practices	app/home/[account]/**/_components/*.tsx
+UI/UX	web-design-guidelines	app/home/[account]/**/_components/*.tsx
+Service layer	service-builder	app/home/[account]/**/*service*.ts
+Glob the reference pattern → read ONE file
+Extract 3-5 key patterns: function signatures, imports, naming, error handling, post-operation hooks
+Invoke the domain skill: Skill({ skill: "skill-name" })
+
+The reference file is your ground truth. Your code must structurally match it.
+
+Step 4: Create Internal Task List
+
+Create tasks via TaskCreate for each implementation step. This is not optional — tasks survive context compacts and are your only recovery mechanism if context is compacted mid-phase. Without them, you must restart the entire phase from scratch.
+
+Prefix all task subjects with [Step] to distinguish from the orchestrator's phase-level tasks in the shared team task list. Mark each task in_progress before starting and completed when done.
+
+Always set owner to your agent name (from your spawn prompt) when creating tasks. This enables filtering in the shared namespace — without it, your tasks are indistinguishable from other agents' tasks after a compact.
+
+Always include structured metadata on every task:
+
+TaskCreate({
+  subject: "[Step] Create change-role-dropdown.tsx",
+  description: "Create at app/home/[account]/roles/_components/. Props: { membershipId, accountSlug }. Fetch roles via listRolesAction, filter by hierarchy_level. Use @/components/ui Select, Badge.",
+  activeForm: "Creating role dropdown component",
+  metadata: {
+    created_by: "{your-agent-name}",
+    agent_type: "builder",
+    phase: "P{NN}",
+    group: "{group-name-from-frontmatter}",
+    skill: "{skill-from-frontmatter}",
+    role: "step",
+    attempt: 1,
+    parent_task_id: "{orchestrator-phase-task-id-from-spawn-prompt}"
+  }
+})
+
+
+After creating, set yourself as owner:
+
+TaskUpdate({ taskId: "{id}", owner: "{your-agent-name}" })
+
+
+Metadata fields:
+
+Field	Value	Purpose
+created_by	Your agent name	Identifies task creator
+agent_type	"builder"	Enables role-specific hook reminders
+phase	"P{NN}"	Links task to its phase
+group	From phase frontmatter	Links task to its audit group
+skill	From phase frontmatter	Domain skill used
+role	"step"	Distinguishes step tasks from phase/audit/fix tasks
+attempt	1 (increment on retry)	Tracks retry cycles
+parent_task_id	From spawn prompt	Links builder steps back to orchestrator's phase task
+
+Task descriptions must be self-contained:
+
+File paths to create/modify
+Function signatures, key parameters
+Which services/actions to call
+Acceptance criteria for that step
+
+Bad: "Create the dropdown component" Good: "[Step] Create change-role-dropdown.tsx at app/home/[account]/roles/_components/. Props: { membershipId, accountSlug }. Fetch roles via listRolesAction, filter by hierarchy_level. Use @/components/ui Select, Badge."
+
+Always start with Step 0: TDD.
+
+Step 5: Implement
+Step 0 (TDD) first — write failing tests before implementation code
+Remaining steps sequentially — follow the phase document exactly
+After each step: run pnpm test, fix failures before moving on
+Mark each task completed via TaskUpdate as you finish it
+
+Scope boundary — implement ONLY what's in the phase:
+
+Do NOT add improvements not specified in the phase
+Do NOT refactor adjacent code
+Do NOT create documentation files
+
+Key project patterns:
+
+Server actions: validate with Zod, verify auth before processing
+Services: createXxxService(client) factory wrapping private class, import 'server-only'
+Imports: path aliases, ordering: React > third-party > internal > local
+After mutations: revalidatePath('/home/[account]/...')
+
+IMPORTANT: Before using the Write tool on any existing file, you MUST Read it first or the write will silently fail. Prefer Edit for modifying existing files.
+
+Step 6: Final Verification
+
+Run the full verification before reporting:
+
+pnpm test
+pnpm run typecheck
+
+
+Both must pass. Fix any failures before proceeding.
+
+Conditional Testing by Phase Type
+
+The phase's skill: frontmatter field determines which additional tests to run:
+
+Phase Skill	Extra Test	Command
+react-form-builder	E2E tests	pnpm test:e2e (scoped)
+vercel-react-best-practices	E2E tests	pnpm test:e2e (scoped)
+web-design-guidelines	E2E tests	pnpm test:e2e (scoped)
+playwright-e2e	E2E tests	pnpm test:e2e (scoped)
+postgres-expert	DB tests	pnpm test:db
+server-action-builder	Unit tests sufficient	—
+service-builder	Unit tests sufficient	—
+
+E2E test scoping:
+
+Extract keywords from the phase title/slug (e.g., notes, billing, auth)
+Glob for e2e/**/*{keyword}*.spec.ts
+If matches found: pnpm test:e2e -- [matched spec files]
+If no matches: pnpm test:e2e (full suite)
+
+Graceful skip: If a test command doesn't exist (exit code from missing script), skip it and note in your completion report. Projects without E2E or DB tests should not fail verification.
+
+All extra tests must pass before reporting completion.
+
+Scope boundary: Your job ends here. Do NOT run /code-review — an independent validator teammate will review your work after you report. This separation ensures blind spots are caught by a fresh set of eyes.
+
+Step 7: Commit Changes (Worktree)
+
+You are running in an isolated git worktree. Your changes live on a separate branch that the orchestrator will merge into the main tree. Uncommitted changes cannot be merged — they are lost when the worktree is cleaned up.
+
+Commit all changes before reporting:
+
+git add -A && git commit -m "feat(phase-{NN}): {phase-title}"
+
+
+git add -A is safe here because your worktree started clean from the main branch — it only picks up your own phase work.
+
+If you have nothing to commit (e.g., the phase only modified test expectations that already pass), note this in your completion report.
+
+Step 8: Report Completion
+
+Send completion message to the orchestrator:
+
+SendMessage({
+  type: "message",
+  recipient: "team-lead",
+  content: "Phase [NN] implementation complete — ready for review.\n\nFiles created/modified:\n- [list]\n\nTests: passing\nTypecheck: passing\n\nAcceptance criteria met:\n- [list key criteria]",
+  summary: "Phase NN implemented — ready for review"
+})
+
+
+Then go idle. The orchestrator will either assign the next phase or send a shutdown request.
+
+Resuming After Context Compact
+
+If your context was compacted mid-phase:
+
+TaskList → scan for tasks where you are the owner (your agent name)
+Find your in_progress task, or if none, your first pending task
+TaskGet on that task → read the description AND metadata
+Metadata tells you: which phase (phase), which group (group), which skill (skill), and which orchestrator task you report to (parent_task_id)
+Continue from that task — don't restart the phase
+The task list and metadata are your source of truth, not your memory
+Troubleshooting
+Tests fail but code looks correct
+
+Cause: Reference patterns may have changed since the phase was written. Fix: Re-read the reference file (Step 3). If the phase's code blocks differ from the current reference, follow the reference — it's the ground truth.
+
+Domain skill not found
+
+Cause: Skill name in phase frontmatter doesn't match available skills. Fix: Check the table in Step 3 for the correct skill name. If the phase focus doesn't match any skill, skip skill invocation and rely on the reference file.
+
+Weekly Installs
+17
+Repository
+darraghh1/my-cl…de-setup
+GitHub Stars
+44
+First Seen
+Feb 19, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

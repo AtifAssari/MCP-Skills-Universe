@@ -1,0 +1,52 @@
+---
+rating: ⭐⭐
+title: jira-ticket-viewer
+url: https://skills.sh/delexw/claude-code-misc/jira-ticket-viewer
+---
+
+# jira-ticket-viewer
+
+skills/delexw/claude-code-misc/jira-ticket-viewer
+jira-ticket-viewer
+Installation
+$ npx skills add https://github.com/delexw/claude-code-misc --skill jira-ticket-viewer
+SKILL.md
+Jira Ticket Viewer
+
+Fetch and display Jira ticket details using the jira CLI tool.
+
+Inputs
+
+Raw arguments: $ARGUMENTS
+
+Infer from the arguments:
+
+TICKET_KEY: the Jira issue key
+OUT_DIR: output directory, or .implement-assets/jira if not provided
+System Requirements
+jira CLI installed and configured (https://github.com/ankitpokhrel/jira-cli)
+Environment variable JIRA_API_TOKEN set with a valid Jira API token. Important: When checking this variable, verify at least 2 times before concluding it is not set. Environment variables can appear unset due to shell context differences. Never expose the value — use existence checks only (e.g. test -n "$JIRA_API_TOKEN").
+Environment variable JIRA_SERVER set to the Jira base URL (e.g. https://yourcompany.atlassian.net).
+Execution
+Pre-flight check: Run jira me to verify the CLI is installed and authenticated — if it fails, follow error handling in references/rules.md. Do NOT continue until jira me succeeds.
+Validate TICKET_KEY against references/rules.md
+Fetch raw JSON (single API call): Run mkdir -p OUT_DIR && jira issue view TICKET_KEY --raw > OUT_DIR/raw.json via Bash
+Parse ticket: Run node ${CLAUDE_SKILL_DIR}/scripts/parse-ticket.js < OUT_DIR/raw.json > OUT_DIR/dossier.json via Bash to get the parsed JSON output
+Fetch pull requests: Run node ${CLAUDE_SKILL_DIR}/scripts/fetch-pull-requests.js < OUT_DIR/raw.json > OUT_DIR/pull-requests.json via Bash. If the output is a non-empty array, read OUT_DIR/dossier.json, add a pullRequests field with the array, and save back using the Write tool. PR fetch failure is non-fatal — warn and continue.
+Interpret comments: If the parsed JSON contains a non-empty comments array, analyze them following references/comment-rules.md. Replace the comments array in the JSON with a commentSummary object, then save the updated JSON back to OUT_DIR/dossier.json using the Write tool.
+Attachments: If the parsed JSON contains a non-empty attachments array, download them:
+Run node ${CLAUDE_SKILL_DIR}/scripts/download-attachment.js --out OUT_DIR < OUT_DIR/raw.json via Bash
+Include downloaded attachment file paths in the output
+Return the parsed JSON output (see references/output-format.md for schema reference), including attachment download paths if any
+Weekly Installs
+55
+Repository
+delexw/claude-code-misc
+GitHub Stars
+1
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykPass

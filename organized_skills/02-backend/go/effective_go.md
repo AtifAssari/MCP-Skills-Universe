@@ -1,0 +1,50 @@
+---
+rating: ⭐⭐
+title: effective go
+url: https://skills.sh/openshift/hypershift/effective-go
+---
+
+# effective go
+
+skills/openshift/hypershift/Effective Go
+Effective Go
+Installation
+$ npx skills add https://github.com/openshift/hypershift --skill 'Effective Go'
+SKILL.md
+Effective Go
+
+Apply best practices and conventions from the official Effective Go guide to write clean, idiomatic Go code.
+
+When to Apply
+
+Use this skill automatically when:
+
+Writing new Go code
+Reviewing Go code
+Refactoring existing Go implementations
+Key Reminders
+
+Follow the conventions and patterns documented at https://go.dev/doc/effective_go, with particular attention to:
+
+Formatting: Always use gofmt - this is non-negotiable
+Naming: No underscores, use MixedCaps for exported names, mixedCaps for unexported
+Error handling: Always check errors; return them, don't panic
+Concurrency: Share memory by communicating (use channels)
+Interfaces: Keep small (1-3 methods ideal); accept interfaces, return concrete types
+Documentation: Document all exported symbols, starting with the symbol name
+References
+Official Guide: https://go.dev/doc/effective_go
+Code Review Comments: https://github.com/golang/go/wiki/CodeReviewComments
+Standard Library: Use as reference for idiomatic patterns
+Weekly Installs
+–
+Repository
+openshift/hypershift
+GitHub Stars
+523
+First Seen
+–
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

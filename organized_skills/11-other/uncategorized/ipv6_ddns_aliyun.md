@@ -1,0 +1,192 @@
+---
+rating: ⭐⭐
+title: ipv6-ddns-aliyun
+url: https://skills.sh/shigzz/aliyun-skills/ipv6-ddns-aliyun
+---
+
+# ipv6-ddns-aliyun
+
+skills/shigzz/aliyun-skills/ipv6-ddns-aliyun
+ipv6-ddns-aliyun
+Installation
+$ npx skills add https://github.com/shigzz/aliyun-skills --skill ipv6-ddns-aliyun
+SKILL.md
+能力概述
+
+本 Skill 实现了一个完整的 IPv6 DDNS（动态域名解析）解决方案，自动将本机获取到的公网 IPv6 地址同步到阿里云云解析 DNS。
+
+工作流程
+┌─────────────────────────────────────────────────────────────┐
+│ 1. 检测本机公网 IPv6 地址                                    │
+│    - 过滤 fe80::/10 (链路本地)                               │
+│    - 过滤 ::1/128 (回环地址)                                 │
+│    - 筛选出公网可路由的 IPv6 地址                             │
+│    - 验证公网可达性：                                         │
+│      * 通过 curl 6.ipw.cn 获取出口 IPv6 地址                 │
+│      * 与本机网卡 IPv6 地址比对                               │
+│      * 如匹配成功，确认为公网地址                             │
+│    - 如无公网 IPv6，报错退出                                 │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 2. 检查 aliyun-domain-skill 依赖                             │
+│    - 检查本地是否存在 domain/SKILL.md                       │
+│    - 如不存在，执行安装命令：                                 │
+│      npx skills add shigzz/aliyun-skills --skill aliyun-domain-skill
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 3. 读取或询问 DDNS 配置                                       │
+│    - 检查当前目录 .aliyun-config.json                       │
+│    - 如有配置且用户确认，直接使用                            │
+│    - 如无配置，交互式询问：                                   │
+│      * 根域名 (如 example.com)                               │
+│      * 主机记录 (如 ddns 或 @)                                │
+│      * TTL (默认 60 秒)                                      │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 4. 验证域名归属                                               │
+│    - 通过 aliyun-domain-skill 查询账号域名列表                │
+│    - 确认用户指定的根域名在列表中                             │
+│    - 如不存在，提示用户先去阿里云注册域名                      │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 5. 查询现有 AAAA 记录                                         │
+│    - 通过 aliyun-domain-skill 查询域名解析记录                │
+│    - 筛选 Type=AAAA, RR=主机记录 的记录                       │
+│    - 获取记录 ID 和当前 IP 值                                 │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│ 6. 更新或新增解析记录                                         │
+│    - 如现有记录 IP == 本机 IPv6：提示无需更新，退出           │
+│    - 如存在记录但 IP 不同：更新记录                           │
+│    - 如不存在记录：新增 AAAA 记录                             │
+│    - 更新成功后保存配置到 .aliyun-config.json                │
+└─────────────────────────────────────────────────────────────┘
+
+依赖说明
+
+本 Skill 依赖 aliyun-domain-skill 提供的域名管理能力：
+
+查询账号域名列表
+管理 DNS 解析记录（查询、新增、修改 AAAA 记录）
+
+如未安装，请执行：
+
+npx skills add shigzz/aliyun-skills --skill aliyun-domain-skill
+
+配置存储
+
+DDNS 配置保存在当前工作目录的 .aliyun-config.json，支持两种格式：
+
+单项目配置（对象格式）
+{
+  "version": 1,
+  "ddns": {
+    "domain_name": "example.com",
+    "rr": "ddns",
+    "ttl": 60,
+    "record_id": "12345678901234567",
+    "last_ip": "2408:4002:1c2f:8d00::1",
+    "last_update": "2026-03-28T15:30:00+08:00"
+  }
+}
+
+多项目配置（数组格式）
+
+支持在同一仓库中管理多个 DDNS 配置（如多域名或多主机）：
+
+[
+  {
+    "project": "nas-home",
+    "version": 1,
+    "ddns": {
+      "domain_name": "example.com",
+      "rr": "nas",
+      "ttl": 60,
+      "record_id": "12345678901234567",
+      "last_ip": "2408:4002:1c2f:8d00::1",
+      "last_update": "2026-03-28T15:30:00+08:00"
+    }
+  },
+  {
+    "project": "router-office",
+    "version": 1,
+    "ddns": {
+      "domain_name": "company.com",
+      "rr": "router",
+      "ttl": 60,
+      "record_id": "98765432109876543",
+      "last_ip": "2408:4002:1c2f:8e00::1",
+      "last_update": "2026-03-28T10:00:00+08:00"
+    }
+  }
+]
+
+
+字段说明：
+
+字段	类型	必需	说明
+project	string	多项目时必需	项目标识名，用于区分不同配置
+version	int	是	配置格式版本，当前为 1
+ddns.domain_name	string	是	根域名，用于 DNS 解析
+ddns.rr	string	是	主机记录，如 ddns 或 @
+ddns.ttl	int	否	DNS 记录 TTL，默认 60 秒
+ddns.record_id	string	否	阿里云 DNS 记录 ID
+ddns.last_ip	string	否	上次更新的 IP 地址
+ddns.last_update	string	否	ISO 8601 格式最后更新时间
+配置复用
+对象格式：若配置存在且字段完整，本次可直接复用，无需再次询问
+数组格式：提示用户选择要使用的项目（按 project 字段区分），选定后仅更新该项目配置
+
+若用户要求更换域名或主机记录，或新增项目配置，则重新交互确认。
+
+前置检查
+1. 阿里云凭证
+
+需要阿里云 AccessKey，配置方式见 aliyun-domain-skill：
+
+环境变量方式（推荐）：
+
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+
+
+.env 文件方式：
+
+cp .env.example .env
+# 编辑 .env 填入凭证
+
+使用方法
+作为 Claude Code Skill 调用
+设置本机的 IPv6 DDNS
+更新我的 DDNS 记录
+
+错误处理
+错误场景	处理方式
+无公网 IPv6	退出并提示用户检查网络配置
+aliyun-domain-skill 未安装	提示用户安装依赖 skill
+域名不存在于账号	提示用户去阿里云注册域名
+DNS 操作权限不足	提示用户配置 RAM 权限后重试
+注意事项
+IPv6 要求：本机必须有公网可路由的 IPv6 地址（非 fe80:: 开头的链路本地地址）
+公网验证：通过 curl 6.ipw.cn 获取出口 IPv6，与本机网卡地址比对，确认地址为公网可达
+TTL 设置：建议设置为 60 秒，以便 IP 变化时快速生效
+域名归属：域名必须在当前阿里云账号下，且使用阿里云云解析 DNS
+首次配置：首次运行需要交互式输入域名和主机记录，后续可从 .aliyun-config.json 读取
+多 IPv6 地址：如本机有多个公网 IPv6，默认使用第一个
+Weekly Installs
+9
+Repository
+shigzz/aliyun-skills
+GitHub Stars
+2
+First Seen
+Mar 28, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykWarn

@@ -1,0 +1,100 @@
+---
+rating: ⭐⭐
+title: case study writer
+url: https://skills.sh/eddiebe147/claude-settings/case-study-writer
+---
+
+# case study writer
+
+skills/eddiebe147/claude-settings/Case Study Writer
+Case Study Writer
+Installation
+$ npx skills add https://github.com/eddiebe147/claude-settings --skill 'Case Study Writer'
+SKILL.md
+Case Study Writer
+
+Transform customer success stories into powerful case studies that demonstrate value and build credibility. This skill helps you create compelling narratives that showcase real results, overcome objections, and prove your solution works.
+
+Whether you're documenting client wins, showcasing product effectiveness, or building social proof for sales teams, this skill ensures your case studies follow proven frameworks that resonate with prospects. They balance storytelling with data to create credible, persuasive content.
+
+Perfect for B2B marketers, sales teams, agencies, SaaS companies, and service providers who need case studies that convert prospects into customers by showing—not just telling—what success looks like.
+
+Core Workflows
+Workflow 1: Full Case Study Development
+Client Selection - Identify customer with compelling story and strong results
+Interview Execution - Gather details through structured questions
+Story Framework - Structure using Problem-Solution-Results format
+Headline Creation - Write attention-grabbing title featuring key metric
+Executive Summary - Create scannable overview with highlights
+Challenge Description - Paint picture of situation before your solution
+Solution Narrative - Explain what you did and why you did it
+Results Quantification - Showcase metrics, ROI, impact with specifics
+Quote Integration - Include powerful client testimonials throughout
+Visual Elements - Suggest charts, screenshots, before/after comparisons
+Call-to-Action - End with clear next step for readers
+Workflow 2: Problem-Solution-Results Framework
+Problem - Document specific challenges client faced
+Business impact of the problem
+Why previous solutions failed
+Urgency or trigger for seeking new solution
+Solution - Detail your approach and implementation
+Why client chose you over alternatives
+Implementation process and timeline
+Unique aspects of your methodology
+Results - Quantify outcomes and ongoing impact
+Specific metrics and percentage improvements
+Time to value and ROI
+Qualitative benefits and unexpected wins
+Workflow 3: Interview Question Framework
+Background Questions - Company, industry, role, team size
+Challenge Questions - What problem were you trying to solve? What had you tried before?
+Selection Questions - Why did you choose us? What alternatives did you consider?
+Implementation Questions - How did the process go? Any surprises?
+Results Questions - What changed? Specific numbers? Time to results?
+Testimonial Questions - How would you describe working with us? Would you recommend us?
+Future Questions - What's next? How will you continue using our solution?
+Workflow 4: Format Variations
+Long-Form PDF - Comprehensive 2-4 page deep dive
+One-Pager - Quick-read summary for sales handouts
+Video Case Study - Script for customer interview video
+Slide Deck - Visual presentation for sales meetings
+Social Media Snippets - Bite-sized highlights for LinkedIn, Twitter
+Web Page - SEO-optimized landing page version
+Email Campaign - Multi-part story across drip sequence
+Quick Reference
+Action	Command/Trigger
+Full case study	"Write case study for [client]"
+Interview questions	"Create interview questions for case study"
+Executive summary	"Write case study summary for [client]"
+Results section	"Write results section showing [metrics]"
+Problem statement	"Describe client challenge for case study"
+One-pager	"Create one-page case study for [client]"
+Social snippets	"Extract social media quotes from case study"
+Video script	"Write video script for case study"
+Best Practices
+Lead with results - Put biggest wins in headline and first paragraph
+Use specific numbers - "247% ROI" beats "significant improvement"
+Tell a story - Make it narrative, not just a bulleted list of features
+Feature the customer - Their voice and perspective, not your sales pitch
+Show before/after - Help prospect see themselves in the "before" state
+Include obstacles - Real stories have challenges, showing how you solved them builds credibility
+Get approval - Ensure client signs off on all claims and quotes
+Use client's words - Direct quotes are more credible than paraphrasing
+Make it scannable - Subheadings, pull quotes, bullet points, bold numbers
+Industry relevance - Create case studies for each target vertical
+SEO optimization - Include industry keywords, client industry, solution type
+Visual hierarchy - Use formatting to highlight key takeaways
+Credibility markers - Include client logo, job title, company size
+Address objections - If prospects worry about X, show how client overcame X
+Keep it current - Update annually or when results improve
+Multiple CTAs - Give readers various ways to engage (demo, download, contact)
+Quantify time savings - Hours saved, faster time-to-market, efficiency gains
+Highlight unexpected benefits - Bonus wins beyond primary goal
+Use active voice - "Client achieved X" not "X was achieved"
+Link to resources - Connect to related content, product pages, demos
+Weekly Installs
+–
+Repository
+eddiebe147/clau…settings
+First Seen
+–

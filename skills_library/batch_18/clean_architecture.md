@@ -1,0 +1,93 @@
+---
+title: clean-architecture
+url: https://skills.sh/j5ik2o/okite-ai/clean-architecture
+---
+
+# clean-architecture
+
+skills/j5ik2o/okite-ai/clean-architecture
+clean-architecture
+Installation
+$ npx skills add https://github.com/j5ik2o/okite-ai --skill clean-architecture
+SKILL.md
+クリーンアーキテクチャ
+
+クリーンアーキテクチャを採用しているプロジェクト向けの設計・レビュー支援。
+
+注意: このスキルはプロジェクトがクリーンアーキテクチャを採用している場合にのみ使用する。 他のアーキテクチャ（Hexagonal、Onion、レイヤード等）には適用しない。
+
+層構造の概要
+┌─────────────────────────────────────────────────────┐
+│  Infrastructure（横断的関心事のみ）                   │
+│  ・ログ ・設定 ・メトリクス ・DI設定                  │
+├─────────────────────────────────────────────────────┤
+│  Interface Adapters（外部との境界）                  │
+│  ・Controller ・Repository実装 ・Gateway実装         │
+├─────────────────────────────────────────────────────┤
+│  Use Cases（アプリケーション固有ルール）             │
+│  ・Use Case ・Output Port（Repository Interface等）│
+├─────────────────────────────────────────────────────┤
+│  Domain（ビジネスルール）                            │
+│  ・Entity ・Value Object ・Domain Service           │
+└─────────────────────────────────────────────────────┘
+
+重要な原則
+永続化・RPCの配置場所
+コンポーネント	配置層
+Repository Interface	ユースケース層（Output Port）
+Repository 実装	インターフェースアダプタ層
+Gateway Interface	ユースケース層（Output Port）
+Gateway 実装（RPC等）	インターフェースアダプタ層
+インフラストラクチャ層の責務
+
+配置するもの（横断的関心事のみ）:
+
+ロギング機構
+設定管理
+メトリクス・トレーシング
+DIコンテナ設定
+
+配置しないもの:
+
+Repository実装 → インターフェースアダプタ層へ
+外部API Gateway → インターフェースアダプタ層へ
+レビュー時のチェックポイント
+
+ドメイン層に外部依存がないか
+
+DB接続、HTTPクライアント等の混入を確認
+
+Repository実装の配置が正しいか
+
+インターフェースアダプタ層にあるべき
+
+インフラストラクチャ層が肥大化していないか
+
+永続化コードが紛れ込んでいないか確認
+
+依存方向が内向きか
+
+外側の層から内側への依存のみ許可
+詳細リファレンス
+
+各層の詳細な責務と配置すべきコンポーネントの一覧は references/layer-responsibilities.md を参照。
+
+関連スキル（併読推奨）
+
+このスキルを使用する際は、以下のスキルも併せて参照すること：
+
+repository-placement: クリーンアーキテクチャにおけるリポジトリインターフェースの配置
+package-design: 各層内のパッケージ設計原則
+ddd-module-pattern: ドメイン層内のモジュール構成
+Weekly Installs
+24
+Repository
+j5ik2o/okite-ai
+GitHub Stars
+75
+First Seen
+Mar 3, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,190 @@
+---
+rating: ⭐⭐⭐
+title: domain-modeling
+url: https://skills.sh/jwilger/agent-skills/domain-modeling
+---
+
+# domain-modeling
+
+skills/jwilger/agent-skills/domain-modeling
+domain-modeling
+Installation
+$ npx skills add https://github.com/jwilger/agent-skills --skill domain-modeling
+SKILL.md
+Domain Modeling
+
+Value: Communication -- domain types make code speak the language of the business. They turn implicit knowledge into explicit, compiler-verified contracts that humans and AI can reason about.
+
+Purpose
+
+Teaches how to build rich domain models that prevent bugs at compile time rather than catching them at runtime. Covers primitive obsession detection, parse-don't-validate, making invalid states unrepresentable, and semantic type design. Independently useful for any code review or design task, and provides the principles that domain review checks for in the TDD cycle.
+
+Practices
+Avoid Primitive Obsession
+
+Do not use raw primitives (String, int, number) for domain concepts. Create types that express business meaning.
+
+Do:
+
+fn transfer(from: AccountId, to: AccountId, amount: Money) -> Result<Receipt, TransferError>
+
+
+Do not:
+
+fn transfer(from: String, to: String, amount: i64) -> Result<(), String>
+
+
+When reviewing code, flag every parameter, field, or return type where a primitive represents a domain concept. The fix is a newtype or value object that validates on construction.
+
+Bool-as-state anti-pattern: A bool field whose name describes a domain state (already_exists, is_initialized, is_published, has_been_reviewed) is a state machine encoded as a primitive. Two states today become three tomorrow, and the bool cannot represent the third.
+
+// BAD: bool encodes a two-state machine as a primitive
+struct Article { is_published: bool }
+
+// GOOD: enum names the states and extends safely
+enum ArticleState { Draft, Published, Archived }
+
+
+Flag any bool field that answers "what state is this in?" rather than "is this condition true?" The fix is an enum whose variants name the domain states. This check is distinct from "make invalid states unrepresentable" -- that rule catches impossible combinations; this one catches domain concepts hiding inside a boolean.
+
+Parse, Don't Validate
+
+Validate at the boundary. Use strong types internally. Never re-validate data that a type already guarantees.
+
+Accept raw input at system boundaries (user input, API responses).
+Parse it into a domain type that enforces validity at construction.
+Pass the domain type through the system. No further validation needed.
+# Boundary: parse raw input into domain type
+email = Email(raw_input)  # raises if invalid
+
+# Interior: trust the type
+def send_welcome(email: Email) -> None:
+    # No need to validate -- Email guarantees validity
+
+
+If you find validation logic deep inside business logic, it belongs at the construction boundary instead.
+
+Make Invalid States Unrepresentable
+
+Use the type system to make illegal combinations impossible to construct.
+
+Problem -- boolean flags create invalid combinations:
+
+struct User { email: Option<String>, email_verified: bool }
+# Can have email_verified=true with email=None
+
+
+Solution -- encode state in the type:
+
+enum User {
+    Unverified { email: Email },
+    Verified { email: Email, verified_at: Timestamp },
+}
+
+
+When reviewing code, ask: "Can this type represent a state that is meaningless in the domain?" If yes, redesign it.
+
+Semantic Types Over Structural Types
+
+Name types for what they ARE in the domain, not what they are made of.
+
+Wrong (structural)	Right (semantic)
+NonEmptyString	UserName
+PositiveInteger	OrderQuantity
+ValidatedEmail	CustomerEmail
+
+The test: if two fields have the same structural type, the compiler cannot catch you swapping them. Semantic types prevent this.
+
+// BAD: title and name are both NonEmptyString -- swappable
+{ title: NonEmptyString, name: NonEmptyString }
+
+// GOOD: distinct types catch mix-ups at compile time
+{ title: UserTitle, name: UserName }
+
+
+Structural types are useful as building blocks that semantic types wrap. The semantic type adds domain identity; the structural type provides reusable validation.
+
+Newtypes for Identifiers
+
+Every identifier gets its own type. Never use raw String or int for IDs.
+
+struct AccountId(Uuid);
+struct UserId(Uuid);
+
+// Compiler catches: transfer(user_id, account_id) won't compile
+fn transfer(from: AccountId, to: AccountId, user: UserId) -> Result<(), Error>
+
+Ergonomic Conversions
+
+Make construction validated and extraction easy.
+
+Construction (IN): Always through a validating constructor. No automatic conversion from primitives.
+Extraction (OUT): Provide Display, AsRef, Into or equivalent so the type is convenient to use. Getting the inner value out should be trivial.
+
+Never provide an automatic conversion FROM a primitive -- that bypasses validation and undermines parse-don't-validate.
+
+Exhaustive Matching
+
+Use enums with exhaustive match/switch to ensure all cases are handled. Never use a catch-all default for domain states -- it silently swallows new variants.
+
+Veto Authority
+
+When reviewing code (whether in a TDD cycle or a standalone review), you have authority to reject designs that violate these principles. When exercising this authority:
+
+State the specific violation (e.g., "primitive obsession: email is String, should be Email type").
+Propose the alternative with a concrete type definition.
+Explain the impact in one sentence.
+If the other party disagrees, engage substantively for up to two rounds. Then escalate to the human.
+
+Do not back down from valid domain concerns to avoid conflict. Do not silently accept designs that violate these principles.
+
+Enforcement Note
+Standalone mode: Advisory. The agent follows domain modeling principles by convention.
+TDD domain review (chaining): Advisory. Veto is self-enforced: the agent must reject its own work when it violates these principles, with the same rigor as if a separate agent were reviewing.
+TDD domain review (subagents): Gating. Domain veto blocks phase progression. The reviewing agent can reject the handoff.
+
+Hard constraints:
+
+Do not silently accept designs that violate these principles: [RP] -- if human explicitly overrides, record the override and the principle it violates.
+Constraints
+Veto authority -- "do not back down": Do not rationalize away a valid concern to avoid the friction of escalation. It does not mean refuse to engage with counterarguments. If the counterargument is genuinely convincing -- the principle doesn't apply here -- update your assessment. If you're backing down because escalation is inconvenient, that's a violation.
+Bool-as-state vs. conditions: The test is: does this boolean represent a state transition the domain cares about (e.g., active/inactive, open/closed)? If yes, use an enum. If it genuinely answers a yes/no question with no domain state implications (e.g., "is this calculation positive?"), a boolean is fine. When in doubt, use an enum -- the cost of a small enum is lower than the cost of a boolean that silently accumulates domain meaning.
+Verification
+
+After applying domain modeling principles, verify:
+
+ No primitive types (String, int, number) used for domain concepts
+ No bool fields encoding domain states (use enums for state machines)
+ All identifiers use newtype wrappers, not raw primitives
+ Invalid states are unrepresentable (no contradictory field combinations)
+ Validation occurs at construction boundaries, not deep in business logic
+ Types are named for domain meaning (semantic), not structure
+ Two fields with the same underlying type cannot be accidentally swapped
+ Enum matching is exhaustive with no catch-all defaults for domain states
+
+If any criterion is not met, create or refine the domain type before proceeding.
+
+Dependencies
+
+This skill works standalone. For enhanced workflows, it integrates with:
+
+tdd: Domain review is a mandatory checkpoint in the TDD cycle. This skill provides the principles that review checks for.
+code-review: Domain integrity is stage 3 of the three-stage review. This skill defines what to look for.
+architecture-decisions: Architectural patterns (event sourcing, CQRS, hexagonal) affect where domain boundaries fall.
+
+Missing a dependency? Install with:
+
+npx skills add jwilger/agent-skills --skill tdd
+
+Weekly Installs
+101
+Repository
+jwilger/agent-skills
+GitHub Stars
+2
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

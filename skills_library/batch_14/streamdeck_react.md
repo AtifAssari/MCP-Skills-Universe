@@ -1,0 +1,725 @@
+---
+title: streamdeck-react
+url: https://skills.sh/fcannizzaro/streamdeck-react/streamdeck-react
+---
+
+# streamdeck-react
+
+skills/fcannizzaro/streamdeck-react/streamdeck-react
+streamdeck-react
+Installation
+$ npx skills add https://github.com/fcannizzaro/streamdeck-react --skill streamdeck-react
+SKILL.md
+streamdeck-react
+
+A custom React renderer that turns JSX into rendered images for Elgato Stream Deck hardware. Each action instance gets its own isolated React root with full hooks, state, and lifecycle support.
+
+When to Use This Skill
+
+Use when the user is:
+
+Creating or modifying a Stream Deck plugin that uses @fcannizzaro/streamdeck-react
+Asking about rendering React components on Stream Deck keys or dials, or handling touch input
+Working with @elgato/streamdeck SDK in a React-based plugin
+Implementing a custom adapter for web simulation or testing
+Setting up Vite bundling for a Stream Deck plugin with native Takumi bindings
+Scaffolding a brand new plugin and needs a sensible project template or starter example
+Architecture (5-Stage Pipeline)
+React Tree --> Reconciler --> VNode Tree --> Takumi --> Adapter --> setImage/setFeedback
+(JSX+Hooks)   (host config)   (plain JS)   (JSX->PNG)  (bridge)    (hardware/simulator)
+
+Your components render standard React with hooks and state.
+A custom react-reconciler manages the fiber tree.
+On commit, host nodes form a virtual tree of { type, props, children } with back-pointers for dirty propagation.
+The Takumi renderer converts the tree to a PNG/WebP image buffer via a direct VNode-to-Takumi bypass (skips createElement + fromJsx).
+The adapter pushes the image to the backend via action.setImage() or action.setFeedback(). The default physicalDevice() adapter wraps the Elgato SDK; custom adapters handle it differently.
+4-Phase Skip Hierarchy
+
+Every render passes through a multi-tier skip hierarchy to avoid redundant work:
+
+Phase 1: Dirty-flag check (O(1)) → skip if no VNode mutated
+Phase 2: Merkle hash → Image cache lookup → skip if hash matches cached render
+Phase 3: Takumi render (main thread or worker) → rasterize
+Phase 4: xxHash output dedup → skip hardware push if identical to last frame
+
+
+Two entry points: renderToDataUri (keys/dials → base64 data URI) and renderToRaw (TouchStrip → raw RGBA Buffer).
+
+Flush Coordinator
+
+When multiple roots request flushes in the same tick, the FlushCoordinator batches them via microtask and processes in priority order:
+
+Priority 0 (animating) → 1 (interactive) → 2 (normal) → 3 (idle)
+Sequential execution ensures higher-priority roots get first access to the USB bus.
+Root Recycling Pool
+
+When actions disappear (profile switch, page navigation), the root is suspended rather than destroyed — the fiber tree stays alive. When the same action type reappears, the root is resumed with new context data, avoiding expensive fiber root creation.
+
+Pool key: ${actionUUID}:${canvasType} — ensures component and surface compatibility.
+Reduces profile switch latency from ~160-480ms to ~32-96ms on a 32-key device.
+LRU eviction with configurable max size (default 16 entries).
+Context Provider Tree
+
+Every action root uses 6 context providers (stable outermost, volatile innermost):
+
+CoordinatorContext.Provider    ← plugin-level coordinator (null if not enabled)
+  ThemeContext.Provider          ← plugin-level theme (CSS variables + setter)
+    RootContext.Provider          ← merged: action + device + canvas + streamDeck (immutable)
+      EventBusContext.Provider    ← per-root EventBus (new instance on resume)
+        GlobalSettingsContext.Provider  ← plugin-wide settings
+          SettingsContext.Provider      ← per-action settings
+            PluginWrapper / ActionWrapper / <UserComponent />
+
+
+CoordinatorContext and ThemeContext are plugin-level singletons that rarely or never change. RootContext merges ActionInfo, DeviceInfo, CanvasInfo, and StreamDeckAccess into a single provider, eliminating 3 fiber nodes per root. For 32 active roots, this saves 96 provider fiber nodes.
+
+Code-First Manifest Generation
+
+The Vite bundler plugin auto-generates manifest.json from code:
+
+Action metadata is defined in defineAction({ info: { name, icon, ... } }) — the bundler plugin auto-extracts it from the module graph at build time via AST analysis.
+Plugin metadata (uuid, name, author, description, icon, version) is provided via the manifest option in the bundler plugin config.
+Controllers are auto-derived from key/dial/touchStrip presence on each action.
+Defaults are applied for OS, Nodejs, SDKVersion, Software, CodePath, Category, States.
+Actions with info.disabled: true are excluded from the manifest but still work at runtime.
+The manifest is written to the .sdPlugin directory during writeBundle.
+Skips write if content unchanged (avoids unnecessary recompilation in watch mode).
+
+No hand-written manifest.json is needed.
+
+Each visible action instance on the hardware gets its own isolated React root. No shared state between roots unless you use the built-in Action Coordinator (coordinator: true), an external store (Zustand, Jotai), or the wrapper API.
+
+Native Module Lazy Loading
+
+Native .node binaries (Takumi and any user-registered nativeModules) are lazy-loaded by default — downloaded from npm on first plugin startup and cached on disk.
+
+Build-Time Pipeline
+The streamDeckReact() Vite plugin resolves the installed version of each native module from its package.json.
+A self-contained virtual ESM module is generated for each, embedding the version, npm scope, and platform-to-binding map.
+The bundler's resolveId hook replaces all imports of the native module with the virtual loader. No user code changes needed.
+
+Version resolution uses three strategies in order: createRequire from project root, from library location (hoisted packages), and direct node_modules walk (for packages with restricted exports maps). If all fail, that module falls back to copy mode with a build-time warning.
+
+Runtime Flow
+Read .native-versions.json manifest
+  ↓
+existsSync(nodePath) && cachedVersion === VERSION?
+  ├── YES → require() cached .node file (fast path, ~1ms)
+  └── NO  → fetch npm tarball → gunzipSync → inline tar parse
+            → writeFileSync .node to disk
+            → update .native-versions.json
+            → require()
+
+
+The .node file is written next to the bundle output (import.meta.url-relative) and persists across restarts.
+
+Version Manifest (.native-versions.json)
+
+Tracks cached binary versions for cache invalidation on dependency upgrades:
+
+{ "core.darwin-arm64.node": "0.73.1" }
+
+
+When the baked-in VERSION (from build time) differs from the manifest entry, the binary is re-downloaded. Each native module only reads/writes its own key — concurrent module evaluation is safe.
+
+Tarball Extraction
+
+The loader includes a minimal inline tar parser (no external dependency). npm tarballs use 512-byte headers (filename at offset 0, size at offset 124 in octal). The parser scans sequentially until it finds the target .node file.
+
+Copy Mode Alternative
+
+Set nativeBindings: "copy" for air-gapped/offline environments. Requires platform packages installed and targets specified. .node files are copied from node_modules during writeBundle. Missing bindings are warnings in dev, errors in production.
+
+Custom Native Modules
+
+Register additional NAPI-RS packages via nativeModules on streamDeckReact(). Each entry gets the same lazy/copy treatment. Validation at build time catches empty exports/bindings, duplicate specifiers, filename collisions, and Takumi conflicts. See references/bundling.md for configuration details.
+
+Adapter Layer
+
+The adapter layer abstracts the @elgato/streamdeck SDK behind a pluggable StreamDeckAdapter interface. This makes the SDK an optional peer dependency and enables alternative backends (web simulator, test harness).
+
+physicalDevice() is the default adapter wrapping the real Elgato SDK. It is the only module that value-imports from @elgato/streamdeck.
+Pass a custom adapter via createPlugin({ adapter: myAdapter() }).
+All hooks (useOpenUrl, useSwitchProfile, useSendToPI, useShowAlert, useShowOk, useTitle, useDialHint) route through the adapter.
+AdapterActionHandle is a flat interface unifying Key/Dial/Action. Inapplicable methods (e.g., setImage on dial) no-op.
+See references/adapter.md for full interface definitions and custom adapter example.
+Project Setup
+New Plugin
+
+For greenfield projects, prefer the scaffolder first:
+
+npm create streamdeck-react@latest
+
+
+It asks for the plugin UUID, author, platforms, native targets, starter example, and whether to use React Compiler, then generates a working project.
+
+To use React Compiler via CLI flag:
+
+npm create streamdeck-react@latest --react-compiler true
+
+
+React Compiler automatically memoizes components at build time, preventing unnecessary re-renders. This is especially beneficial in this environment because every re-render triggers an expensive rasterization pipeline (VNode tree -> Takumi layout -> Rust PNG render -> hardware).
+
+If the user wants to build it manually, use this structure:
+
+A minimal plugin project needs:
+
+my-plugin/
+  src/
+    plugin.ts           # Entry point
+    actions/
+      my-action.tsx     # Action component + defineAction with info
+  com.example.my-plugin.sdPlugin/
+    bin/                # Vite output goes here
+    imgs/               # Action and plugin icons
+  vite.config.ts
+  package.json
+  tsconfig.json
+
+Dependencies
+# Runtime
+npm install @fcannizzaro/streamdeck-react react
+
+# Runtime support used by the Stream Deck SDK
+npm install ws
+
+# Build tooling
+npm install -D vite@8.0.0 @vitejs/plugin-react@6.0.1
+
+# Build tooling (with React Compiler -- add on top of base)
+# npm install -D @rolldown/plugin-babel @babel/core babel-plugin-react-compiler
+
+# Build tooling (with Tailwind v4 CSS -- add on top of base)
+# npm install -D @tailwindcss/vite
+
+# Types (if using TypeScript)
+npm install -D @types/react
+
+
+Native Takumi bindings are lazy-loaded by default — they are downloaded from npm on first plugin startup and cached on disk. No platform-specific @takumi-rs/core-* packages need to be installed. Only the main @takumi-rs/core package is required (included as a dependency of @fcannizzaro/streamdeck-react).
+
+To opt out of lazy loading and copy binaries from node_modules at build time instead, set nativeBindings: "copy" on streamDeckReact() and install the matching @takumi-rs/core-* packages. See references/bundling.md for the full platform matrix.
+
+package.json
+
+Must use "type": "module". Example:
+
+{
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  }
+}
+
+tsconfig.json
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
+
+Core Workflow
+Step 1: Define Actions
+// src/actions/counter.tsx
+import { useState } from "react";
+import { defineAction, useKeyDown, useKeyUp, cn } from "@fcannizzaro/streamdeck-react";
+
+function CounterKey() {
+  const [count, setCount] = useState(0);
+  const [pressed, setPressed] = useState(false);
+
+  useKeyDown(() => {
+    setCount((c) => c + 1);
+    setPressed(true);
+  });
+
+  useKeyUp(() => setPressed(false));
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center w-full h-full gap-1",
+        pressed ? "bg-[#2563eb]" : "bg-[#0f172a]",
+      )}
+    >
+      <span className="text-white/70 text-[12px] font-medium">COUNT</span>
+      <span className="text-white text-[36px] font-bold">{count}</span>
+    </div>
+  );
+}
+
+export const counterAction = defineAction({
+  uuid: "com.example.my-plugin.counter",
+  key: CounterKey,
+  info: {
+    name: "Counter",
+    icon: "imgs/actions/counter",
+  },
+});
+
+Step 2: Create the Plugin Entry
+// src/plugin.ts
+import { createPlugin, googleFont } from "@fcannizzaro/streamdeck-react";
+import { counterAction } from "./actions/counter.tsx";
+
+const inter = await googleFont("Inter");
+
+const plugin = createPlugin({
+  fonts: [inter],
+  actions: [counterAction],
+});
+
+await plugin.connect();
+
+Step 3: Configure Vite
+
+Default setup (Oxc transforms):
+
+// vite.config.ts
+import { builtinModules } from "node:module";
+import { resolve } from "node:path";
+import { defineConfig, esmExternalRequirePlugin } from "vite";
+import react from "@vitejs/plugin-react";
+import { streamDeckReact } from "@fcannizzaro/streamdeck-react/vite";
+
+const PLUGIN_DIR = "com.example.my-plugin.sdPlugin";
+const builtins = builtinModules.flatMap((m) => [m, `node:${m}`]);
+
+export default defineConfig({
+  resolve: {
+    conditions: ["node"],
+  },
+  plugins: [
+    esmExternalRequirePlugin({ external: builtins }),
+    react(),
+    streamDeckReact({
+      uuid: "com.example.my-plugin",
+      manifest: {
+        uuid: "com.example.my-plugin",
+        name: "My Plugin",
+        author: "Your Name",
+        description: "A Stream Deck plugin built with React.",
+        icon: "imgs/plugin-icon",
+        version: "0.0.0.1",
+      },
+    }),
+  ],
+  build: {
+    target: "node20",
+    outDir: resolve(PLUGIN_DIR, "bin"),
+    emptyOutDir: false,
+    sourcemap: true,
+    minify: false,
+    lib: {
+      entry: resolve("src/plugin.ts"),
+      formats: ["es"],
+      fileName: () => "plugin.mjs",
+    },
+    rolldownOptions: {
+      output: {
+        codeSplitting: false,
+      },
+    },
+  },
+});
+
+
+With React Compiler (add Babel on top):
+
+// vite.config.ts
+import { builtinModules } from "node:module";
+import { resolve } from "node:path";
+import { defineConfig, esmExternalRequirePlugin } from "vite";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import { streamDeckReact } from "@fcannizzaro/streamdeck-react/vite";
+
+const PLUGIN_DIR = "com.example.my-plugin.sdPlugin";
+const builtins = builtinModules.flatMap((m) => [m, `node:${m}`]);
+
+export default defineConfig({
+  resolve: {
+    conditions: ["node"],
+  },
+  plugins: [
+    esmExternalRequirePlugin({ external: builtins }),
+    react(),
+    // @ts-expect-error — @rolldown/plugin-babel types incorrectly mark inherited babel fields as required
+    await babel({
+      presets: [reactCompilerPreset()],
+    }),
+    streamDeckReact({
+      uuid: "com.example.my-plugin",
+      manifest: {
+        uuid: "com.example.my-plugin",
+        name: "My Plugin",
+        author: "Your Name",
+        description: "A Stream Deck plugin built with React.",
+        icon: "imgs/plugin-icon",
+        version: "0.0.0.1",
+      },
+    }),
+  ],
+  build: {
+    target: "node20",
+    outDir: resolve(PLUGIN_DIR, "bin"),
+    emptyOutDir: false,
+    sourcemap: true,
+    minify: false,
+    lib: {
+      entry: resolve("src/plugin.ts"),
+      formats: ["es"],
+      fileName: () => "plugin.mjs",
+    },
+    rolldownOptions: {
+      output: {
+        codeSplitting: false,
+      },
+    },
+  },
+});
+
+
+Native bindings are lazy-loaded by default — they are downloaded from npm on first plugin startup and cached on disk. No targets option is needed.
+
+manifest.json is auto-generated. You do not need to write or maintain it by hand. Action metadata is extracted from defineAction({ info }) calls at build time.
+
+Step 4: Build and Verify
+
+The manifest.json is auto-generated during the build. Action metadata comes from defineAction({ info }) calls, and plugin metadata from the bundler plugin's manifest option.
+
+Critical: The uuid in each defineAction() must start with the plugin UUID prefix (e.g., "com.example.my-plugin.").
+
+Step 5: Dev
+npx vite build --watch
+
+
+Install the .sdPlugin folder in the Stream Deck app.
+
+If your package.json has a dev script configured, you can also just run bun dev (or npm run dev / pnpm dev).
+
+Hook Quick Reference
+Category	Hooks	Purpose
+Events	useKeyDown, useKeyUp	Key press/release
+Events	useDialRotate, useDialDown, useDialUp	Encoder rotation/press
+Events	useTouchTap	Touch strip tap
+Events	useDialHint	Set encoder trigger descriptions
+Gestures	useTap	Single tap (auto-delayed when useDoubleTap is active)
+Gestures	useLongPress	Key held for configurable duration (default 500ms)
+Gestures	useDoubleTap	Two rapid taps within configurable window (default 250ms)
+Settings	useSettings, useGlobalSettings	Bidirectional settings sync
+Lifecycle	useWillAppear, useWillDisappear	Action mount/unmount
+Context	useDevice, useAction, useCanvas	Device/action/canvas metadata
+Context	useStreamDeck	Adapter and action handle
+Size	useSize	Percentage-based and proportional size calculations
+Coordinator	useChannel	Cross-action shared state via named channels
+Coordinator	useActionPresence	Live snapshot of visible action instances
+Coordinator	useCoordinator	Raw coordinator instance (escape hatch)
+Theme	useTheme	Read/write CSS theme variables at runtime
+SDK	useOpenUrl, useSwitchProfile	System actions
+SDK	useSendToPI, usePropertyInspector	PI communication
+SDK	useShowAlert, useShowOk, useTitle	Key overlays
+Utility	useInterval, useTimeout, usePrevious	Timers and helpers
+Utility	useTick	Animation frame loop
+Animation	useSpring, useTween	Physics and easing-based value animation
+Animation	SpringPresets, Easings	Built-in spring presets and easing functions
+
+See references/hooks.md for full signatures and usage.
+
+Component Quick Reference
+Component	Element	Purpose
+Box	div	Flex container with shorthand props (center, padding, gap, direction)
+Text	span	Text with shorthand props (size, color, weight, align, font)
+Image	img	Image with required width/height, optional fit
+Icon	svg	Single SVG path icon with path, size, color
+ProgressBar	div	Horizontal progress bar with value/max
+CircularGauge	svg	Ring/arc gauge with value/max/size/strokeWidth
+ErrorBoundary	--	Catches errors, renders fallback
+
+All components are optional convenience wrappers. Raw div, span, img, svg elements work directly.
+
+See references/components.md for full props tables.
+
+Styling
+
+Prefer Tailwind classes for all static styling. Use inline style only for dynamic values computed at runtime.
+
+Tailwind classes via className — the primary styling approach. Resolved by Takumi at render time (no CSS build step):
+
+<div className="flex items-center justify-center w-full h-full bg-[#1a1a1a]">
+  <span className="text-white text-[18px] font-bold">Ready</span>
+</div>
+
+
+cn() utility for conditional classes (like clsx). tw() is a deprecated alias:
+
+<div
+  className={cn(
+    "flex items-center justify-center w-full h-full",
+    pressed ? "bg-blue-600" : "bg-[#0f172a]",
+  )}
+>
+  <span className={cn("text-[28px] font-bold", pressed ? "text-white" : "text-white/70")}>
+    {count}
+  </span>
+</div>
+
+
+Inline style — only for dynamic values that can't be known at write-time:
+
+// ✅ Dynamic values: animation outputs, size.scale(), computed colors
+<span className="text-white font-bold" style={{ fontSize: size.scale(24) }}>OK</span>
+<div className="flex items-center justify-center w-full h-full"
+  style={{ backgroundColor: `hsl(${hue}, 60%, 25%)` }} />
+
+// ❌ Avoid: inline styles for static layout
+<div style={{ display: "flex", width: "100%", height: "100%", background: "#1a1a1a" }}>
+
+
+Layout rules:
+
+Prefer flexbox layout (flex, flex-col, items-center, justify-center, gap-*) over absolute positioning.
+Use w-full h-full for full-size containers, not style={{ width: "100%", height: "100%" }}.
+Use Tailwind's arbitrary value syntax for one-off values: bg-[#1a1a2e], text-[14px], p-[6px], rounded-[12px].
+Use position: absolute only when elements truly need to overlap (rare — most layouts work with flexbox).
+State Management Decision Guide
+Need	Solution
+Simple per-action state	useState / useReducer
+Persist per-action settings across reloads	useSettings<T>()
+Plugin-wide shared config	useGlobalSettings<T>()
+Simple cross-action state (built-in)	useChannel() via Action Coordinator (coordinator: true)
+Know which actions are visible	useActionPresence() via Action Coordinator
+Shared state across actions (no provider needed)	Zustand store in module scope
+Shared state with provider pattern	Jotai/React Context via wrapper on createPlugin or defineAction
+Complex derived state / middleware	Zustand or Jotai
+Action Coordinator
+
+Built-in cross-action communication, opt-in via createPlugin({ coordinator: true }):
+
+const plugin = createPlugin({
+  coordinator: true,
+  fonts: [...],
+  actions: [...],
+});
+
+Channels
+
+Named publish/subscribe channels with latest-value semantics:
+
+// In a "play/pause" action:
+const [state, setState] = useChannel<"playing" | "paused">("playback", "paused");
+useKeyDown(() => setState(state === "playing" ? "paused" : "playing"));
+
+// In a "now playing" action (reads same channel):
+const [state] = useChannel<"playing" | "paused">("playback", "paused");
+
+Scoped re-renders — only subscribers of the changed channel re-render.
+Sticky values — new subscribers receive the current value immediately.
+Referential skip — updates are skipped when === identity matches.
+Presence Tracking
+const presence = useActionPresence();
+const volumeActions = presence.byUuid("com.example.plugin.volume");
+const totalVisible = presence.count;
+
+Imperative Access
+const coordinator = useCoordinator();
+coordinator.setChannelValue("volume", 50);
+
+CSS Theme System
+
+Centralized design tokens injected as CSS custom properties:
+
+import { defineTheme, mergeThemes } from "@fcannizzaro/streamdeck-react";
+
+const theme = defineTheme({
+  colors: { primary: "#4CAF50", surface: "#1a1a2e" },
+  spacing: { sm: "4px", md: "8px", lg: "16px" },
+  fontSize: { body: "14px", heading: "24px" },
+});
+
+createPlugin({ theme, ... });
+
+
+Tokens are mapped to CSS variables: colors.primary → --color-primary.
+
+Use in components via Tailwind arbitrary values:
+
+<div className="bg-[var(--color-surface)]">
+  <span className="text-[var(--color-primary)]">Themed</span>
+</div>
+
+Dynamic Theme Switching
+const [variables, setTheme] = useTheme();
+useKeyDown(() => setTheme(darkTheme)); // All roots re-render with new variables
+
+Merging Themes
+const merged = mergeThemes(baseTheme, darkOverride);
+// Later themes override earlier ones for the same variable name
+
+Tailwind v4 CSS Support
+
+For full Tailwind v4 support including @theme blocks, custom utilities, and standard CSS, use the stylesheets option in createPlugin():
+
+// Install: npm install -D @tailwindcss/vite
+// vite.config.ts: add tailwindcss() to plugins
+
+// theme.css — @import "tailwindcss"; @theme { --color-primary: #4CAF50; }
+import stylesheet from "./theme.css?inline";
+
+const plugin = createPlugin({
+  stylesheets: [stylesheet],
+  fonts: [await googleFont("Inter")],
+  actions: [...],
+});
+
+
+With stylesheets, Tailwind v4 @theme tokens become first-class utility classes:
+
+// With stylesheets: bg-primary instead of bg-[var(--color-primary)]
+<div className="bg-primary text-white">Themed</div>
+
+
+defineTheme() and stylesheets can be used together. defineTheme() supports runtime switching via useTheme(), while stylesheets provides first-class Tailwind v4 integration for build-time themes.
+
+Size Calculation Utility
+
+Percentage-based and proportional size helpers for responsive layouts:
+
+import { calcSize, useSize } from "@fcannizzaro/streamdeck-react";
+
+// Standalone (no React context):
+const s = calcSize(144, 144);
+s.w(50); // 72 (50% of width)
+s.scale(16); // 16 (proportional to 144px reference)
+
+// Hook (reads canvas dimensions from context):
+function MyKey() {
+  const size = useSize();
+  return <span style={{ fontSize: size.scale(24) }}>{size.square ? "Key" : "Dial"}</span>;
+}
+
+SizeHelper Methods
+Method	Description
+w(pct)	Percentage of canvas width, rounded
+h(pct)	Percentage of canvas height, rounded
+minP(pct)	Percentage of min(width, height), rounded
+maxP(pct)	Percentage of max(width, height), rounded
+scale(px)	Scale a base pixel value proportionally (ref: 144px)
+
+Properties: width, height, min, max, square, landscape, portrait, aspectRatio.
+
+Encoder / Dial Actions
+
+For Stream Deck+ encoders, provide a dial component in defineAction. If omitted, the key component is used as fallback on encoder slots.
+
+export const volumeAction = defineAction({
+  uuid: "com.example.my-plugin.volume",
+  key: VolumeKey,
+  dial: VolumeDial,
+  info: {
+    name: "Volume",
+    icon: "imgs/actions/volume",
+    encoder: {
+      layout: "$A0",
+      triggerDescription: {
+        rotate: "Adjust volume",
+        push: "Mute / Unmute",
+      },
+    },
+  },
+});
+
+
+The info.encoder block tells the Stream Deck UI about dial interactions. Controllers are auto-derived: if dial or touchStrip is present, ["Encoder"] is used; if key is also present, ["Keypad", "Encoder"].
+
+For touch interaction on Stream Deck+, use useTouchTap() inside the mounted action root. Treat touch as input handling, not as a separate primary rendering surface.
+
+Critical Gotchas
+Fonts are mandatory -- the renderer cannot access system fonts. Use googleFont("Inter") to download TTF fonts from Google Fonts (cached to .google-fonts/ on disk). Alternatively, load font files manually via readFile. Supported formats depend on the backend: native-binding supports .ttf, .otf, .woff, .woff2; WASM mode only supports .ttf and .otf.
+plugin.connect() must be called last -- after createPlugin() and all setup.
+UUID prefix -- every action uuid in defineAction() must start with the plugin UUID prefix (e.g., "com.example.my-plugin."). The manifest is auto-generated from these.
+Native bindings are lazy-loaded by default -- the plugin downloads the platform-specific .node binary from npm on first startup and caches it on disk. No targets option or @takumi-rs/core-* platform packages are needed. Set nativeBindings: "copy" to revert to the old behavior of copying from node_modules. Additional native modules can be registered via the nativeModules option on streamDeckReact() — each entry gets the same lazy/copy treatment as the built-in Takumi binding. See references/bundling.md for configuration details.
+Install ws -- required by the Stream Deck SDK runtime. When using the WASM backend (takumi: "wasm"), install @takumi-rs/wasm instead and native binding packages are not needed.
+No animated images -- each setImage call is a static frame. Use useTick for manual animation loops, or the higher-level useSpring and useTween hooks for physics-based and easing-based animation.
+WASM backend limitations -- takumi: "wasm" is available for environments where native addons can't load (WebContainers, browsers). It force-disables worker threads and does not support WOFF/WOFF2 fonts (use TTF/OTF only). Pass takumi: "wasm" to both createPlugin() and streamDeckReact() to skip native binary copying at build time.
+Design for 72x72 minimum -- smallest key size. Use useCanvas() to adapt to larger devices.
+Use simple layouts -- this is not a browser DOM. Stick to flexbox layouts via Tailwind classes (flex, flex-col, items-center, gap-*), fixed sizes, and simple elements (div, span, img, svg, p). Avoid absolute positioning unless elements truly need to overlap.
+Animation FPS -- Stream Deck hardware refreshes at max 30Hz. The useTick, useSpring, and useTween hooks default to 30fps (clamped). Design animations accordingly.
+Verification Checklist
+
+When scaffolding or modifying a @fcannizzaro/streamdeck-react plugin, verify:
+
+ @fcannizzaro/streamdeck-react and react are in dependencies
+ ws is installed for the Stream Deck SDK runtime
+ package.json has "type": "module"
+ tsconfig.json has "jsx": "react-jsx"
+ At least one font is loaded via googleFont() or manual readFile and passed to createPlugin()
+ Every defineAction() has info: { name, icon } for manifest generation
+ Every defineAction() UUID starts with the plugin UUID prefix
+ vite.config.ts includes streamDeckReact({ manifest: { uuid, name, author, ... } })
+ Encoder actions have info.encoder with layout and triggerDescription
+ plugin.connect() is called after createPlugin()
+ Build completes without errors: npx vite build
+ manifest.json is auto-generated in the .sdPlugin directory after build
+ If React Compiler is enabled: output bundle contains react.memo_cache_sentinel (proof compiler is active)
+DevTools
+
+A browser-based inspector for debugging plugins during development. When enabled, the plugin starts an HTTP + SSE (Server-Sent Events) server on localhost (port range 39400-39499) and the browser UI auto-discovers running plugins by scanning that range.
+
+Enabling
+const plugin = createPlugin({
+  devtools: true, // starts the devtools server (port derived from plugin UUID)
+  fonts: [
+    // ...your fonts
+  ],
+  actions: [
+    /* ... */
+  ],
+});
+
+Opening the DevTools
+Hosted (no install): streamdeckreact.fcannizzaro.com/devtools
+Local: npx @fcannizzaro/streamdeck-react-devtools (npm package @fcannizzaro/streamdeck-react-devtools)
+Panels
+Panel	Description
+Console	Intercepted console.log/warn/error/info/debug output
+Network	Intercepted fetch requests and responses
+Elements	VNode tree inspector with element highlighting on the physical device
+Preview	Live rendered images for every active action and touch bar
+Events	EventBus emissions (keyDown, dialRotate, touchTap, etc.)
+Performance	Render pipeline metrics: flush counts, skip rates, cache stats, render timing
+Key Details
+Element highlighting -- hover a node in the Elements tree to highlight it with a cyan overlay on the Stream Deck hardware.
+Multi-plugin support -- discovers and switches between multiple running plugins.
+Automatic production stripping -- all devtools code, the ws dependency, and instrumentation hooks are removed from the bundle when NODE_ENV=production (non-watch builds). Zero overhead in release builds.
+Detailed References
+references/api-surface.md -- Full public API table
+references/adapter.md -- Adapter layer interfaces and custom adapter guide
+references/plugin-setup.md -- createPlugin and defineAction details
+references/hooks.md -- All hooks with signatures and payloads
+references/components.md -- Component props tables
+references/bundling.md -- Vite config and native binding details
+references/device-sizes.md -- Key/encoder/touch dimensions per device
+references/limitations.md -- Styling constraints and known limitations
+Weekly Installs
+22
+Repository
+fcannizzaro/str…ck-react
+GitHub Stars
+2
+First Seen
+Mar 7, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

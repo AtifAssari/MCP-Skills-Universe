@@ -1,0 +1,132 @@
+---
+title: sentry-ruby-setup
+url: https://skills.sh/getsentry/sentry-agent-skills/sentry-ruby-setup
+---
+
+# sentry-ruby-setup
+
+skills/getsentry/sentry-agent-skills/sentry-ruby-setup
+sentry-ruby-setup
+Installation
+$ npx skills add https://github.com/getsentry/sentry-agent-skills --skill sentry-ruby-setup
+SKILL.md
+Sentry Ruby Setup
+
+Install and configure Sentry in Ruby projects.
+
+Invoke This Skill When
+User asks to "add Sentry to Ruby" or "install Sentry" in a Ruby app
+User wants error monitoring, logging, or tracing in Ruby
+User mentions "sentry-ruby" gem or Ruby on Rails
+
+Important: The configuration options and code samples below are examples. Always verify against docs.sentry.io before implementing, as APIs and defaults may have changed.
+
+Requirements
+Ruby 2.4+ or recent JRuby versions
+Install
+
+Add to Gemfile:
+
+gem "sentry-ruby"
+
+# For profiling, add ONE of:
+gem "stackprof"  # SDK 5.9.0+ — works on all Ruby versions
+# gem "vernier"  # SDK 5.21.0+ — requires Ruby 3.2.1+, better for multi-threaded servers
+                 # Also requires: config.profiler_class = Sentry::Vernier::Profiler
+
+
+Then run:
+
+bundle install
+
+Configure
+
+Initialize as early as possible:
+
+require "sentry-ruby"
+
+Sentry.init do |config|
+  config.dsn = "YOUR_SENTRY_DSN"
+  config.send_default_pii = true
+  
+  # Breadcrumbs from logs
+  config.breadcrumbs_logger = [:sentry_logger, :http_logger]
+  
+  # Tracing
+  config.traces_sample_rate = 1.0
+  
+  # Profiling (requires stackprof or vernier gem)
+  config.profiles_sample_rate = 1.0
+  # config.profiler_class = Sentry::Vernier::Profiler  # Uncomment if using vernier
+  
+  # Logs
+  config.enable_logs = true
+end
+
+Rails Integration
+
+For Rails, add to config/initializers/sentry.rb:
+
+Sentry.init do |config|
+  config.dsn = ENV["SENTRY_DSN"]
+  config.send_default_pii = true
+  config.breadcrumbs_logger = [:active_support_logger, :http_logger]
+  config.traces_sample_rate = 1.0
+  config.profiles_sample_rate = 1.0
+  config.enable_logs = true
+end
+
+Rails-specific Gems
+# Gemfile
+gem "sentry-ruby"
+gem "sentry-rails"  # Rails integration
+gem "sentry-sidekiq"  # If using Sidekiq
+gem "sentry-delayed_job"  # If using Delayed Job
+gem "sentry-resque"  # If using Resque
+
+Configuration Options
+Option	Description	Default
+dsn	Sentry DSN	nil (SDK no-ops without it)
+send_default_pii	Include user data	false
+traces_sample_rate	% of transactions traced	nil (tracing disabled)
+profiles_sample_rate	% of traces profiled	nil (profiling disabled)
+enable_logs	Send logs to Sentry	false
+environment	Environment name	"development" (checks SENTRY_CURRENT_ENV, SENTRY_ENVIRONMENT, RAILS_ENV, RACK_ENV in order)
+release	Release version	Auto-detected
+Breadcrumb Loggers
+Logger	Description
+:sentry_logger	Sentry's own logger
+:http_logger	HTTP request breadcrumbs
+:redis_logger	Redis command breadcrumbs
+:active_support_logger	Rails ActiveSupport (Rails only)
+Environment Variables
+SENTRY_DSN=https://xxx@o123.ingest.sentry.io/456
+SENTRY_AUTH_TOKEN=sntrys_xxx
+SENTRY_ORG=my-org
+SENTRY_PROJECT=my-project
+
+Verification
+# Capture test message
+Sentry.capture_message("Test message from Ruby")
+
+# Or trigger intentional error
+1 / 0
+
+Troubleshooting
+Issue	Solution
+Errors not appearing	Ensure Sentry.init called early, check DSN
+No traces	Set traces_sample_rate > 0
+No profiles	Add stackprof gem, set profiles_sample_rate
+Rails errors missing	Use sentry-rails gem instead of sentry-ruby
+Weekly Installs
+86
+Repository
+getsentry/sentr…t-skills
+GitHub Stars
+19
+First Seen
+Jan 21, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

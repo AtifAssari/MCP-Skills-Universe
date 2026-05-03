@@ -1,0 +1,123 @@
+---
+title: gws-drive
+url: https://skills.sh/googleworkspace/cli/gws-drive
+---
+
+# gws-drive
+
+skills/googleworkspace/cli/gws-drive
+gws-drive
+Installation
+$ npx skills add https://github.com/googleworkspace/cli --skill gws-drive
+Summary
+
+Complete Google Drive API access for file, folder, and shared drive management.
+
+Covers 15+ resource types including files, folders, shared drives, permissions, comments, revisions, and access proposals with 50+ methods total
+Supports file operations: create, copy, download, export, upload (via helper skill), search with query parameters, and label management
+Enables sharing workflows: create/update/delete permissions, manage access proposals, and control shared drive visibility
+Includes change tracking via changes.list and changes.watch, plus comment and reply threads for collaborative workflows
+Requires gws CLI and authentication setup from gws-shared skill; use gws schema to inspect method parameters before building requests
+SKILL.md
+drive (v3)
+
+PREREQUISITE: Read ../gws-shared/SKILL.md for auth, global flags, and security rules. If missing, run gws generate-skills to create it.
+
+gws drive <resource> <method> [flags]
+
+Helper Commands
+Command	Description
++upload	Upload a file with automatic metadata
+API Resources
+about
+get — Gets information about the user, the user's Drive, and system capabilities. For more information, see Return user info. Required: The fields parameter must be set. To return the exact fields you need, see Return specific fields.
+accessproposals
+get — Retrieves an access proposal by ID. For more information, see Manage pending access proposals.
+list — List the access proposals on a file. For more information, see Manage pending access proposals. Note: Only approvers are able to list access proposals on a file. If the user isn't an approver, a 403 error is returned.
+resolve — Approves or denies an access proposal. For more information, see Manage pending access proposals.
+approvals
+get — Gets an Approval by ID.
+list — Lists the Approvals on a file.
+apps
+get — Gets a specific app. For more information, see Return user info.
+list — Lists a user's installed apps. For more information, see Return user info.
+changes
+getStartPageToken — Gets the starting pageToken for listing future changes. For more information, see Retrieve changes.
+list — Lists the changes for a user or shared drive. For more information, see Retrieve changes.
+watch — Subscribes to changes for a user. For more information, see Notifications for resource changes.
+channels
+stop — Stops watching resources through this channel. For more information, see Notifications for resource changes.
+comments
+create — Creates a comment on a file. For more information, see Manage comments and replies. Required: The fields parameter must be set. To return the exact fields you need, see Return specific fields.
+delete — Deletes a comment. For more information, see Manage comments and replies.
+get — Gets a comment by ID. For more information, see Manage comments and replies. Required: The fields parameter must be set. To return the exact fields you need, see Return specific fields.
+list — Lists a file's comments. For more information, see Manage comments and replies. Required: The fields parameter must be set. To return the exact fields you need, see Return specific fields.
+update — Updates a comment with patch semantics. For more information, see Manage comments and replies. Required: The fields parameter must be set. To return the exact fields you need, see Return specific fields.
+drives
+create — Creates a shared drive. For more information, see Manage shared drives.
+get — Gets a shared drive's metadata by ID. For more information, see Manage shared drives.
+hide — Hides a shared drive from the default view. For more information, see Manage shared drives.
+list — Lists the user's shared drives. This method accepts the q parameter, which is a search query combining one or more search terms. For more information, see the Search for shared drives guide.
+unhide — Restores a shared drive to the default view. For more information, see Manage shared drives.
+update — Updates the metadata for a shared drive. For more information, see Manage shared drives.
+files
+copy — Creates a copy of a file and applies any requested updates with patch semantics. For more information, see Create and manage files.
+create — Creates a file. For more information, see Create and manage files. This method supports an /upload URI and accepts uploaded media with the following characteristics: - Maximum file size: 5,120 GB - Accepted Media MIME types: */* (Specify a valid MIME type, rather than the literal */* value. The literal */* is only used to indicate that any valid MIME type can be uploaded.
+download — Downloads the content of a file. For more information, see Download and export files. Operations are valid for 24 hours from the time of creation.
+export — Exports a Google Workspace document to the requested MIME type and returns exported byte content. For more information, see Download and export files. Note that the exported content is limited to 10 MB.
+generateIds — Generates a set of file IDs which can be provided in create or copy requests. For more information, see Create and manage files.
+get — Gets a file's metadata or content by ID. For more information, see Search for files and folders. If you provide the URL parameter alt=media, then the response includes the file contents in the response body. Downloading content with alt=media only works if the file is stored in Drive.
+list — Lists the user's files. For more information, see Search for files and folders. This method accepts the q parameter, which is a search query combining one or more search terms. This method returns all files by default, including trashed files. If you don't want trashed files to appear in the list, use the trashed=false query parameter to remove trashed files from the results.
+listLabels — Lists the labels on a file. For more information, see List labels on a file.
+modifyLabels — Modifies the set of labels applied to a file. For more information, see Set a label field on a file. Returns a list of the labels that were added or modified.
+update — Updates a file's metadata, content, or both. When calling this method, only populate fields in the request that you want to modify. When updating fields, some fields might be changed automatically, such as modifiedDate. This method supports patch semantics. This method supports an /upload URI and accepts uploaded media with the following characteristics: - Maximum file size: 5,120 GB - Accepted Media MIME types: */* (Specify a valid MIME type, rather than the literal */* value.
+watch — Subscribes to changes to a file. For more information, see Notifications for resource changes.
+operations
+get — Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.
+permissions
+create — Creates a permission for a file or shared drive. For more information, see Share files, folders, and drives. Warning: Concurrent permissions operations on the same file aren't supported; only the last update is applied.
+delete — Deletes a permission. For more information, see Share files, folders, and drives. Warning: Concurrent permissions operations on the same file aren't supported; only the last update is applied.
+get — Gets a permission by ID. For more information, see Share files, folders, and drives.
+list — Lists a file's or shared drive's permissions. For more information, see Share files, folders, and drives.
+update — Updates a permission with patch semantics. For more information, see Share files, folders, and drives. Warning: Concurrent permissions operations on the same file aren't supported; only the last update is applied.
+replies
+create — Creates a reply to a comment. For more information, see Manage comments and replies.
+delete — Deletes a reply. For more information, see Manage comments and replies.
+get — Gets a reply by ID. For more information, see Manage comments and replies.
+list — Lists a comment's replies. For more information, see Manage comments and replies.
+update — Updates a reply with patch semantics. For more information, see Manage comments and replies.
+revisions
+delete — Permanently deletes a file version. You can only delete revisions for files with binary content in Google Drive, like images or videos. Revisions for other files, like Google Docs or Sheets, and the last remaining file version can't be deleted. For more information, see Manage file revisions.
+get — Gets a revision's metadata or content by ID. For more information, see Manage file revisions.
+list — Lists a file's revisions. For more information, see Manage file revisions. Important: The list of revisions returned by this method might be incomplete for files with a large revision history, including frequently edited Google Docs, Sheets, and Slides. Older revisions might be omitted from the response, meaning the first revision returned may not be the oldest existing revision.
+update — Updates a revision with patch semantics. For more information, see Manage file revisions.
+teamdrives
+create — Deprecated: Use drives.create instead.
+get — Deprecated: Use drives.get instead.
+list — Deprecated: Use drives.list instead.
+update — Deprecated: Use drives.update instead.
+Discovering Commands
+
+Before calling any API method, inspect it:
+
+# Browse resources and methods
+gws drive --help
+
+# Inspect a method's required params, types, and defaults
+gws schema drive.<resource>.<method>
+
+
+Use gws schema output to build your --params and --json flags.
+
+Weekly Installs
+23.5K
+Repository
+googleworkspace/cli
+GitHub Stars
+25.7K
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

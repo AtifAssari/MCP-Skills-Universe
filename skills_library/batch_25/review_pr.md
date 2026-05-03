@@ -1,0 +1,426 @@
+---
+title: review-pr
+url: https://skills.sh/yonatangross/orchestkit/review-pr
+---
+
+# review-pr
+
+skills/yonatangross/orchestkit/review-pr
+review-pr
+Installation
+$ npx skills add https://github.com/yonatangross/orchestkit --skill review-pr
+SKILL.md
+Contains Hooks
+
+This skill uses Claude hooks which can execute code automatically in response to events. Review carefully before installing.
+
+Review PR
+
+Deep code review using 6-7 parallel specialized agents.
+
+Quick Start
+/ork:review-pr 123
+/ork:review-pr feature-branch
+
+
+Opus 4.6: Parallel agents use native adaptive thinking for deeper analysis. Complexity-aware routing matches agent model to review difficulty.
+
+Argument Resolution
+
+The PR number or branch is passed as the skill argument. Resolve it immediately:
+
+PR_NUMBER = "$ARGUMENTS[0]"  # e.g., "123" or "feature-branch"
+
+# If no argument provided, check environment
+if not PR_NUMBER:
+    PR_NUMBER = os.environ.get("ORCHESTKIT_PR_URL", "").split("/")[-1]
+
+# If still empty, detect from current branch
+if not PR_NUMBER:
+    PR_NUMBER = "$(gh pr view --json number -q .number 2>/dev/null)"
+
+
+Use PR_NUMBER consistently in all subsequent commands and agent prompts.
+
+STEP 0: Verify User Intent with AskUserQuestion
+
+BEFORE creating tasks, clarify review focus:
+
+AskUserQuestion(
+  questions=[{
+    "question": "What type of review do you need?",
+    "header": "Focus",
+    "options": [
+      {"label": "Full review (Recommended)", "description": "Security + code quality + tests + architecture", "markdown": "```\nFull Review (6 agents)\n──────────────────────\n  PR diff ──▶ 6 parallel agents:\n  ┌────────────┐ ┌────────────┐\n  │ Quality x2 │ │ Security   │\n  ├────────────┤ ├────────────┤\n  │ Test Gen   │ │ Backend    │\n  ├────────────┤ ├────────────┤\n  │ Frontend   │ │ (optional) │\n  └────────────┘ └────────────┘\n         ▼\n  Synthesized review comment\n  with conventional comments:\n  praise/suggestion/issue/nitpick\n```"},
+      {"label": "Security focus", "description": "Prioritize security vulnerabilities", "markdown": "```\nSecurity Review\n───────────────\n  PR diff ──▶ security-auditor:\n  ┌─────────────────────────┐\n  │ Auth changes       ✓/✗ │\n  │ Input validation   ✓/✗ │\n  │ SQL/XSS/CSRF       ✓/✗ │\n  │ Secrets in diff    ✓/✗ │\n  │ Dependency risk    ✓/✗ │\n  └─────────────────────────┘\n  Output: Security-focused\n  review with fix suggestions\n```"},
+      {"label": "Performance focus", "description": "Focus on performance implications", "markdown": "```\nPerformance Review\n──────────────────\n  PR diff ──▶ perf analysis:\n  ┌─────────────────────────┐\n  │ N+1 queries        ✓/✗ │\n  │ Bundle size impact  ±KB │\n  │ Render performance  ✓/✗ │\n  │ Memory leaks       ✓/✗ │\n  │ Caching gaps       ✓/✗ │\n  └─────────────────────────┘\n  Agent: frontend-performance\n  or python-performance\n```"},
+      {"label": "Quick review", "description": "High-level review, skip deep analysis", "markdown": "```\nQuick Review (~2 min)\n─────────────────────\n  PR diff ──▶ Single pass\n\n  Output:\n  ├── Approve / Request changes\n  ├── Top 3 concerns\n  └── 1-paragraph summary\n  1 agent: code-quality-reviewer\n  No deep security/perf scan\n```"}
+    ],
+    "multiSelect": false
+  }]
+)
+
+
+Based on answer, adjust workflow:
+
+Full review: All 6-7 parallel agents
+Security focus: Prioritize security-auditor, reduce other agents
+Performance focus: Add frontend-performance-engineer agent
+Quick review: Single code-quality-reviewer agent only
+"Ultra" mode → defer to claude ultrareview (CC 2.1.120+, #1542)
+
+If the user asks for an "ultra" / "deep" / "thorough" review and the host is on CC ≥ 2.1.120, defer to the native subcommand instead of re-implementing the multi-agent loop in skill instructions:
+
+claude ultrareview "$PR_REF" --json
+
+
+The CLI runs the same multi-agent review (code-quality, security-auditor, test-coverage, architecture) with structured output and a determinate verdict (approve | comment | request-changes). On CC < 2.1.120 the subcommand doesn't exist — fall back to the parallel-agents path below.
+
+This keeps the skill thin: built-in CLI wins for "ultra" depth; the OrchestKit skill wins for --render-style customization, focused review modes (security-only, perf-only), and offline scenarios.
+
+STEP 0b: Select Orchestration Mode
+
+Load orchestration guidance: Read("${CLAUDE_SKILL_DIR}/references/orchestration-mode-selection.md")
+
+MCP Probe (CC 2.1.71)
+# memory is alwaysLoad in .mcp.json (CC 2.1.121+, #1541) — probe below kept as fallback for older CC:
+ToolSearch(query="select:mcp__memory__search_nodes")
+Write(".claude/chain/capabilities.json", { memory, timestamp })
+# If memory available: search for past review patterns on these files
+
+CRITICAL: Task Management is MANDATORY
+
+BEFORE doing ANYTHING else, create tasks to track progress:
+
+# 1. Create main review task IMMEDIATELY
+TaskCreate(
+  subject="Review PR #{number}",
+  description="Comprehensive code review with parallel agents",
+  activeForm="Reviewing PR #{number}"
+)
+
+# 2. Create subtasks for each phase
+TaskCreate(subject="Gather PR information", activeForm="Gathering PR information")
+TaskCreate(subject="Launch review agents", activeForm="Dispatching review agents")
+TaskCreate(subject="Run validation checks", activeForm="Running validation checks")
+TaskCreate(subject="Synthesize review", activeForm="Synthesizing review")
+TaskCreate(subject="Submit review", activeForm="Submitting review")
+
+# 3. Update status as you progress
+TaskUpdate(taskId="2", status="in_progress")  # When starting
+TaskUpdate(taskId="2", status="completed")    # When done
+
+Phase 1: Gather PR Information
+
+CC ≥ 2.1.116 note: the gh calls below can hit GitHub's API rate limit on very active repos. When the Bash tool surfaces a rate-limit hint, stop and wait for reset — do not retry in a loop. See ork:github-operations for the full guidance.
+
+CC ≥ 2.1.119 multi-host note (M122): --from-pr now accepts GitLab MR, Bitbucket PR, and GitHub Enterprise URLs. Detect the host with parsePrUrl from src/hooks/src/lib/pr-host-parser.ts and branch on family for the right CLI:
+
+Family	CLI
+github / github-enterprise	gh pr view/diff/checks (with GH_HOST=<enterprise-host> for GHE)
+gitlab / gitlab-self	glab mr view/diff/ci (or REST /projects/:id/merge_requests/:iid)
+bitbucket	bb pr (or REST /repositories/:ws/:repo/pullrequests/:id)
+
+Falls back to github.com when the URL doesn't match any pattern. Custom enterprise hosts: configure prUrlTemplate (see src/skills/configure/). Full pattern: src/skills/chain-patterns/references/pr-from-platform.md.
+
+# Get PR details
+gh pr view $PR_NUMBER --json title,body,files,additions,deletions,commits,author
+
+# View the diff
+gh pr diff $PR_NUMBER
+
+# Check CI status
+gh pr checks $PR_NUMBER
+
+Capture Scope for Agents
+# Capture changed files for agent scope injection
+CHANGED_FILES=$(gh pr diff $PR_NUMBER --name-only)
+
+# Detect affected domains
+HAS_FRONTEND=$(echo "$CHANGED_FILES" | grep -qE '\.(tsx?|jsx?|css|scss)$' && echo true || echo false)
+HAS_BACKEND=$(echo "$CHANGED_FILES" | grep -qE '\.(py|go|rs|java)$' && echo true || echo false)
+HAS_AI=$(echo "$CHANGED_FILES" | grep -qE '(llm|ai|agent|prompt|embedding)' && echo true || echo false)
+
+
+Pass CHANGED_FILES to every agent prompt in Phase 3. Pass domain flags to select which agents to spawn.
+
+Identify: total files changed, lines added/removed, affected domains (frontend, backend, AI).
+
+Tool Guidance
+Task	Use	Avoid
+Fetch PR diff	Bash: gh pr diff	Reading all changed files individually
+List changed files	Bash: gh pr diff --name-only	bash find
+Search for patterns	Grep(pattern="...", path="src/")	bash grep
+Read file content	Read(file_path="...")	bash cat
+Check CI status	Bash: gh pr checks	Polling APIs
+
+<use_parallel_tool_calls> When gathering PR context, run independent operations in parallel:
+
+gh pr view (PR metadata), gh pr diff (changed files), gh pr checks (CI status)
+
+Spawn all three in ONE message. This cuts context-gathering time by 60%. For agent-based review (Phase 3), all 6 agents are independent -- launch them together. </use_parallel_tool_calls>
+
+Phase 2: Skills Auto-Loading
+
+CC auto-discovers skills -- no manual loading needed!
+
+Relevant skills activated automatically:
+
+code-review-playbook -- Review patterns, conventional comments
+security-scanning -- OWASP, secrets, dependencies
+type-safety-validation -- Zod, TypeScript strict
+testing-unit, testing-e2e, testing-integration -- Test adequacy, coverage gaps, rule matching
+Phase 3: Parallel Code Review (6 Agents)
+Project Context Injection
+
+Before spawning agents, load project-specific review context from memory:
+
+# Load project review context (conventions, known weaknesses, past findings)
+# This gives agents project-specific knowledge without re-discovering patterns
+PROJECT_CONTEXT = Read("${MEMORY_DIR}/review-pr-context.md")  # Falls back gracefully if missing
+
+
+All agent prompts receive ${PROJECT_CONTEXT} so they know project conventions, security patterns, and known weaknesses from prior reviews.
+
+Structured Output
+
+All agents return findings as JSON (see structured output contract in agent prompt files). This enables automated deduplication, severity sorting, and memory graph persistence in Phase 5.
+
+Anti-Sycophancy Response Protocol
+
+All review agents and the coordinator MUST follow Read("${CLAUDE_PLUGIN_ROOT}/skills/shared/rules/anti-sycophancy.md"):
+
+NEVER use: "Great work!", "Excellent!", "Nice!", "Thanks for catching that!", "You're absolutely right!", or ANY performative agreement.
+
+INSTEAD: State findings directly. The code speaks for itself.
+
+"Fixed. Changed X to Y in auth.ts:42."
+"Security: JWT in localStorage. Move to httpOnly cookie."
+[Just fix it and show the diff]
+
+When feedback seems wrong: Push back with technical reasoning. Not "I respectfully disagree." Just facts and evidence.
+
+Agent Status Protocol
+
+All agents MUST include a status field per Read("${CLAUDE_PLUGIN_ROOT}/agents/shared/status-protocol.md"):
+
+DONE — task completed, all requirements met
+DONE_WITH_CONCERNS — completed but flagging risks
+BLOCKED — cannot proceed
+NEEDS_CONTEXT — insufficient information
+Domain-Aware Agent Selection
+
+Only spawn agents relevant to the PR's changed domains:
+
+Domain Detected	Agents to Spawn
+Backend only	code-quality (x2), security-auditor, test-generator, backend-system-architect
+Frontend only	code-quality (x2), security-auditor, test-generator, frontend-ui-developer
+Full-stack	All 6 agents
+AI/LLM code	All 6 + optional llm-integrator (7th)
+
+Skip agents for domains not present in the diff. This saves ~33% tokens on domain-specific PRs.
+
+Progressive Output (CC 2.1.76+)
+
+Output each agent's findings as they complete — don't batch until synthesis.
+
+Focus mode (CC 2.1.101): In focus mode, the user only sees your final message. Include the full review verdict, all findings by severity, and the approve/request-changes recommendation — don't assume they saw per-agent outputs.
+
+Security findings → show blockers and critical issues first
+Code quality → show pattern violations, complexity hotspots
+Test coverage gaps → show missing test cases
+
+This lets the PR author start addressing blocking issues while remaining agents are still analyzing. Only the final synthesis (Phase 5) requires all agents to have completed.
+
+Partial results (CC 2.1.98): If a review agent fails mid-analysis, synthesize partial findings:
+
+for agent_result in review_results:
+    if "[PARTIAL RESULT]" in agent_result.output:
+        # A security agent that found 2 issues before crashing > no security review
+        findings.extend(parse_findings(agent_result.output))
+        findings[-1]["partial"] = True  # Flag in synthesis
+        # Do NOT re-spawn — partial findings are still valuable
+
+
+Monitor for CI streaming (CC 2.1.98): Stream CI check output in Phase 4:
+
+Bash(command="gh pr checks $PR_NUMBER --watch 2>&1", run_in_background=true)
+Monitor(pid=ci_watch_id)  # Each status change → notification
+
+
+See Agent Prompts -- Task Tool Mode for the 6 parallel agent prompts.
+
+See Agent Prompts -- Agent Teams Mode for the mesh alternative.
+
+See AI Code Review Agent for the optional 7th LLM agent.
+
+Phase 3.5: /ultrareview Gate (CC 2.1.111+, optional)
+
+Claude Code 2.1.111 ships a built-in /ultrareview — parallel multi-agent deep review (Pro/Max users get 3 free per month). It overlaps this skill's Phase 3 but goes deeper. It's not free, so never fire it by default — offer it only when a trigger justifies the cost, and always ask the user before burning a quota.
+
+Trigger evaluation (automatic, after Phase 3)
+
+Compute whether /ultrareview is warranted from the already-collected PR metadata + agent results:
+
+triggers = []
+if diff_loc_changed > 500:
+    triggers.append("large_diff")
+if any(path.startswith(p) for path in changed_files
+       for p in ["auth/", "migrations/", "hooks/", "crypto/", "security/", "payments/"]):
+    triggers.append("sensitive_path")
+if reviewer_verdicts_disagree(phase_3_results):
+    triggers.append("reviewer_disagreement")
+if any(label in pr_labels for label in ["release", "hotfix"]):
+    triggers.append("high_stakes_label")
+
+
+If triggers is empty → skip the gate entirely and proceed to Phase 4. Never mention /ultrareview to the user.
+
+When triggers fire: voice-friendly prompt
+
+Read session state: Read(".claude/state/ultrareview-usage.json") (may not exist). If month == currentMonth() and skip_session == true, skip the prompt and proceed to Phase 4. Otherwise:
+
+AskUserQuestion(questions=[{
+  "question": f"This PR triggers /ultrareview (reason: {', '.join(triggers)}). Run it? (Pro/Max: 3 free per month.)",
+  "header": "Ultrareview",
+  "multiSelect": false,
+  "options": [
+    {"label": "Yes, run ultrareview",
+     "description": "Invoke built-in /ultrareview as a final deep pass. Adds 5–10 min."},
+    {"label": "No, skip it",
+     "description": "Continue with Phase 4 using existing agent results."},
+    {"label": "Skip for this session",
+     "description": "Don't ask again until this session ends."}
+  ]
+}])
+
+
+Why AskUserQuestion and not a --ultra flag: the user relies on voice, so "yes"/"no"/"skip for session" is speakable whereas flags are not.
+
+After user response
+Yes → invoke /ultrareview on the working tree. Merge its findings with Phase 3 agent results in Phase 5 synthesis (label them as "Ultrareview:").
+No → proceed to Phase 4 unchanged.
+Skip for this session → write .claude/state/ultrareview-usage.json:
+{ "month": "2026-04", "session_skip": true, "last_asked": "<iso>" }
+
+Then proceed to Phase 4.
+
+On every run where the user said "Yes", increment the month counter so we advise against a third ask in the same month:
+
+{ "month": "2026-04", "used_this_month": 2, "last_used": "<iso>" }
+
+
+This is advisory only — we cannot query Anthropic's real quota. When used_this_month >= 3, the AskUserQuestion text changes the third option to warn: "You may have exhausted the monthly free quota."
+
+Opt-out
+
+Set ORK_DISABLE_ULTRAREVIEW=1 or .claude/settings.json → "ork.disableUltrareview": true to skip the gate entirely regardless of triggers. Honored at the top of this phase.
+
+Phase 4: Run Validation
+
+Load validation commands: Read("${CLAUDE_SKILL_DIR}/references/validation-commands.md")
+
+Phase 5: Synthesize Review
+
+Combine all agent feedback into a structured report. Load template: Read("${CLAUDE_SKILL_DIR}/references/review-report-template.md")
+
+Memory Persistence
+
+After synthesis, persist critical/high findings to the memory graph so future reviews build on past knowledge:
+
+# Persist review findings for cross-session learning
+mcp__memory__create_entities(entities=[{
+    "name": "PR-{number}-Review",
+    "entityType": "code-review",
+    "observations": ["<summary>", "<critical findings>", "<patterns discovered>"]
+}])
+# Update known-weaknesses entity if new patterns found
+mcp__memory__add_observations(observations=[{
+    "entityName": "review-known-weaknesses",
+    "contents": ["<new pattern from this review>"]
+}])
+
+Phase 6: Submit Review
+# Approve
+gh pr review $PR_NUMBER --approve -b "Review message"
+
+# Request changes
+gh pr review $PR_NUMBER --request-changes -b "Review message"
+
+CC 2.1.20 Enhancements
+PR Status Enrichment
+
+The pr-status-enricher hook automatically detects open PRs at session start and sets:
+
+ORCHESTKIT_PR_URL -- PR URL for quick reference
+ORCHESTKIT_PR_STATE -- PR state (OPEN, MERGED, CLOSED)
+Session Resume with PR Context (CC 2.1.27+)
+
+Sessions are automatically linked when reviewing PRs. Resume later with full context:
+
+claude --from-pr 123
+claude --from-pr https://github.com/org/repo/pull/123
+
+Task Metrics (CC 2.1.30)
+
+Load metrics template: Read("${CLAUDE_SKILL_DIR}/references/task-metrics-template.md")
+
+Conventional Comments
+
+Use these prefixes for comments:
+
+praise: -- Positive feedback
+nitpick: -- Minor suggestion
+suggestion: -- Improvement idea
+issue: -- Must fix
+question: -- Needs clarification
+Agent Coordination
+Context Passing
+
+All review agents receive: changed files list, PR metadata (author, base branch), domain flags (has_frontend, has_backend, has_ai), and project review conventions from memory.
+
+SendMessage (Cross-Review Findings)
+
+When the security agent finds an issue the code-quality agent should also flag:
+
+SendMessage(to="code-quality-reviewer", message="Security: auth middleware bypassed in route handler — flag as issue in review")
+
+Agent Teams Alternative
+
+For complex PRs (> 500 lines, 3+ domains), use mesh topology so reviewers can challenge each other:
+
+# Load: Read("${CLAUDE_SKILL_DIR}/rules/agent-prompts-agent-teams.md")
+
+Related Skills
+ork:commit: Create commits after review
+ork:create-pr: Create PRs for review
+slack-integration: Team notifications for review events
+References
+
+Load on demand with Read("${CLAUDE_SKILL_DIR}/references/<file>"):
+
+File	Content
+review-template.md	Review checklist template
+review-report-template.md	Structured review report
+orchestration-mode-selection.md	Task tool vs Agent Teams
+validation-commands.md	Build/test/lint commands
+task-metrics-template.md	Task metrics format
+
+Rules: Read("${CLAUDE_SKILL_DIR}/rules/<file>"):
+
+File	Content
+agent-prompts-task-tool.md	Agent prompts for Task tool mode
+agent-prompts-agent-teams.md	Agent prompts for Agent Teams mode
+AI Code Review Agent
+Weekly Installs
+123
+Repository
+yonatangross/orchestkit
+GitHub Stars
+163
+First Seen
+Jan 22, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

@@ -1,0 +1,126 @@
+---
+rating: ⭐⭐⭐
+title: threat-modeling
+url: https://skills.sh/dralgorhythm/claude-agentic-framework/threat-modeling
+---
+
+# threat-modeling
+
+skills/dralgorhythm/claude-agentic-framework/threat-modeling
+threat-modeling
+Installation
+$ npx skills add https://github.com/dralgorhythm/claude-agentic-framework --skill threat-modeling
+SKILL.md
+Threat Modeling
+MCP Tools
+
+Sequential Thinking (systematic analysis): Use for structured STRIDE analysis:
+
+Enumerate each threat category systematically
+Consider attack vectors step-by-step
+Evaluate mitigations with pros/cons
+Document reasoning for risk acceptance
+Why Threat Model?
+Identify threats early
+Prioritize security efforts
+Document security assumptions
+Guide security testing
+STRIDE Methodology
+
+Use Sequential Thinking to work through each category:
+
+S - Spoofing
+
+Pretending to be someone else.
+
+Example: Forged authentication tokens
+Mitigation: Strong authentication, MFA
+T - Tampering
+
+Modifying data without authorization.
+
+Example: Changing request parameters
+Mitigation: Integrity checks, signatures
+Trace with Grep: Find all input handlers
+R - Repudiation
+
+Denying an action occurred.
+
+Example: User denies making transaction
+Mitigation: Audit logging, non-repudiation
+I - Information Disclosure
+
+Exposing confidential data.
+
+Example: API returns sensitive fields
+Mitigation: Encryption, access controls
+Trace with Grep: Find data return points
+D - Denial of Service
+
+Making system unavailable.
+
+Example: Resource exhaustion attack
+Mitigation: Rate limiting, auto-scaling
+E - Elevation of Privilege
+
+Gaining unauthorized access.
+
+Example: User becomes admin
+Mitigation: Least privilege, input validation
+Trace with Grep: Find authorization checks
+Threat Modeling Process
+1. Decompose System
+Use Grep and Glob to identify entry points
+Draw data flow diagrams
+Identify trust boundaries
+2. Identify Threats
+
+Use Sequential Thinking to systematically ask STRIDE questions for each component.
+
+3. Trace Data Flow
+
+Use Grep to trace:
+
+User input → processing → storage
+Authentication token flow
+Sensitive data paths
+4. Rate Threats
+
+Use DREAD or CVSS scoring:
+
+Damage potential
+Reproducibility
+Exploitability
+Affected users
+Discoverability
+5. Mitigate
+Avoid: Remove the feature
+Transfer: Use third-party
+Mitigate: Add controls
+Accept: Document risk (use Sequential Thinking to justify)
+Threat Model Document
+## Asset: User Database
+
+### Threats
+| Threat | Type | Likelihood | Impact | Risk |
+|--------|------|------------|--------|------|
+| SQL Injection | Tampering | Medium | High | High |
+| Data Breach | Info Disclosure | Low | Critical | High |
+
+### Mitigations
+1. Parameterized queries
+2. Encryption at rest
+3. Access logging
+
+Weekly Installs
+40
+Repository
+dralgorhythm/cl…ramework
+GitHub Stars
+76
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

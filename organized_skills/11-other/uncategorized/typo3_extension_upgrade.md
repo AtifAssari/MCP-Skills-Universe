@@ -1,0 +1,92 @@
+---
+rating: ⭐⭐⭐
+title: typo3-extension-upgrade
+url: https://skills.sh/dirnbauer/webconsulting-skills/typo3-extension-upgrade
+---
+
+# typo3-extension-upgrade
+
+skills/dirnbauer/webconsulting-skills/typo3-extension-upgrade
+typo3-extension-upgrade
+Installation
+$ npx skills add https://github.com/dirnbauer/webconsulting-skills --skill typo3-extension-upgrade
+SKILL.md
+TYPO3 Extension Upgrade Skill
+
+Systematic framework for upgrading TYPO3 extensions to newer LTS versions. Extension code only -- NOT for project/core upgrades.
+
+Upgrade Toolkit
+Tool	Purpose	Files
+Extension Scanner	Diagnose deprecated APIs	TYPO3 Backend
+Rector	Automated PHP migrations	.php
+Fractor	Non-PHP migrations	FlexForms, TypoScript, YAML, Fluid
+PHPStan	Static analysis	.php
+Core Workflow
+Complete planning phase (consult references/pre-upgrade.md)
+Create feature branch (verify git is clean)
+Update composer.json constraints for target version
+Audit third-party dependencies for major version changes (consult references/third-party-dependency-upgrades.md)
+Run rector process --dry-run then review and apply
+Run fractor process --dry-run then review and apply
+Run php-cs-fixer fix
+Run phpstan analyse against each supported dependency version and fix errors
+Run phpunit and fix tests
+Test in target TYPO3 version(s)
+Verify success criteria (consult references/verification.md)
+When NOT to Apply Automatically
+
+Do NOT blindly apply Rector/Fractor if dual-version compatibility is needed, tests are missing, changes are unclear, or complex APIs (DBAL, Extbase) are affected. Instead: apply specific rules manually, test between each change.
+
+Third-Party Dependency Upgrades
+
+When composer.json widens constraints to a new major version: enumerate API usages, cross-reference the new version's API, flag interface/concrete-only methods, verify mocks against all supported versions, use adapter pattern for signature differences, run PHPStan against each major version. See references/third-party-dependency-upgrades.md.
+
+Quick Commands
+rector process --dry-run && rector process        # PHP migrations
+fractor process --dry-run && fractor process       # Non-PHP migrations
+php-cs-fixer fix && phpstan analyse && phpunit     # Quality checks
+
+Asset Templates
+
+Config templates in assets/: rector.php, fractor.php, phpstan.neon, phpunit.xml, .php-cs-fixer.php
+
+References
+Reference	Use when...
+references/pre-upgrade.md	Starting an upgrade: planning checklist, version audit, risk assessment
+references/api-changes.md	Checking deprecated/removed APIs by TYPO3 version
+references/upgrade-v11-to-v12.md	Upgrading from TYPO3 v11 to v12
+references/upgrade-v12-to-v13.md	Upgrading from TYPO3 v12 to v13
+references/upgrade-v13-to-v14.md	Upgrading from TYPO3 v13 to v14
+references/dual-compatibility.md	Maintaining dual compatibility (v12 + v13)
+references/real-world-patterns.md	Looking for real-world migration examples
+references/toolchain-output.md	Understanding Rector/Fractor dry-run output
+references/troubleshooting.md	Rector broke code, PHPStan errors, test failures
+references/third-party-dependency-upgrades.md	Upgrading non-TYPO3 dependencies (major version bumps, adapter patterns)
+references/verification.md	Checking success criteria and real-world testing
+references/multi-version-worktrees.md	Per-LTS worktree layout, backport workflow, cross-version CI matrix
+External Resources
+TYPO3 Rector
+Fractor
+TYPO3 Core Changelog
+Credits & Attribution
+
+This skill is based on the excellent work by Netresearch DTT GmbH.
+
+Original repository: https://github.com/netresearch/typo3-extension-upgrade-skill
+
+Copyright (c) Netresearch DTT GmbH — Methodology and best practices (MIT / CC-BY-SA-4.0)
+
+Special thanks to Netresearch DTT GmbH for their generous open-source contributions to the TYPO3 community, which helped shape this skill collection. Adapted by webconsulting.at for this skill collection
+
+Weekly Installs
+66
+Repository
+dirnbauer/webco…g-skills
+GitHub Stars
+27
+First Seen
+Jan 22, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,208 @@
+---
+rating: ⭐⭐⭐
+title: k8s-cli
+url: https://skills.sh/rohitg00/kubectl-mcp-server/k8s-cli
+---
+
+# k8s-cli
+
+skills/rohitg00/kubectl-mcp-server/k8s-cli
+k8s-cli
+Installation
+$ npx skills add https://github.com/rohitg00/kubectl-mcp-server --skill k8s-cli
+SKILL.md
+kubectl-mcp-server CLI
+
+Command-line interface for kubectl-mcp-server operations.
+
+When to Apply
+
+Use this skill when:
+
+User mentions: "CLI", "command line", "tool discovery", "server health"
+Operations: listing tools, calling tools directly, checking dependencies
+Keywords: "doctor", "tools list", "call", "grep", "info"
+Priority Rules
+Priority	Rule	Impact	Tools
+1	Run doctor to check dependencies	CRITICAL	kubectl-mcp-server doctor
+2	Use tools -d for descriptions	HIGH	kubectl-mcp-server tools -d
+3	Use grep for tool discovery	MEDIUM	kubectl-mcp-server grep
+4	Use call for direct invocation	MEDIUM	kubectl-mcp-server call
+Quick Reference
+Task	Command	Example
+List tools	tools -d	kubectl-mcp-server tools -d
+Search tools	grep	kubectl-mcp-server grep "*pod*"
+Call tool	call	kubectl-mcp-server call get_pods '{"namespace": "default"}'
+Check health	doctor	kubectl-mcp-server doctor
+Server Commands
+Start Server
+# stdio transport (for Claude Desktop)
+kubectl-mcp-server serve
+
+# HTTP transport (for remote clients)
+kubectl-mcp-server serve --transport streamable-http --port 8000
+
+# With debug logging
+MCP_DEBUG=true kubectl-mcp-server serve
+
+Check Health
+# Verify dependencies
+kubectl-mcp-server doctor
+
+# Shows:
+# ✓ kubectl: found
+# ✓ helm: found
+# ✓ kubeconfig: valid
+# ✓ cluster: connected
+
+Tool Discovery
+List Tools
+# List all tools
+kubectl-mcp-server tools
+
+# List with descriptions
+kubectl-mcp-server tools -d
+
+# JSON output
+kubectl-mcp-server tools --json
+
+Search Tools
+# Search by pattern
+kubectl-mcp-server grep "*pod*"
+kubectl-mcp-server grep "*helm*"
+kubectl-mcp-server grep "*velero*"
+
+# Results show matching tool names
+
+Tool Schema
+# Show tool parameters
+kubectl-mcp-server tools get_pods
+kubectl-mcp-server tools install_helm_chart
+
+# Shows:
+# - Description
+# - Parameters (name, type, required)
+# - Return type
+
+Direct Tool Invocation
+Call Tools
+# Call with JSON arguments
+kubectl-mcp-server call get_pods '{"namespace": "default"}'
+
+# Call with stdin
+echo '{"namespace": "kube-system"}' | kubectl-mcp-server call get_pods
+
+# Call with no arguments
+kubectl-mcp-server call get_namespaces '{}'
+
+Examples
+# Get pods
+kubectl-mcp-server call get_pods '{"namespace": "default"}'
+
+# Describe pod
+kubectl-mcp-server call describe_pod '{"name": "nginx-xxx", "namespace": "default"}'
+
+# Get logs
+kubectl-mcp-server call get_pod_logs '{"name": "nginx-xxx", "namespace": "default"}'
+
+# Scale deployment
+kubectl-mcp-server call scale_deployment '{"name": "nginx", "namespace": "default", "replicas": 3}'
+
+# Install helm chart
+kubectl-mcp-server call install_helm_chart '{
+  "name": "my-release",
+  "chart": "bitnami/nginx",
+  "namespace": "default"
+}'
+
+Context Management
+# Show current context
+kubectl-mcp-server context
+
+# Switch context
+kubectl-mcp-server context production
+
+# List available contexts
+kubectl-mcp-server call list_contexts_tool '{}'
+
+Server Info
+# Show server information
+kubectl-mcp-server info
+
+# Shows:
+# - Version
+# - Tool count
+# - Resource count
+# - Prompt count
+
+MCP Resources
+# List available resources
+kubectl-mcp-server resources
+
+# Resources:
+# - cluster://status
+# - namespaces://list
+# - pods://{namespace}
+# - deployments://{namespace}
+# - services://{namespace}
+# - events://{namespace}
+# - nodes://list
+# - contexts://list
+
+MCP Prompts
+# List available prompts
+kubectl-mcp-server prompts
+
+# Prompts:
+# - troubleshoot-pod
+# - deploy-application
+# - security-audit
+# - cost-optimization
+# - incident-response
+# - helm-workflow
+# - gitops-sync
+# - multi-cluster-compare
+
+Environment Variables
+# Core
+export MCP_DEBUG=true           # Enable debug logging
+export MCP_LOG_FILE=/var/log/mcp.log  # Log to file
+export NO_COLOR=1               # Disable colors
+
+# Browser (optional)
+export MCP_BROWSER_ENABLED=true
+export MCP_BROWSER_PROVIDER=browserbase
+export BROWSERBASE_API_KEY=bb_...
+
+Claude Desktop Configuration
+{
+  "mcpServers": {
+    "kubectl": {
+      "command": "kubectl-mcp-server",
+      "args": ["serve"]
+    }
+  }
+}
+
+Shell Aliases
+# Add to ~/.bashrc or ~/.zshrc
+alias kmcp='kubectl-mcp-server'
+alias kmcp-tools='kubectl-mcp-server tools -d'
+alias kmcp-call='kubectl-mcp-server call'
+alias kmcp-grep='kubectl-mcp-server grep'
+
+Related Skills
+k8s-core - Core resource tools
+k8s-diagnostics - Diagnostic tools
+Weekly Installs
+8
+Repository
+rohitg00/kubect…p-server
+GitHub Stars
+869
+First Seen
+Feb 7, 2026
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykPass

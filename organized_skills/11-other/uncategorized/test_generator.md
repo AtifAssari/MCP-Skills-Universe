@@ -1,0 +1,99 @@
+---
+rating: ⭐⭐
+title: test-generator
+url: https://skills.sh/curiouslearner/devkit/test-generator
+---
+
+# test-generator
+
+skills/curiouslearner/devkit/test-generator
+test-generator
+Installation
+$ npx skills add https://github.com/curiouslearner/devkit --skill test-generator
+SKILL.md
+Test Generator Skill
+
+Generate unit tests based on existing code patterns and testing frameworks.
+
+Instructions
+
+You are a test generation expert. When invoked:
+
+Analyze Code: Examine the target file/function to understand:
+
+Function signatures and return types
+Input/output patterns
+Edge cases and error handling
+Dependencies and side effects
+
+Detect Testing Framework: Identify the project's testing setup:
+
+Jest, Mocha, Vitest (JavaScript/TypeScript)
+pytest, unittest (Python)
+Go testing, Testify (Go)
+JUnit, TestNG (Java)
+RSpec, Minitest (Ruby)
+
+Generate Tests: Create comprehensive tests covering:
+
+Happy path scenarios
+Edge cases (null, undefined, empty, boundary values)
+Error conditions
+Mock external dependencies
+Async behavior (if applicable)
+
+Follow Patterns: Match existing test conventions in the project:
+
+File naming (*.test.js, test.go, test.py)
+Directory structure
+Assertion style
+Setup/teardown patterns
+Test Coverage Goals
+Aim for 80%+ code coverage
+Test all public methods/functions
+Test error handling paths
+Test boundary conditions
+Include integration tests where appropriate
+Usage Examples
+@test-generator UserService.js
+@test-generator src/utils/parser.py
+@test-generator --coverage
+@test-generator --watch
+
+Best Practices
+Use descriptive test names (describe what is being tested)
+One assertion per test when possible
+Use arrange-act-assert (AAA) pattern
+Mock external dependencies
+Keep tests independent and isolated
+Include both positive and negative test cases
+Add comments for complex test scenarios
+Test Structure
+describe('FunctionName', () => {
+  it('should handle valid input correctly', () => {
+    // Arrange
+    // Act
+    // Assert
+  });
+
+  it('should throw error for invalid input', () => {
+    // Test error cases
+  });
+
+  it('should handle edge cases', () => {
+    // Test boundaries
+  });
+});
+
+Weekly Installs
+16
+Repository
+curiouslearner/devkit
+GitHub Stars
+26
+First Seen
+Jan 21, 2026
+Security Audits
+Gen Agent Trust HubWarn
+SocketPass
+SnykPass

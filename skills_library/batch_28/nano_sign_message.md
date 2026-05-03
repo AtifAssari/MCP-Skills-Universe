@@ -1,0 +1,89 @@
+---
+title: nano-sign-message
+url: https://skills.sh/casualsecurityinc/xno-skills/nano-sign-message
+---
+
+# nano-sign-message
+
+skills/casualsecurityinc/xno-skills/nano-sign-message
+nano-sign-message
+Installation
+$ npx skills add https://github.com/casualsecurityinc/xno-skills --skill nano-sign-message
+SKILL.md
+nano-sign-message
+
+CLI Execution Priority: Do not assume xno-skills is installed globally. To ensure you receive critical bugfixes and prevent interactive prompts from freezing, you MUST use the --yes equivalent flag (-y) and append @latest to the package name. Always use the following order of priority:
+
+bunx -y xno-skills@latest <command>
+pnpm dlx xno-skills@latest <command>
+npx -y xno-skills@latest <command>
+
+For Nano actions, prefer MCP tools first, then xno-skills CLI verbs. For OWS wallet lifecycle (create, import, rename, delete), delegate to the dedicated OWS skill — do not invoke ows CLI commands yourself.
+
+Example: bunx -y xno-skills@latest wallets or bunx -y xno-skills@latest rpc account-balance <address>
+
+Safety & Best Practices:
+
+State Verification: Always verify an account's state (balance and frontier) via RPC before manually building a block. Do not hallucinate previous hashes.
+Command Discovery: Always use --help (e.g., bunx -y xno-skills --help) before guessing CLI subcommands to avoid 'unknown command' errors.
+Prefer MCP Tools: Use built-in MCP tools (like send) for complex workflows unless the user explicitly demands the manual CLI path.
+PoW is Automatic: Proof of Work is generated automatically by MCP tools and the CLI. Never attempt to generate or supply PoW manually.
+Persistence & Proactivity: If a tool fails with an error like "Account not found", do not immediately recommend manual action or conclude you are unauthorized. Troubleshoot the protocol state (e.g., check for pending funds) and use the correct tool for that state (e.g., receive to open an account).
+No Custom Scripts: NEVER write custom Node.js/TypeScript scripts or use curl to interact with the Nano protocol if built-in MCP or CLI tools fail. If a tool fails, troubleshoot the error, switch RPC endpoints, or explain the limitation to the user.
+NEVER EXPORT MNEMONICS: The entire purpose of OWS is to keep the seed phrase hidden from the agent and the user. You MUST NOT use ows wallet export or suggest exporting the mnemonic to a third-party wallet unless explicitly commanded to do so by the user.
+Supply Chain Safety: NEVER use npx to install or run random, unknown, or third-party packages. Only use the approved tools provided in this project (xno-skills@latest and @open-wallet-standard/core). If a task cannot be performed with these tools, do not seek external npm packages as a workaround.
+
+Sign an off-chain message (plain text) using a custodial wallet managed by xno-mcp. This follows the NOMS (Nano Off-chain Message Signature) / ORIS-001 standard.
+
+Usage
+
+Use this skill when you need to prove ownership of a Nano account or provide an off-chain signature for authentication, voting, or other non-transactional proofs.
+
+Prerequisites
+A custodial wallet must be created via the separate OWS skill and visible in xno-mcp via wallets.
+Sign a message
+
+To sign a message, call the sign_message tool:
+
+{
+  "name": "sign_message",
+  "arguments": {
+    "wallet": "my-wallet",
+    "index": 0,
+    "message": "I am me."
+  }
+}
+
+
+The tool will return the address, public key, and the hex-encoded signature.
+
+CLI Usage
+
+You can also sign messages directly from the command line if you have the private key:
+
+bunx -y xno-skills sign "<message>" --key <private-key-hex>
+
+Example
+bunx -y xno-skills sign "I am me." --key 0000000000000000000000000000000000000000000000000000000000000000
+
+
+To get JSON output:
+
+bunx -y xno-skills sign "I am me." --key 0000000000000000000000000000000000000000000000000000000000000000 --json
+
+NOMS Standard (ORIS-001)
+
+The signature is computed over a binary payload that includes a magic header, ensuring it cannot be misinterpreted as a valid Nano block. This protects users from accidentally signing a malicious transaction block.
+
+Weekly Installs
+11
+Repository
+casualsecurityi…o-skills
+GitHub Stars
+1
+First Seen
+3 days ago
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykFail

@@ -1,0 +1,127 @@
+---
+rating: ⭐⭐⭐
+title: groq-cost-tuning
+url: https://skills.sh/jeremylongshore/claude-code-plugins-plus-skills/groq-cost-tuning
+---
+
+# groq-cost-tuning
+
+skills/jeremylongshore/claude-code-plugins-plus-skills/groq-cost-tuning
+groq-cost-tuning
+Installation
+$ npx skills add https://github.com/jeremylongshore/claude-code-plugins-plus-skills --skill groq-cost-tuning
+SKILL.md
+Groq Cost Tuning
+Overview
+
+Optimize Groq inference costs by selecting the right model for each use case and managing token volume. Groq's pricing is extremely competitive (Llama 3.1 8B at ~$0.05/M tokens, Llama 3.3 70B at ~$0.59/M tokens, Mixtral at ~$0.24/M tokens), but high throughput (500+ tokens/sec) makes it easy to burn through large volumes quickly.
+
+Prerequisites
+Groq Cloud account with billing dashboard access
+Understanding of which use cases need which model quality
+Application-level request routing capability
+Instructions
+Step 1: Implement Smart Model Routing
+// Route requests to cheapest model that meets quality requirements
+const MODEL_ROUTING: Record<string, { model: string; costPer1MTokens: number }> = {
+  'classification':  { model: 'llama-3.1-8b-instant',    costPer1MTokens: 0.05 },
+  'summarization':   { model: 'llama-3.1-8b-instant',    costPer1MTokens: 0.05 },
+  'code-review':     { model: 'llama-3.3-70b-versatile',  costPer1MTokens: 0.59 },
+  'creative-writing':{ model: 'llama-3.3-70b-versatile',  costPer1MTokens: 0.59 },
+  'extraction':      { model: 'llama-3.1-8b-instant',    costPer1MTokens: 0.05 },
+  'chat':            { model: 'llama-3.3-70b-versatile',  costPer1MTokens: 0.59 },
+};
+
+function selectModel(useCase: string): string {
+  return MODEL_ROUTING[useCase]?.model || 'llama-3.1-8b-instant'; // Default cheap
+}
+// Classification on 8B: $0.05/M tokens vs 70B: $0.59/M = 12x savings
+
+Step 2: Minimize Token Usage per Request
+// Reduce prompt tokens -- Groq charges for both input and output
+const OPTIMIZATION_TIPS = {
+  systemPrompt: 'Keep system prompts under 200 tokens. Be concise.',  # HTTP 200 OK
+  maxTokens: 'Set max_tokens to expected output size, not maximum.',
+  context: 'Only include relevant context, not entire documents.',
+  fewShot: 'Use 1-2 examples instead of 5-6 for few-shot learning.',
+};
+
+// Example: reduce a 2000-token prompt to 500 tokens  # 500: 2000: 2 seconds in ms
+const optimizedRequest = {
+  model: 'llama-3.1-8b-instant',
+  messages: [
+    { role: 'system', content: 'Classify: positive/negative/neutral' }, // 6 tokens vs 200  # HTTP 200 OK
+    { role: 'user', content: text }, // Only the text, no verbose instructions
+  ],
+  max_tokens: 5, // Only need one word
+};
+
+Step 3: Cache Identical Requests
+import { createHash } from 'crypto';
+
+const responseCache = new Map<string, { result: any; ts: number }>();
+
+async function cachedCompletion(messages: any[], model: string) {
+  const key = createHash('md5').update(JSON.stringify({ messages, model })).digest('hex');
+  const cached = responseCache.get(key);
+  if (cached && Date.now() - cached.ts < 3600_000) return cached.result;
+
+  const result = await groq.chat.completions.create({ model, messages });
+  responseCache.set(key, { result, ts: Date.now() });
+  return result;
+}
+
+Step 4: Use Batching for Bulk Processing
+// Process items in batches with the fast 8B model
+// Groq's speed makes batch processing very efficient
+async function batchClassify(items: string[]): Promise<string[]> {
+  // Batch 10 items per request instead of 1 per request
+  const batchPrompt = items.map((item, i) => `${i}: ${item}`).join('\n');
+  const result = await groq.chat.completions.create({
+    model: 'llama-3.1-8b-instant',
+    messages: [{ role: 'user', content: `Classify each as pos/neg/neutral:\n${batchPrompt}` }],
+    max_tokens: items.length * 10,
+  });
+  // 1 API call instead of 10 = ~90% reduction in overhead
+  return parseClassifications(result.choices[0].message.content);
+}
+
+Step 5: Set Spending Limits
+
+In Groq Console > Organization > Billing:
+
+Set monthly spending cap
+Enable alerts at 50% and 80% of budget
+Configure auto-pause when limit is reached
+Error Handling
+Issue	Cause	Solution
+Costs higher than expected	Using 70B for simple tasks	Route classification/extraction to 8B model
+Rate limit causing retries	RPM cap hit	Spread requests across multiple keys
+Spending cap paused API	Budget exhausted	Increase cap or reduce request volume
+Cache hit rate low	Unique prompts every time	Normalize prompts before caching
+Examples
+
+Basic usage: Apply groq cost tuning to a standard project setup with default configuration options.
+
+Advanced scenario: Customize groq cost tuning for production environments with multiple constraints and team-specific requirements.
+
+Output
+Configuration files or code changes applied to the project
+Validation report confirming correct implementation
+Summary of changes made and their rationale
+Resources
+Official monitoring documentation
+Community best practices and patterns
+Related skills in this plugin pack
+Weekly Installs
+25
+Repository
+jeremylongshore…s-skills
+GitHub Stars
+2.1K
+First Seen
+Jan 25, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

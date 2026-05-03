@@ -1,0 +1,183 @@
+---
+title: x07-agent-playbook
+url: https://skills.sh/x07lang/x07-website/x07-agent-playbook
+---
+
+# x07-agent-playbook
+
+skills/x07lang/x07-website/x07-agent-playbook
+x07-agent-playbook
+Installation
+$ npx skills add https://github.com/x07lang/x07-website --skill x07-agent-playbook
+SKILL.md
+x07-agent-playbook
+
+This skill sets the baseline workflow and constraints for autonomous agents writing X07 programs. It assumes end-users only have the released toolchain binaries, not the toolchain source repo.
+
+Tooling
+
+See references/tooling.md.
+
+Execution should go through x07 run (single front door). The standalone OS runner binary (x07-os-runner) remains available for expert usage, but is not part of the default agent loop.
+
+If the task needs OS worlds or native deps (curl/openssl, etc), run x07 doctor early and follow its suggestions.
+
+Canonical docs:
+
+https://x07lang.org/docs/toolchain/repair-loop/
+https://x07lang.org/docs/toolchain/running-programs/
+https://x07lang.org/docs/language/stream-pipes/
+https://x07lang.org/docs/language/types-memory/ (branded bytes)
+https://x07lang.org/docs/language/concurrency-multiprocessing/
+https://x07lang.org/docs/worlds/record-replay/
+https://x07lang.org/docs/language/budget-scopes/
+https://x07lang.org/docs/toolchain/arch-check/
+https://x07lang.org/docs/toolchain/schema-derive/
+https://x07lang.org/docs/toolchain/state-machines/
+https://x07lang.org/docs/toolchain/pbt/
+https://x07lang.org/docs/toolchain/review-trust/
+Single canonical agent loop (edit → run → test)
+
+Create or edit x07AST JSON (*.x07.json).
+
+Run in the correct capability world (canonical: x07 run):
+
+default run (uses x07.json default_profile): x07 run
+policy-enforced run: x07 policy init --template <cli|http-client|web-service|fs-tool|sqlite-app|postgres-client|worker|worker-parallel> (starting point; review and extend), then x07 run --profile sandbox (optionally add --allow-host ... / --deny-host ... to materialize derived policies)
+
+x07 run runs the canonical auto-repair loop by default (format → lint → quickfix, repeatable). Use:
+
+--repair=off to disable auto-repair (debugging)
+--repair=memory to stage repairs under .x07/repair/_staged/ without editing source files
+--repair=write (default) to write repairs back to source files
+--repair-max-iters N to bound iterations (default: 3)
+
+For CLI-style programs that expect argv_v1, pass process args after -- and x07 run will encode them into input bytes:
+
+x07 run -- tool --help
+
+If the project uses dependencies, update the lockfile:
+
+x07 pkg lock --project x07.json
+x07 pkg lock --project x07.json --check (CI gate)
+
+If the index can be consulted, --check also fails on yanked dependencies and active advisories unless explicitly allowed (--allow-yanked / --allow-advisories). If any dependency declares required helper packages via meta.requires_packages, x07 pkg lock may also update x07.json to add those transitive deps. If a transitive dependency must be forced to a safe version, use project.patch in x07.json (requires x07.project@0.3.0).
+
+Run non-mutating whole-project validation before packaging:
+
+x07 check --project x07.json
+
+If you need a distributable native executable (end-user CLI binary, no toolchain required at runtime), bundle it:
+
+x07 bundle --profile os --out dist/app
+x07 bundle --profile sandbox --out dist/app (policy enforced)
+
+For formal verification or certificate-oriented review flows, use the public trust surface directly:
+
+x07 verify --prove --entry <sym>
+x07 trust profile check --project x07.json --profile <profile.json> --entry <sym>
+x07 trust capsule check --project x07.json --index arch/capsules/index.x07capsule.json when capsules are in scope
+x07 pkg attest-closure --project x07.json --out arch/trust/dependency_closure.attest.json for networked certification profiles
+x07 trust certify --project x07.json --profile <profile.json> --entry <sym> --out-dir target/cert
+
+Read the certificate artifacts (summary.html, certificate.json, prove/coverage reports) instead of treating trust as a hidden internal process.
+
+If you need explicit diagnostics or tighter control than the default auto-repair loop:
+
+x07 fmt / x07 lint / x07 fix / x07 ast apply-patch
+
+Keep each iteration small and checkable; if a repair loop does not converge quickly, stop and re-evaluate the approach.
+
+Note: paths above assume a project scaffold (x07 init). In a publishable package repo (x07 init --package), format/lint the module files under modules/ and run tests via x07 test --manifest tests/tests.json.
+
+Correctness + review artifacts (canonical)
+
+Property-based testing:
+
+x07 test --pbt --manifest tests/tests.json (PBT only)
+x07 test --all --manifest tests/tests.json (unit + PBT)
+x07 fix --from-pbt <repro.json> --write (counterexample → deterministic regression test)
+
+Semantic diff + trust report (for human review / CI artifacts):
+
+x07 review diff --from . --to . --html-out target/review/diff.html --json-out target/review/diff.json
+x07 trust report --project x07.json --out target/trust/trust.json --html-out target/trust/trust.html
+SBOM artifact (default CycloneDX): target/trust/trust.sbom.cdx.json
+Dependency capability gate: add --fail-on deps-capability and provide x07.deps.capability-policy.json
+
+Function contracts + certification artifacts:
+
+add requires / ensures / invariant clauses on a defn
+add decreases[] when certifying pure self-recursive defn
+run x07 verify --prove --entry <sym> for proof and coverage artifacts
+run x07 trust profile check before x07 trust certify
+for networked profiles, bind the reviewed dependency set with x07 pkg attest-closure
+Recommended project layout (single canonical shape)
+
+For app projects (x07 init):
+
+x07.json: project manifest (x07.project@0.3.0; do not author new manifests on x07.project@0.2.0)
+x07.lock.json: project lockfile (or lockfile configured in x07.json)
+src/main.x07.json: entry
+src/: module roots
+.x07/deps/<name>/<version>/: fetched dependencies (when using x07 pkg lock)
+tests/tests.json: test manifest (generated by x07 init in new projects)
+
+For publishable package repos (x07 init --package):
+
+x07-package.json: package manifest (publish contract for x07 pkg publish)
+x07.json: minimal project manifest for local tests
+modules/: module roots (publishable modules layout)
+tests/tests.json: test manifest
+
+For certification-oriented projects, start from the matching scaffold:
+
+x07 init --template verified-core-pure
+x07 init --template trusted-sandbox-program
+x07 init --template trusted-network-service
+x07 init --template certified-capsule
+x07 init --template certified-network-capsule
+Choosing packages (canonical)
+
+Prefer the capability map (one default choice per capability):
+
+https://x07lang.org/agent/latest/catalog/capabilities.json
+
+Common non-web building blocks for agents:
+
+text.core → ext-text (trim/split/join/find/lines)
+text.unicode → ext-unicode-rs (normalize/casefold/segment)
+math.bigint → ext-bigint-rs
+math.decimal → ext-decimal-rs
+data.cbor → ext-cbor-rs
+data.msgpack → ext-msgpack-rs
+checksum.fast → ext-checksum-rs
+diff.patch → ext-diff-rs
+compress.zstd → ext-compress-rs
+fs.globwalk → ext-path-glob-rs (run-os*)
+
+Add deps with x07 pkg add NAME@VERSION --sync (choose NAME@VERSION from the capability map).
+
+If you don’t know which package provides an import, use x07 pkg provides <module-id>.
+
+Agent-first design rails
+
+See references/design-rails.md.
+
+For a built-in language/stdlib reference (toolchain-only), use x07 guide.
+
+By-example docs (recommended)
+Sandbox policy workflow: https://x07lang.org/docs/worlds/sandbox-policy-walkthrough/
+Publishing packages: https://x07lang.org/docs/packages/publishing-by-example/
+Porting via x07import: https://x07lang.org/docs/x07import/porting-by-example/
+Testing harness: https://x07lang.org/docs/toolchain/testing-by-example/
+Weekly Installs
+8
+Repository
+x07lang/x07-website
+First Seen
+Mar 14, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

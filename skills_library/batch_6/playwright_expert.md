@@ -1,0 +1,170 @@
+---
+title: playwright-expert
+url: https://skills.sh/jeffallan/claude-skills/playwright-expert
+---
+
+# playwright-expert
+
+skills/jeffallan/claude-skills/playwright-expert
+playwright-expert
+Installation
+$ npx skills add https://github.com/jeffallan/claude-skills --skill playwright-expert
+Summary
+
+Playwright E2E testing specialist for writing maintainable browser tests, debugging flaky tests, and CI/CD integration.
+
+Emphasizes role-based selectors and auto-waiting to avoid brittle tests and arbitrary timeouts
+Provides Page Object Model patterns for test organization, fixture setup, and configuration guidance
+Includes debugging workflow using trace viewer, screenshots, and retry strategies to identify and fix flaky tests
+Covers API mocking, visual regression testing, and parallel test execution for comprehensive test infrastructure
+SKILL.md
+Playwright Expert
+
+E2E testing specialist with deep expertise in Playwright for robust, maintainable browser automation.
+
+Core Workflow
+Analyze requirements - Identify user flows to test
+Setup - Configure Playwright with proper settings
+Write tests - Use POM pattern, proper selectors, auto-waiting
+Debug - Run test → check trace → identify issue → fix → verify fix
+Integrate - Add to CI/CD pipeline
+Reference Guide
+
+Load detailed guidance based on context:
+
+Topic	Reference	Load When
+Selectors	references/selectors-locators.md	Writing selectors, locator priority
+Page Objects	references/page-object-model.md	POM patterns, fixtures
+API Mocking	references/api-mocking.md	Route interception, mocking
+Configuration	references/configuration.md	playwright.config.ts setup
+Debugging	references/debugging-flaky.md	Flaky tests, trace viewer
+Constraints
+MUST DO
+Use role-based selectors when possible
+Leverage auto-waiting (don't add arbitrary timeouts)
+Keep tests independent (no shared state)
+Use Page Object Model for maintainability
+Enable traces/screenshots for debugging
+Run tests in parallel
+MUST NOT DO
+Use waitForTimeout() (use proper waits)
+Rely on CSS class selectors (brittle)
+Share state between tests
+Ignore flaky tests
+Use first(), nth() without good reason
+Code Examples
+Selector: Role-based (correct) vs CSS class (brittle)
+// ✅ Role-based selector — resilient to styling changes
+await page.getByRole('button', { name: 'Submit' }).click();
+await page.getByLabel('Email address').fill('user@example.com');
+
+// ❌ CSS class selector — breaks on refactor
+await page.locator('.btn-primary.submit-btn').click();
+await page.locator('.email-input').fill('user@example.com');
+
+Page Object Model + Test File
+// pages/LoginPage.ts
+import { type Page, type Locator } from '@playwright/test';
+
+export class LoginPage {
+  readonly page: Page;
+  readonly emailInput: Locator;
+  readonly passwordInput: Locator;
+  readonly submitButton: Locator;
+  readonly errorMessage: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.emailInput = page.getByLabel('Email address');
+    this.passwordInput = page.getByLabel('Password');
+    this.submitButton = page.getByRole('button', { name: 'Sign in' });
+    this.errorMessage = page.getByRole('alert');
+  }
+
+  async goto() {
+    await this.page.goto('/login');
+  }
+
+  async login(email: string, password: string) {
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
+    await this.submitButton.click();
+  }
+}
+
+// tests/login.spec.ts
+import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+
+test.describe('Login', () => {
+  let loginPage: LoginPage;
+
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page);
+    await loginPage.goto();
+  });
+
+  test('successful login redirects to dashboard', async ({ page }) => {
+    await loginPage.login('user@example.com', 'correct-password');
+    await expect(page).toHaveURL('/dashboard');
+  });
+
+  test('invalid credentials shows error', async () => {
+    await loginPage.login('user@example.com', 'wrong-password');
+    await expect(loginPage.errorMessage).toBeVisible();
+    await expect(loginPage.errorMessage).toContainText('Invalid credentials');
+  });
+});
+
+Debugging Workflow for Flaky Tests
+// 1. Run failing test with trace enabled
+// playwright.config.ts
+use: {
+  trace: 'on-first-retry',
+  screenshot: 'only-on-failure',
+}
+
+// 2. Re-run with retries to capture trace
+// npx playwright test --retries=2
+
+// 3. Open trace viewer to inspect timeline
+// npx playwright show-trace test-results/.../trace.zip
+
+// 4. Common fix — replace arbitrary timeout with proper wait
+// ❌ Flaky
+await page.waitForTimeout(2000);
+await page.getByRole('button', { name: 'Save' }).click();
+
+// ✅ Reliable — waits for element state
+await page.getByRole('button', { name: 'Save' }).waitFor({ state: 'visible' });
+await page.getByRole('button', { name: 'Save' }).click();
+
+// 5. Verify fix — run test 10x to confirm stability
+// npx playwright test --repeat-each=10
+
+Output Templates
+
+When implementing Playwright tests, provide:
+
+Page Object classes
+Test files with proper assertions
+Fixture setup if needed
+Configuration recommendations
+Knowledge Reference
+
+Playwright, Page Object Model, auto-waiting, locators, fixtures, API mocking, trace viewer, visual comparisons, parallel execution, CI/CD integration
+
+Documentation
+
+Weekly Installs
+2.3K
+Repository
+jeffallan/claude-skills
+GitHub Stars
+8.7K
+First Seen
+1 day ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

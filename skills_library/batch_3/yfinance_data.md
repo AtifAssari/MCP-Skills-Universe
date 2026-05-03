@@ -1,0 +1,110 @@
+---
+title: yfinance-data
+url: https://skills.sh/himself65/finance-skills/yfinance-data
+---
+
+# yfinance-data
+
+skills/himself65/finance-skills/yfinance-data
+yfinance-data
+Installation
+$ npx skills add https://github.com/himself65/finance-skills --skill yfinance-data
+SKILL.md
+Contains Shell Commands
+
+This skill contains shell command directives (!`command`) that may execute system commands. Review carefully before installing.
+
+yfinance Data Skill
+
+Fetches financial and market data from Yahoo Finance using the yfinance Python library.
+
+Important: yfinance is not affiliated with Yahoo, Inc. Data is for research and educational purposes.
+
+Step 1: Ensure yfinance Is Available
+
+Current environment status:
+
+!`python3 -c "import yfinance; print('yfinance ' + yfinance.__version__ + ' installed')" 2>/dev/null || echo "YFINANCE_NOT_INSTALLED"`
+
+
+If YFINANCE_NOT_INSTALLED, install it before running any code:
+
+import subprocess, sys
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "yfinance"])
+
+
+If yfinance is already installed, skip the install step and proceed directly.
+
+Step 2: Identify What the User Needs
+
+Match the user's request to one or more data categories below, then use the corresponding code from references/api_reference.md.
+
+User Request	Data Category	Primary Method
+Stock price, quote	Current price	ticker.info or ticker.fast_info
+Price history, chart data	Historical OHLCV	ticker.history() or yf.download()
+Balance sheet	Financial statements	ticker.balance_sheet
+Income statement, revenue	Financial statements	ticker.income_stmt
+Cash flow	Financial statements	ticker.cashflow
+Dividends	Corporate actions	ticker.dividends
+Stock splits	Corporate actions	ticker.splits
+Options chain, calls, puts	Options data	ticker.option_chain()
+Earnings, EPS	Analysis	ticker.earnings_history
+Analyst price targets	Analysis	ticker.analyst_price_targets
+Recommendations, ratings	Analysis	ticker.recommendations
+Upgrades/downgrades	Analysis	ticker.upgrades_downgrades
+Institutional holders	Ownership	ticker.institutional_holders
+Insider transactions	Ownership	ticker.insider_transactions
+Company overview, sector	General info	ticker.info
+Compare multiple stocks	Bulk download	yf.download()
+Screen/filter stocks	Screener	yf.Screener + yf.EquityQuery
+Sector/industry data	Market data	yf.Sector / yf.Industry
+News	News	ticker.news
+Step 3: Write and Execute the Code
+General pattern
+import subprocess, sys
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "yfinance"])
+
+import yfinance as yf
+
+ticker = yf.Ticker("AAPL")
+# ... use the appropriate method from the reference
+
+Key rules
+Always wrap in try/except — Yahoo Finance may rate-limit or return empty data
+Use yf.download() for multi-ticker comparisons — it's faster with multi-threading
+For options, list expiration dates first with ticker.options before calling ticker.option_chain(date)
+For quarterly data, use quarterly_ prefix: ticker.quarterly_income_stmt, ticker.quarterly_balance_sheet, ticker.quarterly_cashflow
+For large date ranges, be mindful of intraday limits — 1m data only goes back ~7 days, 1h data ~730 days
+Print DataFrames clearly — use .to_string() or .to_markdown() for readability, or select key columns
+Timezone handling — yfinance returns tz-aware datetime indices (e.g., America/New_York). When comparing dates, always use pd.Timestamp(..., tz=...) or strip timezones with .tz_localize(None). See the reference file for details.
+Valid periods and intervals
+Periods	1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+Intervals	1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
+Step 4: Present the Data
+
+After fetching data, present it clearly:
+
+Summarize key numbers in a brief text response (current price, market cap, P/E, etc.)
+Show tabular data formatted for readability — use markdown tables or formatted DataFrames
+Highlight notable items — earnings beats/misses, unusual volume, dividend changes
+Provide context — compare to sector averages, historical ranges, or analyst consensus when relevant
+
+If the user seems to want a chart or visualization, combine with an appropriate visualization approach (e.g., generate an HTML chart or describe the trend).
+
+Reference Files
+references/api_reference.md — Complete yfinance API reference with code examples for every data category
+
+Read the reference file when you need exact method signatures or edge case handling.
+
+Weekly Installs
+672
+Repository
+himself65/finance-skills
+GitHub Stars
+1.4K
+First Seen
+Mar 14, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

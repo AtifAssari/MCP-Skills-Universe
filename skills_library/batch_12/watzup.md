@@ -1,0 +1,131 @@
+---
+title: watzup
+url: https://skills.sh/duc01226/easyplatform/watzup
+---
+
+# watzup
+
+skills/duc01226/easyplatform/watzup
+watzup
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill watzup
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Evidence-Based Reasoning — Speculation is FORBIDDEN. Every claim needs proof.
+
+Cite file:line, grep results, or framework docs for EVERY claim
+Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+Cross-service validation required for architectural changes
+"I don't have enough evidence" is valid and expected output
+
+BLOCKED until: - [ ] Evidence file path (file:line) - [ ] Grep search performed - [ ] 3+ similar patterns found - [ ] Confidence level stated
+
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because" If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+External Memory: For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in plans/reports/ — prevents context loss and serves as deliverable.
+
+Evidence Gate: MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires file:line proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+Quick Summary
+
+Goal: Review current branch changes, summarize impact/quality, and check for documentation staleness.
+
+Workflow:
+
+Review — Analyze recent commits: what was modified, added, removed
+Summarize — Provide detailed change summary with quality assessment
+Doc Check — Cross-reference changed files against docs/ for staleness
+Lesson Learned — Analyze AI mistakes/issues during the task and capture lessons
+
+Key Rules:
+
+READ-ONLY: do not implement or fix anything, only flag
+Doc staleness check is REQUIRED (see mapping table below)
+Lesson-learned analysis is REQUIRED (see section below)
+Final review task MUST ATTENTION include doc-staleness check AND lesson-learned analysis
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Review my current branch and the most recent commits. Provide a detailed summary of all changes, including what was modified, added, or removed. Analyze the overall impact and quality of the changes.
+
+IMPORTANT: Do not start implementing.
+
+Doc Staleness Check (REQUIRED)
+
+After the change summary, run git diff --name-only (against base branch or recent commits) and cross-reference changed files against relevant documentation:
+
+Changed file pattern	Docs to check for staleness
+.claude/hooks/**	.claude/docs/hooks/README.md, hook count tables in .claude/docs/hooks/*.md
+.claude/skills/**	.claude/docs/skills/README.md, skill count/catalog tables
+.claude/workflows/**	CLAUDE.md workflow catalog table, .claude/docs/ workflow references
+src/Services/**	docs/business-features/ doc for the affected service
+src/{frontend-dir}/**	docs/project-reference/frontend-patterns-reference.md, relevant business-feature docs
+CLAUDE.md	.claude/docs/README.md (navigation hub must stay in sync)
+
+Output one of:
+
+A bulleted list of docs that may need updating, with a brief note on what is likely stale (e.g., "hook count changed from 31 to 32").
+No doc updates needed — if no changed file pattern maps to a doc.
+
+Do not edit docs during watzup. Only flag. The user decides whether to fix.
+
+AI Mistake & Lesson Learned Analysis (REQUIRED)
+
+After the doc staleness check, review the entire session for AI mistakes and lessons learned:
+
+Analyze mistakes — Did AI make any errors during this task? Examples:
+
+Wrong assumptions about code behavior
+Incorrect pattern usage (violated project conventions)
+Missing edge cases or validation
+Hallucinated APIs, methods, or file paths
+Over-engineering or unnecessary complexity
+Missed existing code that should have been reused
+Wrong architectural layer placement
+
+Identify lessons — For each mistake found, formulate a concise lesson:
+
+What went wrong (specific, with file:line if applicable)
+Why it happened (root cause)
+How to prevent it next time (actionable rule)
+
+Ask user to persist — If any lesson exists, ask the user:
+
+"Found [N] lesson(s) learned during this task. Should I use /learn to remember them for future sessions?"
+
+Wait for user confirmation before invoking /learn.
+
+Output one of:
+
+A numbered list of lessons with the /learn prompt above
+No AI mistakes identified in this session — if genuinely none found
+
+Be honest and self-critical. The purpose is continuous improvement, not self-congratulation.
+
+Next Steps
+
+MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS after completing this skill, you MUST ATTENTION use AskUserQuestion to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
+"/workflow-end (Recommended)" — Complete and close the active workflow
+"/commit" — Commit changes if not using workflow
+"Skip, continue manually" — user decides
+Closing Reminders
+
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting. MANDATORY IMPORTANT MUST ATTENTION validate decisions with user via AskUserQuestion — never auto-decide. MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality. MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+
+IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act). NEVER speculate without proof.
+IMPORTANT MUST ATTENTION READ CLAUDE.md before starting
+Weekly Installs
+35
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Feb 10, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,232 @@
+---
+title: review-post-task
+url: https://skills.sh/duc01226/easyplatform/review-post-task
+---
+
+# review-post-task
+
+skills/duc01226/easyplatform/review-post-task
+review-post-task
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill review-post-task
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Prerequisites: MUST ATTENTION READ before executing:
+
+Understand Code First — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
+
+Search 3+ similar patterns (grep/glob) — cite file:line evidence
+Read existing files in target area — understand structure, base classes, conventions
+Run python .claude/scripts/code_graph trace <file> --direction both --json when .code-graph/graph.db exists
+Map dependencies via connections or callers_of — know what depends on your target
+Write investigation to .ai/workspace/analysis/ for non-trivial tasks (3+ files)
+Re-read analysis file before implementing — never work from memory alone
+NEVER invent new patterns when existing ones work — match exactly or document deviation
+
+BLOCKED until: - [ ] Read target files - [ ] Grep 3+ patterns - [ ] Graph trace (if graph.db exists) - [ ] Assumptions verified with evidence
+
+Design Patterns Quality — Priority checks for every code change:
+
+DRY via OOP: Same-suffix classes (*Entity, *Dto, *Service) MUST ATTENTION share base class. 3+ similar patterns → extract to shared abstraction.
+Right Responsibility: Logic in LOWEST layer (Entity > Domain Service > Application Service > Controller). Never business logic in controllers.
+SOLID: Single responsibility (one reason to change). Open-closed (extend, don't modify). Liskov (subtypes substitutable). Interface segregation (small interfaces). Dependency inversion (depend on abstractions).
+After extraction/move/rename: Grep ENTIRE scope for dangling references. Zero tolerance.
+YAGNI gate: NEVER recommend patterns unless 3+ occurrences exist. Don't extract for hypothetical future use.
+
+Anti-patterns to flag: God Object, Copy-Paste inheritance, Circular Dependency, Leaky Abstraction.
+
+Deep Multi-Round Review — THREE mandatory escalating-depth rounds. NEVER combine. NEVER PASS after Round 1 alone.
+
+Round 1: Normal review building understanding. Read all files, note issues. Round 2: MANDATORY re-read ALL files from scratch. Focus on:
+
+Cross-cutting concerns missed in Round 1
+Interaction bugs between changed files
+Convention drift (new code vs existing patterns)
+Missing pieces (what should exist but doesn't)
+
+Round 3: MANDATORY adversarial simulation (for >3 files or cross-cutting changes). Pretend you are using/running this code RIGHT NOW:
+
+"What input causes failure? What error do I get?"
+"1000 concurrent users — what breaks?"
+"After deployment rollback — backward compatible?"
+"Can I debug issues from logs/monitoring output?"
+
+Rules: NEVER rely on prior round memory — re-read everything. NEVER declare PASS after Round 1. Final verdict must incorporate ALL rounds. Report must include ## Round 2 Findings and ## Round 3 Findings sections.
+
+Graph Impact Analysis — When .code-graph/graph.db exists, run blast-radius --json to detect ALL files affected by changes (7 edge types: CALLS, MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT, PRODUCES_EVENT, TRIGGERS_COMMAND_EVENT, INHERITS). Compute gap: impacted_files - changed_files = potentially stale files. Risk: <5 Low, 5-20 Medium, >20 High. Use trace --direction downstream for deep chains on high-impact files.
+
+Logic & Intention Review — Verify WHAT code does matches WHY it was changed.
+
+Change Intention Check: Every changed file MUST ATTENTION serve the stated purpose. Flag unrelated changes as scope creep.
+Happy Path Trace: Walk through one complete success scenario through changed code
+Error Path Trace: Walk through one failure/edge case scenario through changed code
+Acceptance Mapping: If plan context available, map every acceptance criterion to a code change
+
+NEVER mark review PASS without completing both traces (happy + error path).
+
+Bug Detection — MUST ATTENTION check categories 1-4 for EVERY review. Never skip.
+
+Null Safety: Can params/returns be null? Are they guarded? Optional chaining gaps? .find() returns checked?
+Boundary Conditions: Off-by-one (< vs <=)? Empty collections handled? Zero/negative values? Max limits?
+Error Handling: Try-catch scope correct? Silent swallowed exceptions? Error types specific? Cleanup in finally?
+Resource Management: Connections/streams closed? Subscriptions unsubscribed on destroy? Timers cleared? Memory bounded?
+Concurrency (if async): Missing await? Race conditions on shared state? Stale closures? Retry storms?
+Stack-Specific: JS: === vs ==, typeof null. C#: async void, missing using, LINQ deferred execution.
+
+Classify: CRITICAL (crash/corrupt) → FAIL | HIGH (incorrect behavior) → FAIL | MEDIUM (edge case) → WARN | LOW (defensive) → INFO
+
+Test Spec Verification — Map changed code to test specifications.
+
+From changed files → find TC-{FEAT}-{NNN} in docs/business-features/{Service}/detailed-features/{Feature}.md Section 15
+Every changed code path MUST ATTENTION map to a corresponding TC (or flag as "needs TC")
+New functions/endpoints/handlers → flag for test spec creation
+Verify TC evidence fields point to actual code (file:line, not stale references)
+Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+If no specs exist → log gap and recommend /tdd-spec
+
+NEVER skip test mapping. Untested code paths are the #1 source of production bugs.
+
+Critical Purpose: Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
+
+MANDATORY IMPORTANT MUST ATTENTION Plan ToDo Task to READ the following project-specific reference docs:
+
+docs/project-reference/code-review-rules.md — anti-patterns, review checklists, quality standards (READ FIRST) (content auto-injected by hook — check for [Injected: ...] header before reading)
+project-structure-reference.md — service list, directory tree, conventions
+
+If files not found, search for: project documentation, coding standards, architecture docs.
+
+OOP & DRY Enforcement: MANDATORY IMPORTANT MUST ATTENTION — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, *Service, etc...) MUST ATTENTION inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
+
+Quick Summary
+
+Goal: Two-pass code review after task completion to catch issues before commit.
+
+Workflow:
+
+Pass 1: File-by-File — Review each changed file individually
+Pass 2: Holistic — Assess overall approach, architecture, consistency
+Report — Summarize critical issues and recommendations
+
+Key Rules:
+
+Ensure quality: no flaws, no bugs, no missing updates, no stale content
+Check both code AND documentation for completeness
+Evidence-based findings with file:line references
+
+Execute mandatory two-pass review protocol after completing code changes. Focus: $ARGUMENTS
+
+Activate code-review skill and follow its workflow with post-task two-pass protocol:
+
+Review Mindset (NON-NEGOTIABLE)
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Do NOT accept code correctness at face value — verify by reading actual implementations
+Every finding must include file:line evidence (grep results, read confirmations)
+If you cannot prove a claim with a code trace, do NOT include it in the report
+Question assumptions: "Does this actually work?" → trace the call path to confirm
+Challenge completeness: "Is this all?" → grep for related usages across services
+Verify side effects: "What else does this change break?" → check consumers and dependents
+No "looks fine" without proof — state what you verified and how
+Core Principles (ENFORCE ALL)
+
+YAGNI — Flag code solving hypothetical future problems (unused params, speculative interfaces, premature abstractions) KISS — Flag unnecessarily complex solutions. Ask: "Is there a simpler way?" DRY — Grep for similar/duplicate code across the codebase. If 3+ similar patterns exist, flag for extraction. Clean Code — Readable > clever. Names reveal intent. Functions do one thing. No deep nesting (≤3 levels). Methods <30 lines. Follow Convention — Before flagging ANY pattern violation, grep for 3+ existing examples. Codebase convention wins. No Flaws/No Bugs — Trace logic paths. Verify edge cases (null, empty, boundary). Check error handling. Proof Required — Every claim backed by file:line evidence or grep results. Speculation is forbidden. Doc Staleness — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
+
+Readability Checklist (MUST ATTENTION evaluate)
+
+Before approving, verify the code is easy to read, easy to maintain, easy to understand:
+
+Schema visibility — If a function computes a data structure (object, map, config), a comment should show the output shape so readers don't have to trace the code
+Non-obvious data flows — If data transforms through multiple steps (A → B → C), a brief comment should explain the pipeline
+Self-documenting signatures — Function params should explain their role; flag unused params
+Magic values — Unexplained numbers/strings should be named constants or have inline rationale
+Naming clarity — Variables/functions should reveal intent without reading the implementation
+Protocol
+
+Pass 1: Gather changes (git diff), apply project review checklist:
+
+Backend: platform repos, validation, events, DTOs
+Backend: seed data in data seeders (not migrations) — if data must exist after DB reset, it's a seeder
+Frontend: base classes, stores, untilDestroyed, BEM
+Architecture: layer placement, service boundaries
+Convention: grep for 3+ similar patterns to verify code follows codebase conventions
+Correctness: trace logic paths, check edge cases (null, empty, boundary values)
+DRY: grep for duplicate/similar code across codebase
+YAGNI/KISS: flag over-engineering, unnecessary abstractions, speculative features
+Doc staleness: cross-reference changed files against docs/business-features/, test specs, READMEs — flag stale docs
+
+[IMPORTANT] Database Performance Protocol (MANDATORY):
+
+Paging Required — ALL list/collection queries MUST ATTENTION use pagination. NEVER load all records into memory. Verify: no unbounded GetAll(), ToList(), or Find() without Skip/Take or cursor-based paging.
+Index Required — ALL query filter fields, foreign keys, and sort columns MUST ATTENTION have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+
+Fix issues found.
+
+Pass 2 (MANDATORY — Fresh-Context Round 2): Delegate re-review to a fresh code-reviewer sub-agent for unbiased perspective. The sub-agent has ZERO memory of Pass 1 findings or fixes.
+
+Spawn the sub-agent:
+
+Agent({
+  description: "Fresh-context Pass 2 holistic review",
+  subagent_type: "code-reviewer",
+  prompt: "## Task\nReview ALL uncommitted changes. This is a holistic second-pass review.\nYou are reviewing with completely fresh eyes — no knowledge of any prior review pass.\n\n## Review Scope\nRun git diff to see all uncommitted changes.\n\n## Focus Areas\n- Cross-cutting concerns spanning multiple changed files\n- Interaction bugs between changed files\n- Convention drift (new code vs existing patterns — grep 3+ examples)\n- Missing pieces (what should exist but doesn't)\n- Subtle edge cases (null, empty, boundary, off-by-one)\n- Over-engineering that may not be justified\n- Naming inconsistencies across files\n\nRead docs/project-reference/code-review-rules.md for project standards.\n\n## Output\nReturn structured findings:\n- **Status**: PASS or FAIL\n- **Issues**: [list with file:line evidence]\n- **Issue Count**: {number}\n\nEvery finding MUST have file:line evidence. No speculation."
+})
+
+
+After sub-agent returns, integrate findings into the main report as ## Round 2 Findings (Fresh-Context).
+
+Round 2 Additional Focus:
+
+Logic errors that Round 1 accepted at face value
+Bug patterns that only emerge when viewing cross-file interactions
+Test spec gaps visible only after seeing the full change set
+
+Note: Round 2 is now performed by a fresh sub-agent. The focus areas above are included in the sub-agent's prompt.
+
+Final Report: Task description, Pass 1/2 results, changes summary, issues fixed, remaining concerns.
+
+Integration Notes
+Auto-triggered by workflow orchestration after /cook, /fix, /code
+Can be manually invoked with /review-post-task
+For PR reviews, use /code-review instead
+Use code-reviewer subagent for complex reviews
+Systematic Review Protocol (for 10+ changed files)
+
+When the changeset is large (10+ files), categorize files by concern, fire parallel code-reviewer sub-agents per category, then synchronize findings into a holistic report. See review-changes/SKILL.md § "Systematic Review Protocol" for the full 4-step protocol (Categorize → Parallel Sub-Agents → Synchronize → Holistic Assessment).
+
+AI Agent Integrity Gate (NON-NEGOTIABLE)
+
+Completion ≠ Correctness. Before reporting ANY work done, prove it:
+
+Grep every removed name. Extraction/rename/delete touched N files? Grep confirms 0 dangling refs across ALL file types.
+Ask WHY before changing. Existing values are intentional until proven otherwise. No "fix" without traced rationale.
+Verify ALL outputs. One build passing ≠ all builds passing. Check every affected stack.
+Evaluate pattern fit. Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
+New artifact = wired artifact. Created something? Prove it's registered, imported, and reachable by all consumers.
+Closing Reminders
+IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+IMPORTANT MUST ATTENTION execute two review rounds (Round 1: understand, Round 2: catch missed issues) MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+IMPORTANT MUST ATTENTION search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
+IMPORTANT MUST ATTENTION check DRY via OOP, right responsibility layer, SOLID. Grep for dangling refs after moves.
+IMPORTANT MUST ATTENTION execute TWO review rounds. Round 2 delegates to fresh code-reviewer sub-agent (zero prior context).
+IMPORTANT MUST ATTENTION run graph impact analysis on changed files. Compute gap: impacted minus changed = potentially stale.
+IMPORTANT MUST ATTENTION verify WHAT code does matches WHY it changed. Trace happy + error paths.
+IMPORTANT MUST ATTENTION check null safety, boundaries, error handling, resource management for every review.
+IMPORTANT MUST ATTENTION map changed code paths to TC-{FEAT}-{NNN}. Flag untested paths.
+Weekly Installs
+33
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

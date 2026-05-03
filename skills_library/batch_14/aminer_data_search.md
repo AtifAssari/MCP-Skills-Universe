@@ -1,0 +1,220 @@
+---
+title: aminer-data-search
+url: https://skills.sh/canxiangcc/aminer-open-skill/aminer-data-search
+---
+
+# aminer-data-search
+
+skills/canxiangcc/aminer-open-skill/aminer-data-search
+aminer-data-search
+Installation
+$ npx skills add https://github.com/canxiangcc/aminer-open-skill --skill aminer-data-search
+SKILL.md
+AMiner Open Platform Academic Data Query
+
+27 APIs + 5 workflows. Token required: set AMINER_API_KEY env var.
+
+Docs: https://open.aminer.cn/open/docs | Console: https://open.aminer.cn/open/board?tab=control
+Mandatory Rules (Critical)
+Token Security: Only check whether AMINER_API_KEY exists; never expose the token in plain text anywhere.
+Cost Control: Prefer optimal combined queries; never do indiscriminate full-detail retrieval. Default to top 10 details when the user has not specified a count.
+Free-First: Prefer free APIs unless the user explicitly requires deeper fields; only upgrade to paid APIs when free ones cannot satisfy the need.
+Result Links: Always append an accessible URL after each entity in the output.
+Disambiguation: Scholar ambiguity → filter by org/org_id or ask user to confirm. Org ambiguity → use org_disambiguate_pro. Paper ambiguity → cross-check year + venue_name + first_author.
+Cost Report: After completing all API calls, always output a cost summary to the user showing: each API called, its unit price, number of calls, and the total cost. Format example: [Cost] ¥X.XX total, N API calls (api_a: ¥X.XX × N, api_b: Free × N).
+High-Cost Confirmation (≥ ¥5): Before executing a workflow or call chain whose estimated total cost is ¥5.00 or more, stop and ask the user for confirmation first. Show the planned call chain, estimated cost per step, and the total. Only proceed after the user explicitly agrees. This applies to both predefined workflows (e.g., Scholar Profile ~¥6.00) and ad-hoc multi-step plans.
+
+Entity URL templates (mandatory):
+
+Paper: https://www.aminer.cn/pub/{paper_id}
+Scholar: https://www.aminer.cn/profile/{scholar_id}
+Patent: https://www.aminer.cn/patent/{patent_id}
+Journal: https://www.aminer.cn/open/journal/detail/{journal_id}
+Token Check (Required)
+
+Check AMINER_API_KEY exists before any API call. Never expose token in plain text.
+
+[ -z "${AMINER_API_KEY+x}" ] && echo "AMINER_API_KEY missing" || echo "AMINER_API_KEY exists"
+
+If ${AMINER_API_KEY} exists: proceed. If not: check --token parameter. If neither: stop, guide user to Console to generate one.
+If the user provides AMINER_API_KEY inline (e.g. "My token is xxx"), accept it for the current session, but recommend setting it as an environment variable for better security.
+Default headers: Authorization: ${AMINER_API_KEY}, X-Platform: openclaw, Content-Type: application/json;charset=utf-8 (POST).
+Call Guardrails
+Parameter names and types must match references/api-catalog.md exactly.
+paper_info is batch-only: {"ids": [...]}. paper_detail is single-paper only: one id. Never mix them.
+When multiple details are needed, filter with a low-cost API first, then fetch details for a small set.
+Paper Search API Selection Guide
+
+When the user says "search for papers", determine the goal first:
+
+API	Focus	Use Case	Cost
+paper_search	Title search → paper_id	Known paper title, locate target	Free
+paper_search_pro	Multi-condition search (author/org/venue/keyword)	Topic search, sort by citations or year	¥0.01
+paper_qa_search	Natural language Q&A / topic keyword search	Semantic search, structured keyword OR/AND	¥0.05
+paper_list_by_keywords	Multi-keyword batch retrieval	Batch thematic retrieval	¥0.10
+paper_detail_by_condition	Year + venue dimension	Journal annual monitoring	¥0.20
+
+Default routing:
+
+Known title: paper_search -> paper_detail -> paper_relation
+Conditional filtering: paper_search_pro -> paper_detail
+Natural language Q&A: paper_qa_search (fall back to paper_search_pro if no results)
+Journal annual analysis: venue_search -> venue_paper_relation -> paper_detail_by_condition
+
+Key paper_qa_search rules:
+
+query and topic_high/topic_middle/topic_low are mutually exclusive; do not pass both.
+query mode: pass a natural language string. topic_* mode: expand synonyms/English variants first.
+Supports sci_flag, force_citation_sort, force_year_sort, author_id, org_id, venue_ids filters.
+
+Free-tier screening fields available:
+
+paper_search: venue_name, first_author, n_citation_bucket, year
+paper_info: abstract_slice, year, venue_id, author_count
+person_search: interests, n_citation, org/org_id
+organization_search: aliases
+venue_search: aliases, venue_type
+patent_search: inventor_name, app_year, pub_year
+patent_info: app_year, pub_year
+Handling Out-of-Workflow Requests
+
+When the user's request falls outside the 5 workflows:
+
+Read references/api-catalog.md to confirm available APIs, parameters, and response fields.
+Design the shortest viable call chain: locate ID → supplement details → expand relationships.
+Do not give up because "no existing workflow fits"; actively compose APIs based on api-catalog.
+5 Combined Workflows
+Workflow 1: Scholar Profile (~¥6.00)
+
+Use Case: Complete academic profile — bio, research interests, papers, patents, projects. Cost note: Full execution exceeds the ¥5 threshold → must ask for user confirmation before proceeding (Rule 7). Show the planned steps and cost. Confirm which sub-modules are needed; skip patents/projects if not requested.
+
+Call Chain:
+
+Scholar search (name → person_id)
+    ↓
+Parallel calls (pick as needed):
+  ├── Scholar details (bio/education/honors)         ¥1.00
+  ├── Scholar portrait (interests/work history)      ¥0.50
+  ├── Scholar papers (paper list)                    ¥1.50
+  ├── Scholar patents (patent list)                  ¥1.50
+  └── Scholar projects (funding info)                ¥1.50
+
+
+Fallback: if paper_search yields no results in sub-steps, fall back to paper_search_pro.
+
+Workflow 2: Paper Deep Dive (~¥0.12)
+
+Use Case: Full paper information and citation chain from a title or keyword.
+
+Call Chain:
+
+Paper search / Paper search pro (title/keyword → paper_id)
+    ↓
+Paper details (abstract/authors/DOI/journal/year/keywords)  ¥0.01
+    ↓
+Paper citations (cited papers → cited_ids)                  ¥0.10
+    ↓
+(Optional) Batch paper_info for cited papers                Free
+
+
+Fallback: if paper_search yields no results, fall back to paper_search_pro.
+
+Workflow 3: Org Analysis (~¥0.81)
+
+Use Case: Institution scholar size, paper output, patent count — for competitive research or partnership evaluation.
+
+Call Chain:
+
+Org disambiguation pro (raw string → org_id)  ¥0.05
+    ↓
+Parallel calls:
+  ├── Org details (description/type)             ¥0.01
+  ├── Org scholars (scholar list, 10/call)       ¥0.50
+  ├── Org papers (paper list, 10/call)           ¥0.10
+  └── Org patents (patent IDs, up to 10,000)     ¥0.10
+
+
+If disambiguation pro returns no ID, fall back to org_search (free).
+
+Workflow 4: Venue Papers (~¥0.10 - ¥0.30)
+
+Use Case: Track journal papers by year; useful for submission research or trend analysis.
+
+Call Chain:
+
+Venue search (name → venue_id)                          Free
+    ↓
+(Optional) Venue details (ISSN/type/abbreviation)       ¥0.20
+    ↓
+Venue papers (venue_id + year → paper_id list)          ¥0.10
+    ↓
+(Optional) Batch paper detail query
+
+Workflow 5: Patent Analysis (~¥0.02)
+
+Use Case: Search patents in a technology domain, or retrieve a scholar's/institution's patent portfolio.
+
+Call Chain (standalone search):
+
+Patent search (query → patent_id)        Free
+    ↓
+Patent info / Patent details             Free / ¥0.01
+
+
+Call Chain (via scholar/institution):
+
+Scholar search → Scholar patents (patent_id list)
+Org disambiguation → Org patents (patent_id list)
+    ↓
+Patent info / Patent details
+
+Individual API Quick Reference
+
+Full parameter docs: read references/api-catalog.md
+
+#	Title	Method	Price	API Path (Base: datacenter.aminer.cn/gateway/open_platform)
+1	Paper QA Search	POST	¥0.05	/api/paper/qa/search
+2	Scholar Search	POST	Free	/api/person/search
+3	Paper Search	GET	Free	/api/paper/search
+4	Paper Search Pro	GET	¥0.01	/api/paper/search/pro
+5	Patent Search	POST	Free	/api/patent/search
+6	Org Search	POST	Free	/api/organization/search
+7	Venue Search	POST	Free	/api/venue/search
+8	Scholar Details	GET	¥1.00	/api/person/detail
+9	Scholar Projects	GET	¥1.50	/api/project/person/v3/open
+10	Scholar Papers	GET	¥1.50	/api/person/paper/relation
+11	Scholar Patents	GET	¥1.50	/api/person/patent/relation
+12	Scholar Portrait	GET	¥0.50	/api/person/figure
+13	Paper Info	POST	Free	/api/paper/info
+14	Paper Details	GET	¥0.01	/api/paper/detail
+15	Paper Citations	GET	¥0.10	/api/paper/relation
+16	Patent Info	GET	Free	/api/patent/info
+17	Patent Details	GET	¥0.01	/api/patent/detail
+18	Org Details	POST	¥0.01	/api/organization/detail
+19	Org Patents	GET	¥0.10	/api/organization/patent/relation
+20	Org Scholars	GET	¥0.50	/api/organization/person/relation
+21	Org Papers	GET	¥0.10	/api/organization/paper/relation
+22	Venue Details	POST	¥0.20	/api/venue/detail
+23	Venue Papers	POST	¥0.10	/api/venue/paper/relation
+24	Org Disambiguation	POST	¥0.01	/api/organization/na
+25	Org Disambiguation Pro	POST	¥0.05	/api/organization/na/pro
+26	Paper Batch Query	GET	¥0.10	/api/paper/list/citation/by/keywords
+27	Paper Details by Year+Venue	GET	¥0.20	/api/paper/platform/allpubs/more/detail/by/ts/org/venue
+References
+Full API parameter documentation: read references/api-catalog.md
+Optional Python client: scripts/aminer_client.py
+Test cases: evals/evals.json
+Official documentation: https://open.aminer.cn/open/docs
+Console: https://open.aminer.cn/open/board?tab=control
+Weekly Installs
+60
+Repository
+canxiangcc/amin…en-skill
+GitHub Stars
+15
+First Seen
+Mar 5, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

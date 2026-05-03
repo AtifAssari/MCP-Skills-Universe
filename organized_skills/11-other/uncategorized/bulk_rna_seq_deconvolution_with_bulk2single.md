@@ -1,0 +1,77 @@
+---
+rating: ⭐⭐⭐
+title: bulk-rna-seq-deconvolution-with-bulk2single
+url: https://skills.sh/starlitnightly/omicverse/bulk-rna-seq-deconvolution-with-bulk2single
+---
+
+# bulk-rna-seq-deconvolution-with-bulk2single
+
+skills/starlitnightly/omicverse/bulk-rna-seq-deconvolution-with-bulk2single
+bulk-rna-seq-deconvolution-with-bulk2single
+Installation
+$ npx skills add https://github.com/starlitnightly/omicverse --skill bulk-rna-seq-deconvolution-with-bulk2single
+SKILL.md
+Bulk RNA-seq deconvolution with Bulk2Single
+Overview
+
+Use this skill when a user wants to reconstruct single-cell profiles from bulk RNA-seq together with a matched reference scRNA-seq atlas. It follows t_bulk2single.ipynb, which demonstrates how to harmonise PDAC bulk replicates, train the beta-VAE generator, and benchmark the output cells against dentate gyrus scRNA-seq.
+
+Instructions
+Load libraries and data
+Import omicverse as ov, scanpy as sc, scvelo as scv, anndata, and matplotlib.pyplot as plt, then call ov.plot_set() to match omicverse styling.
+Read the bulk counts table with ov.read(...)/ov.utils.read(...) and harmonise gene identifiers via ov.bulk.Matrix_ID_mapping(<df>, 'genesets/pair_GRCm39.tsv').
+Load the reference scRNA-seq AnnData (e.g., scv.datasets.dentategyrus()) and confirm the cluster labels (stored in adata.obs['clusters']).
+Initialise the Bulk2Single model
+Instantiate ov.bulk2single.Bulk2Single(bulk_data=bulk_df, single_data=adata, celltype_key='clusters', bulk_group=['dg_d_1', 'dg_d_2', 'dg_d_3'], top_marker_num=200, ratio_num=1, gpu=0).
+Explain GPU selection (gpu=-1 forces CPU) and how bulk_group names align with column IDs in the bulk matrix.
+Estimate cell fractions
+Call model.predicted_fraction() to run the integrated TAPE estimator, then plot stacked bar charts per sample to validate proportions.
+Encourage saving the fraction table for downstream reporting (df.to_csv(...)).
+Preprocess for beta-VAE
+Execute model.bulk_preprocess_lazy(), model.single_preprocess_lazy(), and model.prepare_input() to produce matched feature spaces.
+Clarify that the lazy preprocessing expects raw counts; skip if the user has already log-normalised data and instead provide aligned matrices manually.
+Train or load the beta-VAE
+Train with model.train(batch_size=512, learning_rate=1e-4, hidden_size=256, epoch_num=3500, vae_save_dir='...', vae_save_name='dg_vae', generate_save_dir='...', generate_save_name='dg').
+Mention early stopping via patience and how to resume by reloading weights with model.load('.../dg_vae.pth').
+Use model.plot_loss() to monitor convergence.
+Generate and filter synthetic cells
+Produce an AnnData using model.generate() and reduce noise through model.filtered(generate_adata, leiden_size=25).
+Store the filtered AnnData (.write_h5ad) for reuse, noting it contains PCA embeddings in obsm['X_pca'].
+Benchmark against the reference atlas
+Plot cell-type compositions with ov.bulk2single.bulk2single_plot_cellprop(...) for both generated and reference data.
+Assess correlation using ov.bulk2single.bulk2single_plot_correlation(single_data, generate_adata, celltype_key='clusters').
+Embed with generate_adata.obsm['X_mde'] = ov.pl.mde(generate_adata.obsm['X_pca']) and visualise via ov.pl.embedding(..., color=['clusters'], palette=ov.pl.sc_color()).
+Defensive validation
+# Before Bulk2Single: verify gene name overlap between bulk and reference
+shared_genes = set(bulk_df.index) & set(adata.var_names)
+assert len(shared_genes) > 100, f"Only {len(shared_genes)} shared genes — check gene ID format (Ensembl vs symbol)"
+# Verify bulk_group column names match
+for g in bulk_group:
+    assert g in bulk_df.columns, f"Bulk group '{g}' not found in bulk data columns"
+# Verify cell type key exists
+assert celltype_key in adata.obs.columns, f"Cell type column '{celltype_key}' not found in reference AnnData"
+
+Troubleshooting tips
+If marker selection fails, increase top_marker_num or provide a curated marker list.
+Alignment errors typically stem from mismatched bulk_group names—double-check column IDs in the bulk matrix.
+Training on CPU can take several hours; advise switching gpu to an available CUDA device for speed.
+Examples
+"Estimate cell fractions for PDAC bulk replicates and generate synthetic scRNA-seq using Bulk2Single."
+"Load a pre-trained Bulk2Single model, regenerate cells, and compare cluster proportions to the dentate gyrus atlas."
+"Plot correlation heatmaps between generated cells and reference clusters after filtering noisy synthetic cells."
+References
+Tutorial notebook: t_bulk2single.ipynb
+Example data and weights: omicverse_guide/docs/Tutorials-bulk2single/data/
+Quick copy/paste commands: reference.md
+Weekly Installs
+31
+Repository
+starlitnightly/omicverse
+GitHub Stars
+968
+First Seen
+Jan 26, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

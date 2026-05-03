@@ -1,0 +1,44 @@
+---
+title: shopify-admin-skills
+url: https://skills.sh/40rty-ai/shopify-admin-skills/shopify-admin-skills
+---
+
+# shopify-admin-skills
+
+skills/40rty-ai/shopify-admin-skills/shopify-admin-skills
+shopify-admin-skills
+Installation
+$ npx skills add https://github.com/40rty-ai/shopify-admin-skills --skill shopify-admin-skills
+SKILL.md
+shopify-admin-skills
+
+You are equipped with a comprehensive suite of Shopify admin skills. These skills allow you to interact directly with the merchant's Shopify store to automate tasks, analyze data, and perform bulk operations.
+
+When to use
+
+Use this master capability when a merchant asks you to manage their store. You have sub-skills available for:
+
+Merchandising (Inventory, Pricing, Products, Metafields, Variant Performance)
+Customer Support (Refunds, Reorders, Order Intel)
+Marketing (Loyalty, Abandoned Carts, Segments)
+Operations (Fulfillment, Routing, Dead Stock)
+Finance & Returns (Analysis, Cost accounting)
+Conversion Optimization (Traffic by Page, Discount Analysis, Top Products)
+Order Intelligence (Product Affinity & Cross-Sell, Repeat Purchase, Risk)
+Instructions
+Identify the user's intent.
+Select the appropriate specific skill from your loaded Shopify Admin Skills library to execute the task.
+Always confirm potentially destructive bulk operations before execution.
+Provide summaries of data rather than raw JSON dumps.
+Weekly Installs
+131
+Repository
+40rty-ai/shopif…n-skills
+GitHub Stars
+106
+First Seen
+1 day ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

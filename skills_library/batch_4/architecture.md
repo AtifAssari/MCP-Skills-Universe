@@ -1,0 +1,69 @@
+---
+title: architecture
+url: https://skills.sh/davila7/claude-code-templates/architecture
+---
+
+# architecture
+
+skills/davila7/claude-code-templates/architecture
+architecture
+Installation
+$ npx skills add https://github.com/davila7/claude-code-templates --skill architecture
+Summary
+
+Framework for analyzing requirements, evaluating trade-offs, and documenting architectural decisions.
+
+Guides context discovery through structured questions and project classification before design begins
+Provides ADR templates and trade-off analysis framework for capturing decision rationale and alternatives
+Includes decision trees and anti-pattern guidance for selecting appropriate architectural patterns
+Emphasizes simplicity-first approach: add complexity only when proven necessary, with validation checklist to confirm requirements understanding and team capability alignment
+SKILL.md
+Architecture Decision Framework
+
+"Requirements drive architecture. Trade-offs inform decisions. ADRs capture rationale."
+
+🎯 Selective Reading Rule
+
+Read ONLY files relevant to the request! Check the content map, find what you need.
+
+File	Description	When to Read
+context-discovery.md	Questions to ask, project classification	Starting architecture design
+trade-off-analysis.md	ADR templates, trade-off framework	Documenting decisions
+pattern-selection.md	Decision trees, anti-patterns	Choosing patterns
+examples.md	MVP, SaaS, Enterprise examples	Reference implementations
+patterns-reference.md	Quick lookup for patterns	Pattern comparison
+🔗 Related Skills
+Skill	Use For
+@[skills/database-design]	Database schema design
+@[skills/api-patterns]	API design patterns
+@[skills/deployment-procedures]	Deployment architecture
+Core Principle
+
+"Simplicity is the ultimate sophistication."
+
+Start simple
+Add complexity ONLY when proven necessary
+You can always add patterns later
+Removing complexity is MUCH harder than adding it
+Validation Checklist
+
+Before finalizing architecture:
+
+ Requirements clearly understood
+ Constraints identified
+ Each decision has trade-off analysis
+ Simpler alternatives considered
+ ADRs written for significant decisions
+ Team expertise matches chosen patterns
+Weekly Installs
+426
+Repository
+davila7/claude-…emplates
+GitHub Stars
+26.6K
+First Seen
+Jan 25, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

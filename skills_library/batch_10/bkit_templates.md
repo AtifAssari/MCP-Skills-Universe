@@ -1,0 +1,164 @@
+---
+title: bkit-templates
+url: https://skills.sh/popup-studio-ai/bkit-claude-code/bkit-templates
+---
+
+# bkit-templates
+
+skills/popup-studio-ai/bkit-claude-code/bkit-templates
+bkit-templates
+Installation
+$ npx skills add https://github.com/popup-studio-ai/bkit-claude-code --skill bkit-templates
+SKILL.md
+bkit Document Templates
+
+Use these templates when generating PDCA documents.
+
+Available Templates
+Template	Path	Purpose
+Plan	${CLAUDE_PLUGIN_ROOT}/templates/plan.template.md	Feature planning
+Design	${CLAUDE_PLUGIN_ROOT}/templates/design.template.md	Technical design
+Analysis	${CLAUDE_PLUGIN_ROOT}/templates/analysis.template.md	Gap analysis
+Report	${CLAUDE_PLUGIN_ROOT}/templates/report.template.md	Completion report
+Index	${CLAUDE_PLUGIN_ROOT}/templates/_INDEX.template.md	Document index
+CLAUDE	${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.template.md	CLAUDE.md template
+Template Usage
+Plan Template
+
+For Plan phase - feature planning before design.
+
+Key sections:
+
+Overview & Purpose
+Scope (In/Out)
+Requirements (Functional/Non-Functional)
+Success Criteria
+Risks & Mitigation
+Design Template
+
+For Do phase - technical design before implementation.
+
+Key sections:
+
+Architecture (diagrams, data flow)
+Data Model (entities, relationships)
+API Specification (endpoints, request/response)
+UI/UX Design (layouts, components)
+Error Handling
+Security Considerations
+Test Plan
+Implementation Guide
+Analysis Template
+
+For Check phase - gap analysis between design and implementation.
+
+Key sections:
+
+Design vs Implementation comparison
+Missing features
+Inconsistencies
+Quality metrics
+Recommendations
+Report Template
+
+For Act phase - completion report and lessons learned.
+
+Key sections:
+
+Summary of completed work
+Metrics (LOC, test coverage, etc.)
+Issues encountered
+Lessons learned
+Future improvements
+Document Output Paths
+docs/
+├── 01-plan/
+│   └── features/
+│       └── {feature}.plan.md
+├── 02-design/
+│   └── features/
+│       └── {feature}.design.md
+├── 03-analysis/
+│   └── features/
+│       └── {feature}.analysis.md
+└── 04-report/
+    └── features/
+        └── {feature}.report.md
+
+Variable Substitution
+
+Templates use {variable} syntax:
+
+{feature}: Feature name
+{date}: Creation date (YYYY-MM-DD)
+{author}: Document author
+Pipeline Templates
+
+Additional templates for Development Pipeline phases:
+
+${CLAUDE_PLUGIN_ROOT}/templates/pipeline/ directory
+Document Standards
+File Naming Rules
+{number}_{english_name}.md      # 01_system_architecture.md
+{number}-{english_name}.md      # 01-system-architecture.md
+{feature}.{type}.md             # login.design.md
+
+Common Header
+
+All documents should include:
+
+# {Document Title}
+
+> **Summary**: {One-line description}
+>
+> **Author**: {Name}
+> **Created**: {YYYY-MM-DD}
+> **Last Modified**: {YYYY-MM-DD}
+> **Status**: {Draft | Review | Approved | Deprecated}
+
+---
+
+Version Control
+
+Track changes within documents:
+
+## Version History
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | 2024-12-01 | Initial draft | Kay |
+| 1.1 | 2024-12-05 | Added API spec | Kay |
+
+Cross-References
+
+Link related documents:
+
+## Related Documents
+- Plan: [login.plan.md](../01-plan/features/login.plan.md)
+- Design: [login.design.md](../02-design/features/login.design.md)
+- Analysis: [login.analysis.md](../03-analysis/features/login.analysis.md)
+
+Status Tracking
+
+Use _INDEX.md in each folder:
+
+Status	Meaning	Claude Behavior
+✅ Approved	Use as reference	Follow as-is
+🔄 In Progress	Being written	Notify of changes
+⏸️ On Hold	Temporarily paused	Request confirmation
+❌ Deprecated	No longer valid	Ignore
+Conflict Resolution
+Code vs Design mismatch: Code is truth, suggest document update
+Multiple versions: Reference only the latest version
+Weekly Installs
+43
+Repository
+popup-studio-ai…ude-code
+GitHub Stars
+523
+First Seen
+Jan 30, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

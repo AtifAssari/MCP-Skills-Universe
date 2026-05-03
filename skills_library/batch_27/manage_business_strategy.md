@@ -1,0 +1,134 @@
+---
+title: manage-business-strategy
+url: https://skills.sh/thepexcel/agent-skills/manage-business-strategy
+---
+
+# manage-business-strategy
+
+skills/thepexcel/agent-skills/manage-business-strategy
+manage-business-strategy
+Installation
+$ npx skills add https://github.com/thepexcel/agent-skills --skill manage-business-strategy
+SKILL.md
+Business Management Frameworks
+
+Strategic toolkit for business analysis, planning, and execution.
+
+Quick Start
+Identify need → What problem are you solving?
+Select category → Use decision tree below
+Apply framework → Follow step-by-step instructions
+Document output → Structured insights
+Framework Selection (Decision Tree)
+What do you need?
+│
+├─ Analyze situation
+│  ├─ Internal factors → SWOT (strengths/weaknesses)
+│  ├─ External macro → PESTEL
+│  ├─ Industry competition → Porter's 5 Forces
+│  └─ Comprehensive → SWOT + PESTEL + Porter's
+│
+├─ Make a decision
+│  ├─ Compare 2-5 options → Decision Matrix
+│  ├─ Multiple weighted criteria → Weighted Scoring
+│  └─ vs baseline/current → Pugh Matrix
+│
+├─ Set goals
+│  ├─ Team/Company level → OKR
+│  ├─ Individual/Project → SMART Goals
+│  └─ Multi-perspective → Balanced Scorecard
+│
+├─ Plan growth
+│  ├─ Market/Product expansion → Ansoff Matrix
+│  ├─ Portfolio prioritization → BCG Matrix
+│  ├─ Create new market → Blue Ocean Strategy
+│  └─ Innovation horizons → McKinsey 3 Horizons
+│
+├─ Analyze competition
+│  ├─ Current vs desired → Gap Analysis
+│  ├─ Competitor positions → Strategic Group Mapping
+│  └─ Customer-Company-Competitor → 3C Analysis
+│
+├─ Change organization
+│  ├─ Simple/Fast change → Lewin (3 stages)
+│  ├─ Complex/Long-term → Kotter (8 steps)
+│  └─ People-focused → ADKAR
+│
+├─ Understand customers
+│  ├─ Who they are → Customer Persona
+│  ├─ Their experience → Customer Journey Map
+│  ├─ Market targeting → STP (Segmentation-Targeting-Positioning)
+│  └─ Marketing mix → 4Ps
+│
+├─ Manage risk/stakeholders
+│  ├─ Risk prioritization → Risk Matrix
+│  └─ Stakeholder engagement → Power-Interest Grid
+│
+├─ Design business model → Use `business-model` skill
+│
+└─ Solve problems → Use `problem-solving` skill
+
+Category Reference
+Category	Frameworks	Reference
+Strategic Analysis	SWOT, PESTEL, Porter's 5 Forces, VRIO	strategic-analysis.md
+Decision Making	Decision Matrix, Weighted Scoring, Pugh Matrix	decision-making.md
+Goal Setting	OKR, SMART Goals, Balanced Scorecard	goal-setting.md
+Growth Strategy	Ansoff, BCG, Blue Ocean, 3 Horizons	growth-strategy.md
+Competitive	Gap Analysis, 3C, Strategic Groups	competitive.md
+Organizational	McKinsey 7S, Change Management	organizational.md
+Customer	Persona, Journey, STP, 4Ps	customer.md
+Risk & Stakeholder	Risk Matrix, Power-Interest Grid	risk-stakeholder.md
+Financial	ROI, NPV, Break-Even, IRR	financial.md
+SME Quick Picks
+
+For small-medium enterprises, focus on these high-impact, low-complexity frameworks:
+
+Situation	Use This
+Annual planning	SWOT + OKR
+New product/service	Lean Canvas (→ design-business-model skill)
+Choosing between options	Decision Matrix
+Understanding customers	Customer Persona
+Setting team goals	OKR (3 objectives max)
+Competitive positioning	Gap Analysis
+Output Formats
+
+When applying frameworks, structure outputs as:
+
+## [Framework Name] Analysis
+
+**Date:** YYYY-MM-DD
+**Context:** [Brief situation description]
+
+### Findings
+[Framework-specific structure]
+
+### Key Insights
+1. [Insight 1]
+2. [Insight 2]
+3. [Insight 3]
+
+### Recommended Actions
+- [ ] Action 1
+- [ ] Action 2
+- [ ] Action 3
+
+### Next Steps
+[What to do with this analysis]
+
+Related Skills
+/design-business-model — Business model as strategy foundation
+/boost-intel — Strategic thinking and decision frameworks
+/deep-research — Research industry trends and benchmarks
+/problem-solving — Solve strategic challenges systematically
+Weekly Installs
+77
+Repository
+thepexcel/agent-skills
+GitHub Stars
+21
+First Seen
+Jan 23, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

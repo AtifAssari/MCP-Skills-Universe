@@ -1,0 +1,59 @@
+---
+title: webhooks
+url: https://skills.sh/alsk1992/cloddsbot/webhooks
+---
+
+# webhooks
+
+skills/alsk1992/cloddsbot/webhooks
+webhooks
+Installation
+$ npx skills add https://github.com/alsk1992/cloddsbot --skill webhooks
+SKILL.md
+Webhooks
+
+Register, manage, and inspect incoming webhook endpoints with optional HMAC-SHA256 signature verification.
+
+Commands
+/webhooks list                              - List all registered webhooks
+/webhooks register <id> <path>              - Register a webhook endpoint
+/webhooks register <id> <path> --secret <key> - Register with HMAC secret
+/webhooks unregister <id>                   - Remove a webhook
+/webhooks enable <id>                       - Enable a webhook
+/webhooks disable <id>                      - Disable a webhook
+/webhooks get <id>                          - View webhook details
+
+Examples
+/webhooks list
+/webhooks register trade-signals /hooks/trades
+/webhooks register alerts /hooks/alerts --secret mysecretkey
+/webhooks get trade-signals
+/webhooks disable trade-signals
+/webhooks enable trade-signals
+/webhooks unregister trade-signals
+
+Webhook Details
+
+The /webhooks get <id> command shows:
+
+Path the webhook listens on
+Description (if set)
+Enabled/disabled status
+Whether an HMAC secret is configured
+Total trigger count
+Security
+
+Webhooks support HMAC-SHA256 payload verification. Pass --secret <key> when registering to enable signature validation on incoming requests.
+
+Weekly Installs
+9
+Repository
+alsk1992/cloddsbot
+GitHub Stars
+194
+First Seen
+Feb 20, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

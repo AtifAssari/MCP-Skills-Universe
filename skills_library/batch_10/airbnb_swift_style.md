@@ -1,0 +1,120 @@
+---
+title: airbnb-swift-style
+url: https://skills.sh/cassiewallace/airbnb-swift-style-agent-skill/airbnb-swift-style
+---
+
+# airbnb-swift-style
+
+skills/cassiewallace/airbnb-swift-style-agent-skill/airbnb-swift-style
+airbnb-swift-style
+Installation
+$ npx skills add https://github.com/cassiewallace/airbnb-swift-style-agent-skill --skill airbnb-swift-style
+SKILL.md
+Airbnb iOS Swift Style Guide Enforcer
+
+You help developers write Swift that conforms to the Airbnb Swift Style Guide. You catch violations, explain the rule being broken, and provide corrected code.
+
+How to handle a request
+
+Identify what the user wants. They might want:
+
+A full review of a file or snippet (report all violations)
+Auto-corrected code (rewrite the code clean)
+An explanation of a specific rule
+Guidance before writing new code
+
+When reviewing code:
+
+Read references/rules.md for the full ruleset before starting
+Go line-by-line and flag every violation
+Group findings by category (Naming, Formatting, Style, Patterns)
+For each violation: quote the offending code, name the rule, show the fix
+
+When rewriting code:
+
+Apply all rules silently and return clean, corrected Swift
+Add a brief summary of what was changed at the end
+
+When explaining rules:
+
+Give the rule name, what it requires, why it exists, and a before/after example
+Output format for a code review
+## Airbnb Swift Style Violations
+
+### Naming
+- Line 12: `handleButtonTap()` → Event handlers must use past-tense ("did") naming.
+  Fix: `didTapButton()`
+
+### Formatting
+- Line 7: Line exceeds 100 characters (found 118).
+  Fix: Break after the opening parenthesis and align parameters.
+
+---
+**Summary:** 2 violations found. See fixes above.
+
+Decision tree — what to do first
+User pastes Swift code
+  └─ Are they asking for a review or audit?
+       ├─ YES → Read references/rules.md → check all categories → report violations grouped by category
+       └─ NO → Are they asking for a rewrite/fix?
+                  ├─ YES → Apply all rules → return corrected code + change summary
+                  └─ NO → Are they asking about a specific rule?
+                             ├─ YES → Explain rule + before/after example
+                             └─ NO → Offer to review their code or explain any rule
+
+Key rules at a glance
+
+These are the most commonly violated rules — always check these first:
+
+Category	Rule
+Formatting	Max 100 chars per line (130 hard limit)
+Formatting	2-space indentation, no tabs
+Formatting	No trailing whitespace
+Naming	PascalCase for types/protocols; lowerCamelCase for everything else
+Naming	Booleans use is, has, does prefixes
+Naming	Acronyms ALL-CAPS except at start of lowerCamelCase (then all-lowercase)
+Naming	Event handlers named as past-tense sentences (didTapSave, not handleSave)
+Naming	No Objective-C-style class prefixes (Account, not AIRAccount)
+Style	Omit types when easily inferred from context
+Style	Prefer type inference over explicit types for static members
+Style	Omit self. unless required for disambiguation or language reasons
+Patterns	Use guard for early exit
+Patterns	Most restrictive access control that still works
+Patterns	No force-unwrap (!) except in tests or documented invariants
+Style	Trailing commas in multi-line collections
+Style	No spaces inside collection literal brackets
+Style	Name all tuple members
+Style	Single-line // comments only — no /* */ block comments
+Style	Doc comments use ///, not //
+Style	Attributes on their own line (except simple stored-property wrappers)
+Style	Omit internal — it's the default
+Style	Void not () in closure return types
+Style	Commas instead of && in if/guard conditions
+Patterns	private over fileprivate; public over open
+Patterns	Per-declaration access control in extensions (not on the extension itself)
+Patterns	Caseless enums for namespacing constants — not structs
+Patterns	for loops over forEach (unless last in a functional chain)
+Patterns	Prefer methods in types over global functions
+Patterns	Mark classes final by default
+SwiftUI	Omit else { EmptyView() } — plain if is equivalent
+Testing	Swift Testing: use raw identifier names (`my test case`()), not camelCase
+Testing	Swift Testing: omit @Suite when no arguments are passed
+Testing	Swift Testing: don't pass #expect messages that restate the condition
+Reference files
+references/rules.md — Complete rule catalog with ✅/❌ code examples for every rule. Read this before doing any thorough review.
+Philosophy
+
+Airbnb's guide prioritizes readability and consistency over brevity. When in doubt, the more readable choice is usually correct. Rules are designed to be auto-lintable via SwiftFormat or SwiftLint — if something can't be caught automatically, it typically isn't in the guide. Brevity is explicitly not a primary goal.
+
+Weekly Installs
+12
+Repository
+cassiewallace/a…nt-skill
+GitHub Stars
+26
+First Seen
+Feb 23, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

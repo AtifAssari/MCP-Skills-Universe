@@ -1,0 +1,199 @@
+---
+title: yy-frontend-vue2-code-optimization
+url: https://skills.sh/bulls-cows/skills/yy-frontend-vue2-code-optimization
+---
+
+# yy-frontend-vue2-code-optimization
+
+skills/bulls-cows/skills/yy-frontend-vue2-code-optimization
+yy-frontend-vue2-code-optimization
+Installation
+$ npx skills add https://github.com/bulls-cows/skills --skill yy-frontend-vue2-code-optimization
+SKILL.md
+yy-frontend-vue2-code-optimization
+When to use
+用户未指定文件时，默认对 git 改动的 .vue、.js、.css、.scss、.less 文件执行优化
+用户明确指定文件或文件夹时，对指定范围内的相关文件执行优化
+用户提供 .vue、.js 或 .css 文件内容，要求优化代码可读性与可维护性
+用户明确要求优化前端代码（Vue2 组件、JS 或 CSS）
+Code Review 时需要优化代码结构
+支持优化的文件类型
+扩展名	优化内容
+.vue	Vue2 单文件组件完整优化（模板、脚本、样式）
+.js	JavaScript 文件优化（代码风格、导入排序、命名规范、注释）
+.css	CSS 样式优化（BEM 命名、格式、注释）
+.scss	SCSS 样式优化（BEM 命名、格式、注释）
+.less	Less 样式优化（BEM 命名、格式、注释）
+Don't use when
+用户要求生成新组件（不需要优化）时
+用户要求修改组件业务逻辑时
+用户要求生成提交信息等非优化类任务时
+⛔ 绝对禁止项 / 推荐项 / 注意事项
+
+重要：以下规则必须严格遵守，违反任何禁止项视为优化不通过。
+
+🔴 绝对禁止项
+数据解构限制：禁止连续解构数据，如 ...data.data
+组件数据修改：禁止在父组件中直接修改子组件的数据
+数据类型修改：禁止多次修改 data 的某些属性，后端给什么值用什么值，可以额外新增属性，但不允许修改原始数据的数据类型
+禁止修改 props：不允许直接修改组件的 props
+🟢 推荐项
+函数 try/catch：推荐使用 try/catch 包裹函数内容，catch 中使用 console.warn 打印错误
+异步写法：尽可能使用 async/await，少用 .then() 链式写法
+🟡 不推荐项
+多层 try/catch 嵌套：不推荐多个 try/catch 嵌套使用，异步操作尽量扁平化
+使用 mixins：不推荐使用 mixins，避免隐式依赖、命名冲突、来源模糊
+注意事项
+v-html：可使用，但必须防范 XSS 风险
+props 解构：可以解构（需注意响应式丢失）
+未使用变量：需自行清理
+等于运算符：使用 == 而不是 === 不属于问题，允许保留原有写法无需修改
+核心原则
+不修改业务逻辑，只优化代码结构、命名、注释
+保持原有功能，不删除或改变组件行为
+注释简洁，不超过一行（JSDoc 不超过 5 行），使用中文描述
+确保 Vue 2 语法正确（v-model、生命周期等）
+关键约束
+脚本结构固定顺序：name → components → props → data → computed → watch → methods → 生命周期
+代码风格：2 空格缩进、单引号、必须分号、120 字符行宽
+网络请求必须 async/await + try/catch/finally
+统一响应处理：const { code, data, msg } = await apiXXX(); if (code === 0) { 成功 } else { this.$message.error(msg) }
+样式使用 BEM 规范 + scoped
+computed 规范：必须使用 try/catch 包裹，命名使用 is / has / visible 等有意义名称
+Vue 元素特性顺序：is → v-for → v-if/v-else-if/v-else → v-show → id → props/attrs → v-on → v-html/v-text
+组件传参要求：命名必须 camelCase，必须明确参数类型，必须添加参数含义注释
+方法内部逻辑顺序：初始化方法 → 网络请求 → 事件处理 → 特殊计算
+emit 事件顺序：this.$emit('input', 数据) → this.$emit('其它事件', 数据) → this.$emit('change/click', 数据)
+一个方法只做一件事，超过 50 行考虑拆分
+工作流程
+阶段一：获取优化目标文件
+
+用户明确指定了文件或文件夹：
+
+如果指定的是文件夹，递归查找该文件夹下所有支持的文件（.vue、.js、.css、.scss、.less）
+如果指定的是单个文件，直接使用该文件
+
+用户未指定文件（默认行为）：
+
+使用 git 命令获取所有改动的文件：
+
+git diff --name-only HEAD
+
+
+以及暂存的文件：
+
+git diff --cached --name-only
+
+
+合并去重后，过滤出支持的文件类型（.vue、.js、.css、.scss、.less）
+
+如果过滤后没有符合条件的文件，告诉用户："当前没有需要优化的改动文件（支持 .vue、.js、.css、.scss、.less）。你可以指定文件或文件夹让我优化。" 并终止执行
+
+阶段二：逐文件优化
+
+根据文件类型，按以下步骤执行优化：
+
+.vue 文件优化
+读取文件完整内容
+按 references 目录中的规范，检查并优化以下方面：
+脚本结构顺序：name → components → props → data → computed → watch → methods → 生命周期
+命名规范：API 函数、事件函数、常量、组件文件名
+代码风格：2 空格缩进、单引号、必须分号、120 字符行宽、导入顺序
+Vue 元素特性顺序：is → v-for → v-if → v-show → id → props/attrs → v-on → v-html/v-text
+网络请求规范：async/await + try/catch/finally，统一响应处理模式
+computed 规范：try/catch 包裹，命名使用 is / has / visible 等
+组件传参要求：命名 camelCase、明确类型、添加含义注释
+emit 事件规范：使用命名白名单，遵循 input → 其它 → change/click 顺序
+方法内部逻辑顺序：初始化 → 网络请求 → 事件处理 → 特殊计算
+样式规范：BEM 命名 + scoped
+注释规范：简洁中文注释，JSDoc 不超过 5 行
+直接输出优化后的完整 Vue SFC 代码
+.js 文件优化
+读取文件完整内容
+按 references 目录中的规范，检查并优化以下方面：
+代码风格：2 空格缩进、单引号、必须分号、120 字符行宽
+导入顺序：node_modules (第三方库) → apis → utils → 相对 utils → store → constants → 相对 constants → components → 相对组件。组间空一行，同一组内按字母顺序排列
+命名规范：API 函数、事件函数、常量、变量名
+函数规范：async/await + try/catch 网络请求
+注释规范：简洁中文注释，JSDoc 不超过 5 行
+直接输出优化后的完整 JavaScript 代码
+.css/.scss/.less 文件优化
+读取文件完整内容
+按 references 目录中的规范，检查并优化以下方面：
+BEM 命名规范：块__元素--修饰符，全小写、横线连接
+代码格式：2 空格缩进、统一换行
+注释规范：模块分组 /* 模块名称 */、子模块 /* 模块 > 子模块 */
+作用域标注：全局样式需标注 /* 全局 */
+直接输出优化后的完整样式代码
+阶段三：输出优化结果
+
+按照以下格式输出优化结果：
+
+## 优化结果
+
+### 优化文件数：N
+
+#### [filename]
+
+**优化内容**：
+
+1. [优化项1描述]
+2. [优化项2描述]
+...
+
+[优化后的完整代码]
+
+开始对话
+
+当用户启动此 skill 时，请按以下方式响应：
+
+用户未指定文件时：
+你好！我是前端代码优化助手 ⚡
+
+我将帮你优化当前所有改动的文件（支持 .vue、.js、.css、.scss、.less）：
+
+1. **Vue 组件**：统一代码结构、规范命名、优化代码风格、规范网络请求、统一样式规范
+2. **JavaScript**：统一导入顺序、规范命名、优化代码风格、添加关键注释
+3. **CSS/样式**：BEM 命名规范、统一格式、添加模块注释
+
+让我先获取改动的文件列表...
+
+用户指定了文件或文件夹时：
+你好！我是前端代码优化助手 ⚡
+
+我将帮你优化指定范围内的文件（支持 .vue、.js、.css、.scss、.less）：
+
+- 目标范围：[用户指定的文件/文件夹]
+
+1. **Vue 组件**：统一代码结构、规范命名、优化代码风格、规范网络请求、统一样式规范
+2. **JavaScript**：统一导入顺序、规范命名、优化代码风格、添加关键注释
+3. **CSS/样式**：BEM 命名规范、统一格式、添加模块注释
+
+让我开始优化...
+
+
+然后按照工作流程逐步执行。
+
+Output contract
+
+解析组件的模板、脚本、样式区块，应用规范后直接输出优化后的完整 Vue SFC 代码。
+
+参考文档
+
+详细规范见 references 目录，优化时按需查阅：
+
+代码风格：基础格式规则、导入顺序、性能优化
+命名规范：目录结构、命名规范、Props 规范、事件命名
+组件开发规范：脚本结构顺序、网络请求、方法规范、页面拆分
+注释规范：模板区、脚本区注释规范，JSDoc 格式
+CSS 与 BEM 样式规范：BEM 命名、样式注释、样式作用域
+Weekly Installs
+10
+Repository
+bulls-cows/skills
+First Seen
+4 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

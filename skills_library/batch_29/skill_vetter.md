@@ -1,0 +1,171 @@
+---
+title: skill-vetter
+url: https://skills.sh/dtyq/magic/skill-vetter
+---
+
+# skill-vetter
+
+skills/dtyq/magic/skill-vetter
+skill-vetter
+Installation
+$ npx skills add https://github.com/dtyq/magic --skill skill-vetter
+SKILL.md
+Skill Vetter
+
+Security-first vetting protocol for AI agent skills. Never install a skill without vetting it first.
+
+When to Use
+Before installing any skill from the platform skill market
+Before installing external skills from skillhub
+Before running skills from GitHub repositories
+When evaluating skills shared by other agents
+Anytime you are asked to install unknown code
+Vetting Protocol
+Step 1: Source Check
+
+Questions to answer:
+
+Where did this skill come from? (platform market / skillhub / GitHub / other)
+Is the author known or reputable?
+How many downloads or stars does it have?
+When was it last updated?
+Are there reviews from other agents?
+Step 2: Preview Install to Temp Dir, Then Read All Files
+
+Do not install to the real skills directory yet. Install to a temp directory first for inspection.
+
+Choose the preview method based on the source:
+
+skillhub source (supports --dir for temp directory):
+
+skillhub --dir /tmp/skillhub-preview/ install <slug>
+
+
+After install, use shell_exec to list and read all files:
+
+# 列出所有文件
+shell_exec(command="find /tmp/skillhub-preview/<skill-name> -type f | sort")
+
+# 逐一读取（对每个文件执行）
+shell_exec(command="cat /tmp/skillhub-preview/<skill-name>/SKILL.md")
+shell_exec(command="cat /tmp/skillhub-preview/<skill-name>/scripts/<file>.py")
+# ... 依次读取所有脚本、配置、引用文件
+
+
+If approved, run the normal install without --dir. Either way, clean up the temp dir:
+
+shell_exec(command="rm -rf /tmp/skillhub-preview/")
+
+
+Platform market / my skill library source (also supports --dir for temp directory):
+
+shell_exec(command="skillhub install-platform-me <code> --dir /tmp/skillhub-preview/")
+# or
+shell_exec(command="skillhub install-platform-market <code> --dir /tmp/skillhub-preview/")
+
+
+After install, use shell_exec to list and read all files:
+
+# 列出所有文件
+shell_exec(command="find /tmp/skillhub-preview/<skill-name> -type f | sort")
+
+# 逐一读取
+shell_exec(command="cat /tmp/skillhub-preview/<skill-name>/SKILL.md")
+shell_exec(command="cat /tmp/skillhub-preview/<skill-name>/scripts/<file>.py")
+# ... 依次读取所有文件
+
+
+If approved, run the normal install without --dir. Either way, clean up the temp dir:
+
+shell_exec(command="rm -rf /tmp/skillhub-preview/")
+
+Step 3: Code Review (MANDATORY)
+
+Read ALL files in the skill. Reject immediately if any of the following are present:
+
+REJECT IMMEDIATELY IF YOU SEE:
+─────────────────────────────────────────
+- curl/wget to unknown URLs
+- Sends data to external servers
+- Requests credentials, tokens, or API keys
+- Reads ~/.ssh, ~/.aws, ~/.config without clear reason
+- Accesses MEMORY.md, USER.md, SOUL.md, IDENTITY.md
+- Uses base64 decode on anything
+- Uses eval() or exec() with external input
+- Modifies system files outside the workspace
+- Installs packages without listing them explicitly
+- Network calls to raw IP addresses instead of domains
+- Obfuscated code (compressed, encoded, or minified)
+- Requests elevated or sudo permissions
+- Accesses browser cookies or sessions
+- Touches credential files
+─────────────────────────────────────────
+
+Step 4: Permission Scope
+
+Evaluate:
+
+What files does it need to read?
+What files does it need to write?
+What commands does it run?
+Does it need network access? To where?
+Is the scope minimal for its stated purpose?
+Step 5: Risk Classification
+Risk Level	Examples	Action
+LOW	Notes, weather, formatting	Basic review, install OK
+MEDIUM	File ops, browser, external APIs	Full code review required
+HIGH	Credentials, trading, system commands	Human approval required
+EXTREME	Security configs, root access	Do NOT install
+Output Format
+
+After vetting, produce this report:
+
+SKILL VETTING REPORT
+=======================================
+Skill: [name]
+Source: [platform market / skillhub / GitHub / other]
+Author: [username]
+Version: [version]
+---------------------------------------
+METRICS:
+- Downloads/Stars: [count]
+- Last Updated: [date]
+- Files Reviewed: [count]
+---------------------------------------
+RED FLAGS: [None / list them]
+
+PERMISSIONS NEEDED:
+- Files: [list or "None"]
+- Network: [list or "None"]
+- Commands: [list or "None"]
+---------------------------------------
+RISK LEVEL: [LOW / MEDIUM / HIGH / EXTREME]
+
+VERDICT: [SAFE TO INSTALL / INSTALL WITH CAUTION / DO NOT INSTALL]
+
+NOTES: [Any observations]
+=======================================
+
+Trust Hierarchy
+Official platform skills (published via platform market) — lower scrutiny (still review)
+High-star repos (1000+) — moderate scrutiny
+Known authors — moderate scrutiny
+New or unknown sources — maximum scrutiny
+Skills requesting credentials — human approval always required
+Principles
+No skill is worth compromising security
+When in doubt, do not install
+Escalate high-risk decisions to the user
+Document what you vet for future reference
+Weekly Installs
+13
+Repository
+dtyq/magic
+GitHub Stars
+4.8K
+First Seen
+Mar 27, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

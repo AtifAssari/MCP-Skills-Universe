@@ -1,0 +1,82 @@
+---
+title: x07-os-run
+url: https://skills.sh/x07lang/x07-website/x07-os-run
+---
+
+# x07-os-run
+
+skills/x07lang/x07-website/x07-os-run
+x07-os-run
+Installation
+$ npx skills add https://github.com/x07lang/x07-website --skill x07-os-run
+SKILL.md
+x07-os-run
+
+Prefer x07 run --profile os / x07 run --profile sandbox for normal execution. x07-os-runner is an internal component behind the x07 facade; its CLI is not part of the supported end-user surface.
+
+Use this skill when you need real OS I/O (fs/net/process/time) via run-os or policy-enforced execution via run-os-sandboxed.
+
+Canonical commands (recommended: x07 run)
+
+Run the current project (unsandboxed):
+
+x07 run
+x07 run --profile os
+
+Run a project explicitly (unsandboxed):
+
+x07 run --project x07.json --profile os
+
+Run sandboxed (requires an explicit policy):
+
+x07 run --project x07.json --profile sandbox --policy run-os-policy.json
+
+If your program expects CLI args via argv_v1, pass them after -- and x07 run will encode them into input bytes:
+
+x07 run --profile os -- tool --help
+
+Generate a schema-valid base policy:
+
+x07 policy init --template cli
+x07 policy init --template http-client
+x07 policy init --template web-service
+x07 policy init --template fs-tool
+x07 policy init --template sqlite-app
+x07 policy init --template postgres-client
+x07 policy init --template worker
+x07 policy init --template worker-parallel
+
+Materialize a derived policy with explicit destinations (only in run-os-sandboxed):
+
+x07 run --profile sandbox --policy .x07/policies/base/http-client.sandbox.base.policy.json --allow-host example.com:443
+x07 run --profile sandbox --policy .x07/policies/base/http-client.sandbox.base.policy.json --deny-host example.com:*
+
+Run a single program (when not using a project manifest):
+
+x07 run --program src/main.x07.json --module-root src
+Expert backend (x07-os-runner)
+
+x07-os-runner implements OS execution for x07 run / x07 bundle. Treat it as internal and prefer x07 commands above.
+
+Policy
+
+Policies are a starting point. Generate one from a template, then extend it deliberately for your app (roots, env, subprocess allowlists, limits). For net-enabled templates, keep net.allow_hosts empty in the base policy and use x07 run --allow-host to materialize auditable derived policies for specific destinations.
+
+Output contract
+x07 run in run-os* worlds prints an x07-os-runner.report@... JSON report to stdout (pass-through).
+The underlying OS runner emits the same report shape.
+
+In both cases:
+
+Use the process exit code for pass/fail.
+Parse the JSON for schema_version, mode, world, and base64-encoded output bytes.
+Weekly Installs
+10
+Repository
+x07lang/x07-website
+First Seen
+Mar 14, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,74 @@
+---
+title: qe-pr-review
+url: https://skills.sh/proffesor-for-testing/agentic-qe/qe-pr-review
+---
+
+# qe-pr-review
+
+skills/proffesor-for-testing/agentic-qe/qe-pr-review
+qe-pr-review
+Installation
+$ npx skills add https://github.com/proffesor-for-testing/agentic-qe --skill qe-pr-review
+SKILL.md
+PR Review Workflow
+
+Review pull requests with correct AQE scope boundaries, clear communication, and actionable feedback.
+
+Arguments
+<pr-number> — GitHub PR number to review. If omitted, prompt the user.
+Steps
+1. Read the Full Diff
+gh pr diff <pr-number>
+gh pr view <pr-number>
+
+
+Read the complete diff and PR description. Do not skim — read every changed file.
+
+2. Scope Check
+Only analyze AQE/QE skills (NOT Claude Flow platform skills)
+Platform skills to EXCLUDE: v3-, flow-nexus-, agentdb-, reasoningbank-, swarm-, github-, hive-mind-advanced, hooks-automation, iterative-loop, stream-chain, skill-builder, sparc-methodology, pair-programming, release, debug-loop, aqe-v2-v3-migration
+If the PR touches skills, verify the count/scope matches expectations (~78 AQE skills)
+Flag any platform skill changes that may have leaked into an AQE-focused PR
+3. Summarize Changes
+
+Write a user-friendly summary of what changed and why:
+
+Focus on outcomes, not implementation details
+Avoid overly technical jargon
+Keep it to 3-5 bullet points
+4. Trust Tier Validation
+
+For any skill changes, validate trust_tier assignments:
+
+tier 3 = has eval infrastructure (evals/, schemas/, scripts/)
+tier 2 = tested but no eval framework
+tier 1 = untested
+Flag inconsistencies (e.g., a skill with evals at tier 2 should be tier 3)
+5. Code Quality Review
+
+Check for:
+
+Hardcoded version strings
+Production safety concerns (adapter changes, breaking changes)
+Missing test coverage for new code
+Security issues (exposed secrets, injection risks)
+6. Post Review
+gh pr review <pr-number> --body "review comments"
+
+Communication Rules
+Keep tone constructive and actionable
+Be outcome-focused: what should the author do, not what's wrong
+Group related comments together instead of posting many small ones
+If approving with minor suggestions, use APPROVE with comments, not REQUEST_CHANGES
+Weekly Installs
+42
+Repository
+proffesor-for-t…entic-qe
+GitHub Stars
+334
+First Seen
+Feb 27, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

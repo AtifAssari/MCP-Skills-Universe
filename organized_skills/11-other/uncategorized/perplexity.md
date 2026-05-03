@@ -1,0 +1,298 @@
+---
+rating: ⭐⭐
+title: perplexity
+url: https://skills.sh/vm0-ai/vm0-skills/perplexity
+---
+
+# perplexity
+
+skills/vm0-ai/vm0-skills/perplexity
+perplexity
+Installation
+$ npx skills add https://github.com/vm0-ai/vm0-skills --skill perplexity
+SKILL.md
+Troubleshooting
+
+If requests fail, run zero doctor check-connector --env-name PERPLEXITY_TOKEN or zero doctor check-connector --url https://api.perplexity.ai/chat/completions --method POST
+
+How to Use
+1. Chat Completions (Recommended)
+
+AI-powered Q&A with web search and citations. OpenAI SDK compatible.
+
+Basic query with sonar model:
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "user", "content": "What is the current price of Bitcoin?"}
+  ]
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+
+With system prompt:
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "system", "content": "Be precise and concise. Answer in bullet points."},
+    {"role": "user", "content": "What are the latest developments in AI?"}
+  ]
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+
+Advanced query with sonar-pro:
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar-pro",
+  "messages": [
+    {"role": "user", "content": "Compare the latest iPhone and Samsung Galaxy flagship phones"}
+  ],
+  "temperature": 0.2,
+  "web_search_options": {
+    "search_context_size": "high"
+  }
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+2. Search with Domain Filter
+
+Limit search to specific domains.
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "user", "content": "Latest research on transformer architectures"}
+  ],
+  "search_domain_filter": ["arxiv.org", "openai.com", "anthropic.com"]
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+
+Exclude domains (add - prefix):
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "user", "content": "Best programming practices"}
+  ],
+  "search_domain_filter": ["-reddit.com", "-quora.com"]
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+3. Search with Time Filter
+
+Filter by recency.
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "user", "content": "Major tech news"}
+  ],
+  "search_recency_filter": "week"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+
+Filter by date range:
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "user", "content": "AI announcements"}
+  ],
+  "search_after_date_filter": "12/01/2024",
+  "search_before_date_filter": "12/31/2024"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+4. Academic Search
+
+Search academic sources.
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar",
+  "messages": [
+    {"role": "user", "content": "Recent papers on large language model alignment"}
+  ],
+  "search_mode": "academic"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+5. Raw Search API
+
+Get raw search results without AI synthesis.
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "query": "Claude AI Anthropic",
+  "max_results": 5
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/search" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+
+With domain and time filters:
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "query": "machine learning tutorials",
+  "max_results": 10,
+  "search_domain_filter": ["github.com", "medium.com"],
+  "search_recency_filter": "month",
+  "country": "US"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/search" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+6. Deep Research (Long-form)
+
+For comprehensive research reports.
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar-deep-research",
+  "messages": [
+    {"role": "user", "content": "Write a comprehensive analysis of the electric vehicle market in 2024"}
+  ],
+  "reasoning_effort": "high"
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+7. Reasoning Model
+
+For complex problem-solving.
+
+Write to /tmp/perplexity_request.json:
+
+{
+  "model": "sonar-reasoning-pro",
+  "messages": [
+    {"role": "user", "content": "Analyze the pros and cons of microservices vs monolithic architecture for a startup"}
+  ]
+}
+
+
+Then run:
+
+curl -s -X POST "https://api.perplexity.ai/chat/completions" --header "Authorization: Bearer $PERPLEXITY_TOKEN" --header "Content-Type: application/json" -d @/tmp/perplexity_request.json
+
+Models
+Model	Description	Best For
+sonar	Lightweight, cost-effective	Quick facts, news, simple Q&A
+sonar-pro	Advanced search, deeper understanding	Complex queries, detailed research
+sonar-reasoning-pro	Multi-step reasoning with search	Problem-solving, analysis
+sonar-deep-research	Exhaustive research, reports	Academic research, market analysis
+Response Format
+
+Chat completions return:
+
+{
+  "id": "uuid",
+  "model": "sonar",
+  "choices": [
+  {
+  "message": {
+  "role": "assistant",
+  "content": "The answer with [1] citations..."
+  }
+  }
+  ],
+  "citations": ["https://source1.com", "https://source2.com"],
+  "search_results": [
+  {
+  "title": "Source Title",
+  "url": "https://source.com",
+  "snippet": "Relevant excerpt..."
+  }
+  ],
+  "usage": {
+  "prompt_tokens": 10,
+  "completion_tokens": 150,
+  "total_tokens": 160
+  }
+}
+
+Guidelines
+Model Selection: Use sonar for simple queries, sonar-pro for complex ones
+Cost Optimization: Lower search_context_size reduces costs (low/medium/high)
+Domain Filters: Limit to 20 domains max; use - prefix to exclude
+Recency Filters: Options are day, week, month, year
+Temperature: Lower (0.1-0.3) for factual queries, higher for creative
+Rate Limits: Vary by tier; check https://docs.perplexity.ai/guides/rate-limits-usage-tiers
+Citations: Response includes numbered citations [1] that map to citations array
+Weekly Installs
+102
+Repository
+vm0-ai/vm0-skills
+GitHub Stars
+57
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

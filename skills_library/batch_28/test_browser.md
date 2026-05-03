@@ -1,0 +1,312 @@
+---
+title: test-browser
+url: https://skills.sh/everyinc/compound-engineering-plugin/test-browser
+---
+
+# test-browser
+
+skills/everyinc/compound-engineering-plugin/test-browser
+test-browser
+Installation
+$ npx skills add https://github.com/everyinc/compound-engineering-plugin --skill test-browser
+SKILL.md
+Browser Test Skill
+
+Run end-to-end browser tests on pages affected by a PR or branch changes using the agent-browser CLI.
+
+Use agent-browser Only For Browser Automation
+
+This workflow uses the agent-browser CLI exclusively. Do not use any alternative browser automation system, browser MCP integration, or built-in browser-control tool. If the platform offers multiple ways to control a browser, always choose agent-browser.
+
+Use agent-browser for: opening pages, clicking elements, filling forms, taking screenshots, and scraping rendered content.
+
+Platform-specific hints:
+
+In Claude Code, do not use Chrome MCP tools (mcp__claude-in-chrome__*).
+In Codex, do not substitute unrelated browsing tools.
+Prerequisites
+Local development server running (e.g., bin/dev, rails server, npm run dev)
+agent-browser CLI installed (see Setup below)
+Git repository with changes to test
+Setup
+
+Check whether agent-browser is installed:
+
+command -v agent-browser >/dev/null 2>&1 && echo "Installed" || echo "NOT INSTALLED"
+
+
+If not installed, inform the user: "agent-browser is not installed. Run /ce-setup to install required dependencies." Then stop — this skill cannot function without agent-browser.
+
+Workflow
+1. Verify Installation
+
+Before starting, verify agent-browser is available:
+
+command -v agent-browser >/dev/null 2>&1 && echo "Ready" || echo "NOT INSTALLED"
+
+
+If not installed, inform the user: "agent-browser is not installed. Run /ce-setup to install required dependencies." Then stop.
+
+2. Ask Browser Mode
+
+Ask the user whether to run headed or headless (using the platform's question tool — e.g., AskUserQuestion in Claude Code, request_user_input in Codex, ask_user in Gemini — or present options and wait for a reply):
+
+Do you want to watch the browser tests run?
+
+1. Headed (watch) - Opens visible browser window so you can see tests run
+2. Headless (faster) - Runs in background, faster but invisible
+
+
+Store the choice and use the --headed flag when the user selects option 1.
+
+3. Determine Test Scope
+
+If PR number provided:
+
+gh pr view [number] --json files -q '.files[].path'
+
+
+If 'current' or empty:
+
+git diff --name-only main...HEAD
+
+
+If branch name provided:
+
+git diff --name-only main...[branch]
+
+4. Map Files to Routes
+
+Map changed files to testable routes:
+
+File Pattern	Route(s)
+app/views/users/*	/users, /users/:id, /users/new
+app/controllers/settings_controller.rb	/settings
+app/javascript/controllers/*_controller.js	Pages using that Stimulus controller
+app/components/*_component.rb	Pages rendering that component
+app/views/layouts/*	All pages (test homepage at minimum)
+app/assets/stylesheets/*	Visual regression on key pages
+app/helpers/*_helper.rb	Pages using that helper
+src/app/* (Next.js)	Corresponding routes
+src/components/*	Pages using those components
+
+Build a list of URLs to test based on the mapping.
+
+5. Detect Dev Server Port
+
+Determine the dev server port using this priority:
+
+Explicit argument — if the user passed --port 5000, use that directly
+Project instructions — check AGENTS.md, CLAUDE.md, or other instruction files for port references
+package.json — check dev/start scripts for --port flags
+Environment files — check .env, .env.local, .env.development for PORT=
+Default — fall back to 3000
+PORT="${EXPLICIT_PORT:-}"
+if [ -z "$PORT" ]; then
+  PORT=$(grep -Eio '(port\s*[:=]\s*|localhost:)([0-9]{4,5})' AGENTS.md 2>/dev/null | grep -Eo '[0-9]{4,5}' | head -1)
+  if [ -z "$PORT" ]; then
+    PORT=$(grep -Eio '(port\s*[:=]\s*|localhost:)([0-9]{4,5})' CLAUDE.md 2>/dev/null | grep -Eo '[0-9]{4,5}' | head -1)
+  fi
+fi
+if [ -z "$PORT" ]; then
+  PORT=$(grep -Eo '\-\-port[= ]+[0-9]{4,5}' package.json 2>/dev/null | grep -Eo '[0-9]{4,5}' | head -1)
+fi
+if [ -z "$PORT" ]; then
+  PORT=$(grep -h '^PORT=' .env .env.local .env.development 2>/dev/null | tail -1 | cut -d= -f2)
+fi
+PORT="${PORT:-3000}"
+echo "Using dev server port: $PORT"
+
+6. Verify Server is Running
+agent-browser open http://localhost:${PORT}
+agent-browser snapshot -i
+
+
+If the server is not running, inform the user:
+
+Server not running on port ${PORT}
+
+Please start your development server:
+- Rails: `bin/dev` or `rails server`
+- Node/Next.js: `npm run dev`
+- Custom port: run this skill again with `--port <your-port>`
+
+Then re-run this skill.
+
+7. Test Each Affected Page
+
+For each affected route:
+
+Navigate and capture snapshot:
+
+agent-browser open "http://localhost:${PORT}/[route]"
+agent-browser snapshot -i
+
+
+For headed mode:
+
+agent-browser --headed open "http://localhost:${PORT}/[route]"
+agent-browser --headed snapshot -i
+
+
+Verify key elements:
+
+Use agent-browser snapshot -i to get interactive elements with refs
+Page title/heading present
+Primary content rendered
+No error messages visible
+Forms have expected fields
+
+Test critical interactions:
+
+agent-browser click @e1
+agent-browser snapshot -i
+
+
+Take screenshots:
+
+agent-browser screenshot page-name.png
+agent-browser screenshot --full page-name-full.png
+
+8. Human Verification (When Required)
+
+Pause for human input when testing touches flows that require external interaction:
+
+Flow Type	What to Ask
+OAuth	"Please sign in with [provider] and confirm it works"
+Email	"Check your inbox for the test email and confirm receipt"
+Payments	"Complete a test purchase in sandbox mode"
+SMS	"Verify you received the SMS code"
+External APIs	"Confirm the [service] integration is working"
+
+Ask the user (using the platform's question tool, or present numbered options and wait):
+
+Human Verification Needed
+
+This test touches [flow type]. Please:
+1. [Action to take]
+2. [What to verify]
+
+Did it work correctly?
+1. Yes - continue testing
+2. No - describe the issue
+
+9. Handle Failures
+
+When a test fails:
+
+Document the failure:
+
+Screenshot the error state: agent-browser screenshot error.png
+Note the exact reproduction steps
+
+Ask the user how to proceed:
+
+Test Failed: [route]
+
+Issue: [description]
+Console errors: [if any]
+
+How to proceed?
+1. Fix now - I'll help debug and fix
+2. Create todo - Add a todo for later (using the todo-create skill)
+3. Skip - Continue testing other pages
+
+
+If "Fix now": investigate, propose a fix, apply, re-run the failing test
+
+If "Create todo": load the todo-create skill and create a todo with priority p1 and description browser-test-{description}, continue
+
+If "Skip": log as skipped, continue
+
+10. Test Summary
+
+After all tests complete, present a summary:
+
+## Browser Test Results
+
+**Test Scope:** PR #[number] / [branch name]
+**Server:** http://localhost:${PORT}
+
+### Pages Tested: [count]
+
+| Route | Status | Notes |
+|-------|--------|-------|
+| `/users` | Pass | |
+| `/settings` | Pass | |
+| `/dashboard` | Fail | Console error: [msg] |
+| `/checkout` | Skip | Requires payment credentials |
+
+### Console Errors: [count]
+- [List any errors found]
+
+### Human Verifications: [count]
+- OAuth flow: Confirmed
+- Email delivery: Confirmed
+
+### Failures: [count]
+- `/dashboard` - [issue description]
+
+### Created Todos: [count]
+- `005-pending-p1-browser-test-dashboard-error.md`
+
+### Result: [PASS / FAIL / PARTIAL]
+
+Quick Usage Examples
+# Test current branch changes (auto-detects port)
+/test-browser
+
+# Test specific PR
+/test-browser 847
+
+# Test specific branch
+/test-browser feature/new-dashboard
+
+# Test on a specific port
+/test-browser --port 5000
+
+agent-browser CLI Reference
+
+Run agent-browser --help for all commands.
+
+Key commands:
+
+# Navigation
+agent-browser open <url>           # Navigate to URL
+agent-browser back                 # Go back
+agent-browser close                # Close browser
+
+# Snapshots (get element refs)
+agent-browser snapshot -i          # Interactive elements with refs (@e1, @e2, etc.)
+agent-browser snapshot -i --json   # JSON output
+
+# Interactions (use refs from snapshot)
+agent-browser click @e1            # Click element
+agent-browser fill @e1 "text"      # Fill input
+agent-browser type @e1 "text"      # Type without clearing
+agent-browser press Enter          # Press key
+
+# Screenshots
+agent-browser screenshot out.png       # Viewport screenshot
+agent-browser screenshot --full out.png # Full page screenshot
+
+# Headed mode (visible browser)
+agent-browser --headed open <url>      # Open with visible browser
+agent-browser --headed click @e1       # Click in visible browser
+
+# Wait
+agent-browser wait @e1             # Wait for element
+agent-browser wait 2000            # Wait milliseconds
+
+Weekly Installs
+238
+Repository
+everyinc/compou…g-plugin
+GitHub Stars
+16.0K
+First Seen
+Mar 12, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

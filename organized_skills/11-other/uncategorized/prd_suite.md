@@ -1,0 +1,413 @@
+---
+rating: ⭐⭐⭐
+title: prd-suite
+url: https://skills.sh/guoxiangjie/skills/prd-suite
+---
+
+# prd-suite
+
+skills/guoxiangjie/skills/prd-suite
+prd-suite
+Installation
+$ npx skills add https://github.com/guoxiangjie/skills --skill prd-suite
+SKILL.md
+PRD 文档管理
+🆕 自然语言需求模板支持
+
+支持使用自然语言需求模板快速创建 PRD：
+
+需求模板文件：提供 requirement_template.md 文件，用自然语言描述项目需求
+智能提取：AI 自动从自然语言中提取结构化信息
+四种模式：
+使用 XMind 文件：通过 XMind MCP 读取 xmind 文件生成 PRD（推荐）
+使用需求模板：根据需求模板文件生成完整 PRD（1 轮完成）
+混合模式：需求模板 + 交互补充缺失章节
+手动创建：使用交互式流程逐轮收集信息
+
+详细模板见：templates/requirement_template.md
+
+目录结构
+prd-suite/
+├── SKILL.md                      # 主入口
+├── commands/                     # 子命令
+│   ├── create.md                 # 创建 PRD 命令
+│   ├── update.md                 # 更新 PRD 命令
+│   └── delete.md                 # 删除 PRD 命令
+├── templates/                    # 模板文件
+│   ├── main_prd_template.md            # 主 PRD 模板
+│   ├── module_prd_template.md          # 模块 PRD 模板
+│   ├── requirement_template.md         # 需求模板
+│   ├── xmind_content_template.md       # XMind 内容解析模板
+│   ├── changelog_format.md             # CHANGELOG 格式
+│   ├── format_guidelines.md            # 格式规范说明
+│   ├── review_process.md               # 审核确认流程
+│   └── module_level_selection.md       # 🆕 层级选择功能说明
+├── config/                       # 配置文件
+│   └── config.json               # 配置信息
+└── scripts/                      # 辅助脚本
+    ├── parser.js                 # 自然语言解析脚本
+    ├── utils.js                  # 工具函数
+    └── level_analyzer.js         # 🆕 XMind 层级分析器
+
+子命令
+create
+功能：创建新的 PRD 文档
+子命令：
+create main - 创建主 PRD 文档
+create module - 创建模块 PRD 文档
+描述：支持自然语言需求模板快速生成，智能推断减少重复输入
+路径：commands/create.md
+update
+功能：更新现有的 PRD 文档
+子命令：
+update main - 更新主 PRD 文档
+update module - 更新模块 PRD 文档
+描述：支持单章节更新，版本管理和变更记录
+路径：commands/update.md
+delete
+功能：删除 PRD 文档
+子命令：
+delete module - 删除模块 PRD 文档
+描述：安全删除模块 PRD，自动更新索引和变更日志
+路径：commands/delete.md
+配置文件
+
+配置文件位于 config/config.json，包含以下内容：
+
+技能基本信息
+子命令配置
+模板文件路径
+变量定义
+功能特性开关
+模板文件
+
+模板文件位于 templates/ 目录：
+
+main_prd_template.md - 主 PRD 文档模板
+module_prd_template.md - 模块 PRD 文档模板
+requirement_template.md - 自然语言需求模板
+xmind_content_template.md - XMind 内容解析文档模板
+changelog_format.md - CHANGELOG 格式规范
+format_guidelines.md - 模板格式规范说明
+review_process.md - 审核确认流程说明
+module_level_selection.md - 🆕 XMind 层级选择功能说明
+辅助脚本
+
+辅助脚本位于 scripts/ 目录：
+
+parser.js - 自然语言需求解析脚本
+utils.js - 工具函数（日期处理、文件操作等）
+level_analyzer.js - 🆕 XMind 层级分析器
+📋 文件命名规则
+⚠️ 重要约束
+
+所有 PRD 文件命名必须严格遵循以下规则！
+
+主 PRD 命名
+格式：main_prd.md
+位置：prd/ 目录下
+约束：不允许添加任何项目名称前缀，固定为 main_prd.md
+模块 PRD 命名
+格式：M{编号}_{模块名称}_prd.md
+位置：prd/modules/ 目录下
+编号规则：从 M001 开始递增（M001、M002、M003...）
+名称规则：使用中文模块名称
+示例：
+M001_用户管理_prd.md
+M002_订单管理_prd.md
+M003_商品管理_prd.md
+命名错误示例
+❌ 错误命名：
+- 用户管理系统_main_prd.md    ← 不允许项目名称前缀
+- main_prd_用户管理.md         ← 不允许项目名称后缀
+- M01_用户管理_prd.md          ← 编号必须三位数字（M001）
+- M001_user_management_prd.md  ← 名称必须使用中文
+- M001_用户管理.md             ← 必须以 _prd.md 结尾
+
+✅ 正确命名：
+- main_prd.md                  ← 主 PRD 固定命名
+- M001_用户管理_prd.md         ← 模块 PRD 标准命名
+
+📋 模板格式要求
+⚠️ 重要说明
+
+所有生成的 PRD 文档必须严格遵循模板格式！ 这是确保 PRD 质量和一致性的关键要求。
+
+模板文件
+
+模板文件位于 templates/ 目录，必须严格按照以下模板生成内容：
+
+主 PRD 模板：templates/main_prd_template.md
+用于创建主 PRD 文档
+包含 9 个标准章节
+必须保持章节顺序、表格格式、Mermaid 图表格式
+模块 PRD 模板：templates/module_prd_template.md
+用于创建模块 PRD 文档
+包含 11 个标准章节
+必须保持章节顺序、表格格式、Mermaid 图表格式
+格式要求
+
+在生成 PRD 时，必须：
+
+严格遵循模板结构
+保持所有章节的顺序和编号
+不遗漏任何必需章节
+不添加模板中未定义的章节
+保持格式一致性
+表格格式必须与模板一致
+Mermaid 图表语法必须正确
+标题层级必须正确
+完整替换变量
+所有 {{变量名}} 必须替换为实际内容
+不保留任何未替换的变量占位符
+格式验证
+生成后必须检查格式是否符合模板
+发现格式问题必须立即修正
+界面布局图生成要求（模块 PRD 重点）
+
+⚠️ 重要：界面布局图必须完整且颗粒度适中！
+
+生成模块 PRD 的"5.3 页面说明与交互细节"章节时，必须确保：
+
+完整性
+
+为 5.1 中列出的每个页面都生成界面布局图
+不得遗漏任何页面
+每个页面的核心区域都必须展示
+
+颗粒度适中
+
+不能过于粗略（如只画一个大框写"内容区"）
+必须展示具体元素：
+表格：显示列名和示例数据行
+表单：显示字段名、输入框
+按钮：显示按钮名称
+使用 ┌ ─ ┐ │ └ ┘ 等字符绘制清晰的边框
+
+状态展示
+
+如有多个状态（空状态、正常状态），需分别展示
+弹窗、抽屉需单独展示布局
+
+详细规范请参考：templates/format_guidelines.md 中的"界面布局图格式"章节
+
+格式规范说明
+
+详细的格式规范请参考：templates/format_guidelines.md
+
+核心特性
+1. 自然语言需求模板
+支持用自然语言描述项目需求
+AI 自动提取结构化信息
+1 轮完成 PRD 生成
+2. 智能推断机制
+从主 PRD 自动提取相关信息
+减少用户重复输入
+提升创建效率
+3. 快速模式
+只生成核心章节
+跳过可选章节
+适合次要模块
+4. 版本管理
+支持语义化版本
+自动记录变更日志
+版本升级流程
+🗺️ XMind 文件支持
+功能说明
+
+支持从 XMind 思维导图文件直接生成主 PRD：
+
+XMind MCP 集成：通过 XMind MCP 服务读取和解析 xmind 文件
+完整内容解析：解析所有节点内容，包括标题、备注、标签、链接等
+智能分析总结：基于全部节点内容，经过分析思考，总结关键信息
+中间文档生成：生成 xmind_content.md 内容文档供确认
+层级选择：🆕 AI 自动分析 XMind 结构，推荐最合适的功能模块层级（新增）
+模板格式输出：按照主 PRD 模板格式生成最终文档
+使用条件
+XMind MCP 服务必须可用
+支持的 XMind MCP 工具
+mcp_XMind_list_xmind_directory：扫描 XMind MCP 配置目录下的 xmind 文件
+mcp_XMind_read_xmind：读取和解析 xmind 文件
+mcp_XMind_extract_node：提取特定节点
+mcp_XMind_search_nodes：搜索节点内容
+🆕 功能模块层级选择（新增）
+
+在 XMind 内容解析完成后，AI 会自动分析 XMind 结构，提供三种层级选择方式：
+
+选项	说明	适用场景
+1️⃣ 确认 AI 推荐	AI 自动分析节点数量、命名规范等，推荐最合适的层级	不确定选哪层，信任 AI 判断
+2️⃣ 按固定层级提取	用户输入层级数字（1-5），提取该层所有节点	明确知道 XMind 结构，有特定需求
+3️⃣ 手动指定模块清单	用户手动输入功能模块列表（编号 | 名称 | 描述）	XMind 结构特殊，或需要完全自定义
+
+AI 推荐逻辑：
+
+节点数量适中（5-12 个优先）
+节点命名符合功能模块命名规范
+与主 PRD 功能模块清单的颗粒度匹配
+内容提取原则
+
+从 XMind 思维导图中提取 PRD 信息时，遵循以下原则：
+
+整体思考总结：不是机械地按关键词提取，而是先完整解析所有节点内容，再综合分析思考，总结关键信息
+提取内容：
+功能概述：产品/项目的核心功能是什么，解决什么问题
+使用人（用户角色）：目标用户是谁，有哪些角色
+目标：产品/项目的目标是什么
+功能模块列表：整理出功能模块（🆕 使用层级选择步骤中确定的模块清单）
+业务流程：总结核心业务流程
+不提取内容：
+非功能需求
+验收标准
+项目背景
+不显示节点来源：总结内容不标注"从哪个节点提取"
+流程说明
+
+详细流程请参考：commands/create.md 中的"使用 XMind 文件创建主 PRD 详细流程"（含层级选择步骤）
+
+工作流程
+创建主 PRD 流程
+
+模式选择：先让用户选择创建模式
+
+使用 XMind 文件：通过 XMind MCP 读取 xmind 文件生成 PRD（推荐）
+使用需求模板：根据需求模板文件生成 PRD
+混合模式：需求模板 + 交互补充
+手动创建：使用交互式流程
+
+条件验证：根据选择的模式验证前置条件
+
+XMind 模式：验证 XMind MCP 服务是否可用
+需求模板模式：检测项目目录是否有 requirement_template.md
+混合模式：检测项目目录是否有 requirement_template.md
+手动创建：无需验证，直接开始
+
+信息收集：根据模式收集必要信息
+
+生成文档：生成完整 PRD 文档内容（⚠️ 不创建文件）
+
+展示内容：展示完整内容供用户查看
+
+暂停等待审核：⚠️ 必须暂停，等待用户审核确认
+
+审核确认：用户审核生成的内容
+
+完成创建：审核通过后创建 PRD 文件并更新相关索引
+
+创建模块 PRD 流程
+前置条件：检查主 PRD 是否存在
+选择模块：从主 PRD 的模块清单中选择要创建的模块
+模式选择：
+快速模式：根据主 PRD 和模块信息自动生成完整内容，然后审核确认
+问答模式：逐章节询问核心业务信息，提供参考信息，生成章节内容，章节审核，直至完成
+内容生成：根据选择的模式生成模块 PRD 内容
+审核确认：用户审核生成的内容
+完成创建：创建模块 PRD 文件并更新相关索引
+更新 PRD 流程
+选择文档：选择要更新的 PRD
+选择章节：选择要更新的章节
+信息收集：收集更新信息
+生成内容：生成更新后的章节内容（⚠️ 不更新文件）
+展示内容：展示更新内容供用户查看
+暂停等待审核：⚠️ 必须暂停，等待用户审核确认
+审核确认：用户审核生成的内容
+版本管理：处理版本升级
+完成更新：审核通过后更新 PRD 文件和相关记录
+删除 PRD 流程
+选择模块：选择要删除的模块 PRD
+安全确认：确认删除操作
+删除文件：删除模块 PRD 文件
+更新索引：更新 PRD_INDEX.md
+更新变更日志：记录删除操作
+确认完成：向用户确认删除完成
+⚠️ 审核确认机制
+
+所有 PRD 创建和更新操作都必须经过用户审核确认！
+
+审核流程（优化后）
+生成内容：AI 生成 PRD 内容
+展示审核：展示完整内容供用户查看
+暂停等待：⚠️ 必须暂停，等待用户审核
+用户选择：
+✅ 确认写入：直接写入文件，输出简短完成提示（不再次展示内容）
+✏️ 提出修改意见：用户输入修改意见，AI 修改后再次展示审核
+🔄 重新生成：重新生成内容，再次展示审核
+❌ 取消操作：终止流程，不创建文件
+核心优化
+一次展示原则：确认写入后直接写文件，不再二次展示内容
+简短完成提示：只输出文件路径和字数，不输出完整内容
+修改时才重展示：只有用户提出修改意见时，才重新展示修改后的内容
+完成提示格式
+✅ 主 PRD 已创建：prd/main_prd.md（约 3500 字）
+
+
+或
+
+✅ 模块 PRD 已创建：prd/modules/M001_用户管理_prd.md（约 2800 字）
+
+审核选项说明
+✅ 确认写入
+用户确认内容无误
+直接写入文件并更新索引
+输出简短完成提示
+✏️ 提出修改意见
+用户输入具体的修改意见
+AI 根据意见修改内容
+修改后再次展示，进入新一轮审核
+🔄 重新生成
+用户对整体内容不满意
+AI 重新生成内容
+重新生成后再次展示审核
+❌ 取消操作
+用户取消本次操作
+不创建或更新任何文件
+终止流程
+
+详细审核流程请参考：templates/review_process.md
+
+使用方法
+创建主 PRD
+调用 prd-suite skill
+选择 create main 命令
+选择创建模式（XMind 文件、需求模板、混合模式、手动创建）
+根据模式验证条件并收集信息
+审核生成的内容
+完成创建
+创建模块 PRD
+确保主 PRD 已存在
+调用 prd-suite skill
+选择 create module 命令
+选择完整模式或快速模式
+审核生成的内容
+完成创建
+更新 PRD
+调用 prd-suite skill
+选择 update 命令
+选择要更新的 PRD 和章节
+提供更新信息
+审核生成的内容
+处理版本管理
+完成更新
+删除模块 PRD
+调用 prd-suite skill
+选择 delete module 命令
+选择要删除的模块
+确认删除
+完成删除
+注意事项
+支持自然语言需求模板快速生成
+保持向后兼容
+所有变更都会记录到 CHANGELOG.md
+模块 PRD 会自动更新到 PRD_INDEX.md
+支持版本管理和状态管理
+Weekly Installs
+31
+Repository
+guoxiangjie/skills
+GitHub Stars
+7
+First Seen
+Mar 13, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykPass

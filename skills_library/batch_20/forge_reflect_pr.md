@@ -1,0 +1,140 @@
+---
+title: forge-reflect-pr
+url: https://skills.sh/mgratzer/forge/forge-reflect-pr
+---
+
+# forge-reflect-pr
+
+skills/mgratzer/forge/forge-reflect-pr
+forge-reflect-pr
+Installation
+$ npx skills add https://github.com/mgratzer/forge --skill forge-reflect-pr
+SKILL.md
+Reflect on PR
+
+Self-review the current PR branch before requesting peer review.
+
+Input
+
+No primary argument required. Operates on the current branch.
+
+Optional last parameter: -- <additional context>
+
+Interpret $ARGUMENTS as optional execution guidance for the review focus. If no argument is provided, use the default review checklist.
+
+Process
+Step 1: Identify Changes
+DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+git diff --name-only $DEFAULT_BRANCH...HEAD
+
+
+Collect the full diff and the list of changed files for the review step.
+
+Step 2: Review Changes (delegate)
+
+Delegate this step to a sub-agent with fresh context if the runtime supports it. The fresh context eliminates self-review bias — the reviewer has no memory of implementation decisions. If the runtime does not support sub-agents, execute the instructions inline.
+
+Sub-agent instructions:
+
+You are reviewing a PR diff for real problems. Read AGENTS.md to understand project conventions. Classify every finding using the review rubric — only flag P0, P1, and P2 items.
+
+For each changed file, check:
+
+Duplication — repeated patterns that should be extracted
+Function size — anything too long to follow at a glance
+Naming — clear and consistent (only flag if actively misleading, not preference)
+Layer placement — logic in the right abstraction layer
+Dead code — unused imports, variables, or functions introduced
+Pattern consistency — if a pattern was changed, grep for ALL files using it:
+grep -rn "<changed-pattern>" <search-root>/
+
+Configuration — new env vars documented in sample env or setup docs? Config placed where consumed? No hardcoded credentials? Manual deployment steps captured?
+Test coverage — corresponding test files exist? Error handling branches covered? Edge cases for new public functions?
+Documentation — changes require updates to docs/*.md, AGENTS.md, code comments, or README? Grep docs for stale references to anything removed or renamed:
+grep -rn "<removed-term>" docs/
+
+Cleanup — no temporary debug logging, commented-out code, untracked TODOs, unused imports, or hardcoded values that should be constants
+
+Return findings grouped by file, with severity tags (P0/P1/P2).
+
+Inputs provided to sub-agent:
+
+Output of git diff $DEFAULT_BRANCH...HEAD
+List of changed files
+Contents of review-rubric.md
+Contents of AGENTS.md (project conventions)
+Any additional context from the user's invocation
+
+Expected output: Structured findings list with severity tags, grouped by file.
+
+Step 3: Quality Gates
+
+Run the project's lint, format, type check, and test commands. Fix issues and commit fixes.
+
+Step 4: Report
+
+Synthesize the review findings (from Step 2) with quality gate results (from Step 3) into the summary format below.
+
+Step 5: Triage Deferred Items
+
+Present each deferred improvement to the user and ask whether to fix now or defer as a follow-up issue.
+
+For each item, recommend one of:
+
+Fix now — small, low-effort changes that fit naturally in this PR (e.g., a missing test case, a stale doc reference, a duplicated line)
+Defer — larger changes that would expand the PR scope or require separate review (e.g., a cross-cutting refactor, a new feature suggestion)
+
+State your recommendation and let the user decide. Then:
+
+Fix now items: apply the fix and commit it
+Deferred items: create a GitHub issue to track:
+gh issue create --title "<title>" --body "<context and proposed solution>"
+
+Output Format
+## PR Reflection Summary
+
+### Refactoring
+- [P1] <what was done>
+
+### Tests
+- [P2] <what was added>
+
+### Documentation
+- [P2] <what was updated>
+
+### Cleanup
+- [P1] <what was fixed>
+
+### Deferred Items
+- Fixed in PR: <what was addressed>
+- Created #<num>: <title>
+- (or: None identified)
+
+(Use severity tags: P0, P1, P2. Omit P3 — see [review rubric](references/review-rubric.md).)
+
+Guidelines
+Pattern consistency is the highest-value check — a missed pattern update causes bugs across the codebase
+Skip noise — see review rubric for severity calibration and what not to flag
+Triage deferred items with the user — ask whether each item should be fixed now or deferred as a follow-up issue; only create issues for confirmed deferrals
+Run quality gates before reporting — catch issues before the reviewer does
+Prefer fresh context — a reviewer without implementation memory catches issues the author overlooks
+Related Skills
+
+After review: Use forge-address-pr-feedback to address reviewer feedback.
+
+Example Usage
+/forge-reflect-pr
+/forge-reflect-pr -- pay extra attention to migration safety and missing regression tests
+
+Weekly Installs
+22
+Repository
+mgratzer/forge
+GitHub Stars
+64
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

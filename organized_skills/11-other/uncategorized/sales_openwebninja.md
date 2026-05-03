@@ -1,0 +1,196 @@
+---
+rating: ⭐⭐
+title: sales-openwebninja
+url: https://skills.sh/sales-skills/sales/sales-openwebninja
+---
+
+# sales-openwebninja
+
+skills/sales-skills/sales/sales-openwebninja
+sales-openwebninja
+Installation
+$ npx skills add https://github.com/sales-skills/sales --skill sales-openwebninja
+SKILL.md
+OpenWeb Ninja Platform Help
+
+Help the user with OpenWeb Ninja platform questions — from Website Contacts Scraper and Email Search through Local Business Data, Real-Time Web Search, JSearch, Product Data APIs, Web Unblocker, and more. OpenWeb Ninja is a Sunnyvale-based real-time public data API stack with 30+ APIs, 50K+ subscribers, 1T+ monthly requests, and a 4.8/5 rating on G2. Each API is a separate product with its own subscription, endpoints, and rate limits, available via the app.openwebninja.com portal or RapidAPI marketplace.
+
+Step 1 — Gather context
+
+If references/learnings.md exists, read it first for accumulated knowledge.
+
+Ask the user:
+
+What area of OpenWeb Ninja do you need help with?
+
+A) Website Contacts Scraper — extract emails, phone numbers, and social links from any website domain
+B) Email Search — find publicly available email addresses by search query
+C) Local Business Data — search Google Maps businesses with 40+ fields (phone, website, ratings, reviews, hours, emails, social links)
+D) Social Links Search — find social media profiles for companies or people
+E) Real-Time Web Search — Google SERP results (organic, AI Overviews, AI Mode, videos, places, news, knowledge graph)
+F) JSearch — job postings aggregator (LinkedIn, Indeed, Glassdoor, ZipRecruiter — 200M+ listings)
+G) Product Data APIs — Amazon, eBay, Walmart, Costco product data (35B+ listings)
+H) Web Unblocker — fetch rendered HTML from any website with rotating proxies
+I) Finance Data — real-time stocks, crypto, forex data
+J) AI/LLM APIs — Google AI Mode, Gemini, ChatGPT, Copilot with web access
+K) Other APIs — Zillow, Yelp, Trustpilot, Events, Waze, Local Rank Tracker, Books, Forums, Shorts, Image Search, News
+L) Account / Billing — plans, pricing, API subscriptions
+M) Something else — describe it
+
+What's your role?
+
+A) Sales / SDR / BDR
+B) RevOps / Sales ops
+C) Developer / engineer
+D) Growth / marketing
+E) Recruiter / talent acquisition
+F) Other
+
+What are you trying to accomplish? (describe your specific goal or question)
+
+If the user's request already provides most of this context, skip directly to the relevant step. Lead with your best-effort answer using reasonable assumptions (stated explicitly), then ask only the most critical 1-2 clarifying questions at the end — don't gate your response behind gathering complete context.
+
+Note: If the user needs a specialized skill, route them there with a brief explanation of why that skill is a better fit.
+
+Step 2 — Route or answer directly
+
+If the request maps to a specialized skill, route:
+
+Cross-platform enrichment strategy / multi-tool enrichment -> /sales-enrich
+Prospect list building strategy -> /sales-prospect-list
+Connecting OpenWeb Ninja to other tools via middleware -> /sales-integration
+Lobstr-specific questions -> /sales-lobstr
+Outscraper-specific questions -> /sales-outscraper
+Apollo-specific questions -> /sales-apollo
+
+Otherwise, answer directly from platform knowledge using the reference below.
+
+Step 3 — OpenWeb Ninja platform reference
+
+Read references/platform-guide.md for detailed module documentation, pricing, integrations, and data model.
+
+You no longer need the platform guide details — focus on the user's specific situation.
+
+Step 4 — Actionable guidance
+
+Based on the user's specific question:
+
+Extracting contacts from a list of target company websites:
+
+Use the Website Contacts Scraper API with each target domain to extract emails, phone numbers, and social links
+Expect 0.5-3 second response time per domain — for large lists, batch requests and respect rate limits (1/sec on Free, up to 30/sec on Mega)
+Results depend on what the website publicly exposes — some domains will return multiple emails and phone numbers, others may return nothing
+Supplement with Email Search API for domains that return no contacts — search by company name with optional domain filter
+Use Social Links Search to fill in LinkedIn, Twitter, and Facebook profiles for discovered contacts
+Export results to your CRM via custom API integration — OpenWeb Ninja has no native CRM connectors, so use middleware (Zapier, Make, n8n) or build a direct integration
+Verify discovered emails with a separate email verification service before outreach (OpenWeb Ninja does not include email verification)
+
+Building a local business prospect list from Google Maps:
+
+Use the Local Business Data API to search by category and location (e.g., "dentists in Austin, TX")
+Each business returned counts as a separate request — a search returning 20 businesses uses 20 requests from your quota
+For each business, you get 40+ fields: phone, website, email, address, ratings, review count, opening hours, social links
+Use nearby search for geographic radius queries, or bulk search for larger area coverage
+Pull reviews for high-priority targets to understand their pain points and personalize outreach
+Enrich results with Website Contacts Scraper for additional email addresses not listed on Google Maps
+Export to spreadsheet or CRM — build a simple script or use middleware to format and push the data
+
+Running competitive intelligence via web search API:
+
+Use Real-Time Web Search API with competitor names, product names, or industry keywords
+Retrieve up to 500 results per query — localize by region and language for market-specific intelligence
+Parse SERP features: AI Overviews for summarized competitive positioning, People Also Ask for common buyer questions, knowledge graph for company facts
+Monitor news results for competitor announcements, funding rounds, and product launches
+Track job postings via JSearch to identify competitor hiring patterns (expansion signals, tech stack changes)
+Combine with Product Data APIs for pricing intelligence on ecommerce competitors
+Set up automated monitoring by scheduling regular API calls and tracking changes over time
+Gotchas
+
+Best-effort from research — review these, especially items about per-API subscriptions and pricing that may have changed.
+
+Each API is a separate subscription — costs add up across multiple APIs. OpenWeb Ninja is not a single platform subscription. If you need Website Contacts Scraper, Local Business Data, and Email Search, that is three separate subscriptions. Subscribing to Pro on all three costs $75/mo, not $25/mo. Audit which APIs you actually need before subscribing, and consider pay-as-you-go ($0.001-0.005/request) for APIs you use infrequently.
+
+Free tier is very limited (50-500 requests) and varies by API — it is evaluation-only. Some APIs offer 500 free requests per month, others offer only 50. The free tier is rate-limited to 1 request per second and is not suitable for production use. Always check the specific API's free tier allocation before relying on it for testing.
+
+Rate limits vary by plan AND by API — do not assume uniform limits. A Pro plan on one API might allow 5 requests/sec while Pro on another allows 10/sec. If you are integrating multiple APIs, you need to track rate limits per API independently. Exceeding rate limits returns errors, not queued requests.
+
+Local Business Data counts per business returned, not per search query. A single search that returns 20 businesses consumes 20 requests from your quota. Large-area searches or broad categories can consume your monthly allocation quickly. Use specific categories and tight geographic filters to control request consumption. Monitor your usage dashboard closely during bulk operations.
+
+Web Unblocker returns raw HTML, not structured data — you must parse it yourself. Unlike the other APIs that return structured JSON, Web Unblocker gives you the full rendered HTML of a page. You need your own parsing logic (BeautifulSoup, Cheerio, etc.) to extract useful data. Use the structured APIs (Local Business Data, Product Data, etc.) whenever they cover your target data — Web Unblocker is a fallback for sites not covered by specialized APIs.
+
+RapidAPI vs direct portal pricing may differ — compare before subscribing. OpenWeb Ninja APIs are available both through the app.openwebninja.com portal and the RapidAPI marketplace. Pricing, rate limits, and plan tiers may not be identical across both platforms. If you are cost-sensitive, compare pricing on both before committing. Also note that RapidAPI uses its own API key header (X-RapidAPI-Key) while the direct portal may use a different authentication method.
+
+No native CRM integrations — OpenWeb Ninja is API-only. Unlike platforms with built-in HubSpot/Salesforce connectors, OpenWeb Ninja requires custom integration work to push data into your CRM, spreadsheets, or other tools. Use middleware platforms (Zapier, Make, n8n) or build direct API integrations. Factor in this development effort when evaluating total cost of adoption.
+
+Email Search returns publicly indexed emails only — these are not verified. The Email Search API discovers email addresses that are publicly available on the web. These emails are not verified for deliverability, may be outdated, and could include role-based addresses (info@, support@). Always run discovered emails through a separate verification service before using them for outreach. Combine with Website Contacts Scraper for more comprehensive coverage.
+
+Response times vary significantly by endpoint — plan your integration accordingly. Website Contacts Scraper takes 0.5-3 seconds per request, Email Search takes 1-2 seconds, but Web Unblocker (with JS rendering) and Local Business Data (with full detail fetches) can take longer. For high-volume pipelines, implement async processing and queuing rather than synchronous request chains. Timeout settings should be generous (10+ seconds) to account for variability.
+
+Self-improving: If you discover something not covered here, append it to references/learnings.md with today's date.
+Step 5 — Related skills
+/sales-enrich — Cross-platform datan enrichment strategy (multi-tool enrichment workflows, waterfall enrichment)
+/sales-prospect-list — Prospect list building strategy and best practices
+/sales-integration — Connect OpenWeb Ninja to CRM, automation tools, or other platforms
+/sales-lobstr — Lobstr platform help (web scraping and data extraction)
+/sales-outscraper — Outscraper platform help (Google Maps scraping and business data)
+/sales-apollo — Apollo platform help (B2B database and sales engagement)
+/sales-do — Not sure which skill to use? The router matches any sales objective to the right skill. Install: npx skills add sales-skills/sales --skill sales-do
+Examples
+Example 1: Building a prospect list from Google Maps for local sales outreach
+
+User says: "I need to find all plumbing companies in Phoenix, AZ with their phone numbers and websites for my sales team to call." Skill does:
+
+Uses Local Business Data API to search for "plumbing" businesses in Phoenix, AZ
+Explains that each business returned counts as a separate request — a search returning 50 plumbers uses 50 requests from the monthly quota
+For each business, extracts key fields: business name, phone, website, address, ratings, review count, opening hours
+Recommends filtering by rating (e.g., 3+ stars) and review count (e.g., 10+ reviews) to focus on established businesses worth calling
+Supplements with Website Contacts Scraper on each business's website to find email addresses and social links not listed on Google Maps
+Advises exporting to a spreadsheet or CRM via a simple script or middleware — no native CRM integration exists
+Notes budget impact: 50 businesses + 50 website contact scrapes = 100 requests across two APIs Result: User has a structured list of plumbing companies in Phoenix with phone, website, email, ratings, and review data ready for sales outreach
+Example 2: Enriching a target account list with contact information from websites
+
+User says: "I have 200 company domains I want to scrape for email addresses and social media links. How do I set this up?" Skill does:
+
+Recommends Website Contacts Scraper API for bulk domain contact extraction — 200 domains at 0.5-3 seconds each, approximately 2-10 minutes total
+Checks rate limit requirements: Free tier allows only 1/sec (200 domains = ~3.5 minutes minimum), Pro allows 5-10/sec (200 domains = ~20-40 seconds)
+Recommends Pro plan ($25/mo, 10,000-20,000 requests) as the minimum viable plan for 200 domains with room for retries and supplementary lookups
+Provides code pattern: iterate through domains, call the API for each, collect emails/phones/social links, handle errors and empty responses
+For domains returning no contacts, falls back to Email Search API with company name queries — this is a separate API subscription
+Advises combining results: merge Website Contacts Scraper results with Email Search results, deduplicate by email address
+Notes that discovered emails are not verified — recommends running through an email verification service before outreach Result: User has a plan and code approach for enriching 200 domains with contact data, with clear budget expectations and fallback strategy
+Example 3: Monitoring competitor job postings as sales signals
+
+User says: "I want to track when competitor companies post new engineering jobs — it could signal they're building new products we should pitch against." Skill does:
+
+Uses JSearch API to search job postings by company name filtered to engineering roles — aggregates from LinkedIn, Indeed, Glassdoor, ZipRecruiter (200M+ listings)
+Sets up a recurring search pattern: query each competitor weekly, compare results to previous week to identify new postings
+Parses job descriptions for technology keywords, team size indicators, and product area mentions
+Supplements with Real-Time Web Search API for press releases, blog posts, or news articles about the competitor's product direction
+Uses Job Salary Data API to understand the seniority and budget level of new hires
+Recommends storing results in a database or spreadsheet and flagging anomalies (sudden hiring surge, new tech stack mentions, new office locations)
+Notes this requires two separate API subscriptions (JSearch + Real-Time Web Search) — budget accordingly Result: User has an automated competitive intelligence workflow using job posting data as a leading indicator for product and sales strategy
+Troubleshooting
+Website Contacts Scraper returning empty results for a known company
+
+Symptom: Calling the Website Contacts Scraper with a well-known company domain returns no emails, phone numbers, or social links. Cause: The company may not list contact information prominently on their website, may use JavaScript-rendered contact forms instead of plain text emails, may use obfuscated email formats (e.g., "name [at] company [dot] com"), or may have recently redesigned their website. Some companies deliberately avoid listing direct contact info on public pages. Solution: Try the Email Search API as a fallback — it searches the broader web, not just the company's website. Check if the domain redirects to a different URL (e.g., www vs non-www, or a parent company domain). Try the Social Links Search to find their social profiles, which may list contact info. For companies that heavily use JavaScript, the Web Unblocker API may capture content that the Website Contacts Scraper misses, though you will need to parse the HTML yourself.
+
+Local Business Data returning duplicate or outdated businesses
+
+Symptom: Search results include duplicate entries for the same business (different place IDs) or businesses that have closed. Cause: Google Maps data can contain duplicates when businesses have multiple listings (e.g., different departments, old and new listings). Closed businesses may remain in Google Maps data with a "permanently closed" status that needs to be checked in the response. Solution: Deduplicate results by phone number or address, not just business name (franchises share names). Filter out businesses with a "permanently closed" or "temporarily closed" status field. Cross-reference with the business's website (via Website Contacts Scraper) to verify they are still operating. For high-value prospect lists, manually verify a sample of results before bulk outreach.
+
+Rate limit errors across multiple APIs
+
+Symptom: Receiving 429 (Too Many Requests) errors when calling multiple OpenWeb Ninja APIs in a pipeline. Cause: Each API has its own independent rate limit, but if you are calling multiple APIs in rapid succession from the same integration, you may be exceeding limits on one or more. Rate limits are per API and per plan — Free is 1/sec, Pro is 5-10/sec, and so on. Solution: Implement per-API rate limiting in your code — track request timestamps for each API independently. Add exponential backoff with jitter on 429 responses. Consider upgrading the specific API that is bottlenecking your pipeline rather than upgrading all APIs. For complex pipelines hitting multiple APIs, use a queue-based architecture that respects each API's individual rate limit.
+
+Weekly Installs
+39
+Repository
+sales-skills/sales
+GitHub Stars
+14
+First Seen
+Mar 30, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

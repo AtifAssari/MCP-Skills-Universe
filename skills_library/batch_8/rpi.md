@@ -1,0 +1,133 @@
+---
+title: rpi
+url: https://skills.sh/boshu2/agentops/rpi
+---
+
+# rpi
+
+skills/boshu2/agentops/rpi
+rpi
+Installation
+$ npx skills add https://github.com/boshu2/agentops --skill rpi
+SKILL.md
+/rpi - Full Lifecycle Orchestrator
+
+Quick ref: /discovery -> /crank -> /validation, then report.
+
+Execute this workflow. Do not only describe it. RPI is autonomous unless --interactive is set. The user touchpoint is after validation, or after a real blocked state exhausts retries. Read references/autonomous-execution.md when you need the full autonomy contract.
+
+Core Contract
+
+RPI delegates via Skill(skill="discovery", ...), Skill(skill="crank", ...), and Skill(skill="validation", ...) as separate tool invocations. Keep strict delegation on by default; do not compress phases, replace phase skills with direct agent spawns, or skip validation. Read ../shared/references/strict-delegation-contract.md for the full anti-compression contract.
+
+RPI owns one lifecycle objective across all phases. Preserve the discovered epic_id when present; otherwise preserve the original goal and execution packet objective. A child bead or one ready slice is context, not a replacement objective. <promise>PARTIAL</promise> from /crank means retry Phase 2 on the same objective.
+
+Route And Classify
+Create .agents/rpi/.
+Resolve --from:
+default, research, plan, pre-mortem, brainstorm -> discovery
+implementation or crank -> implementation
+validation, vibe, or post-mortem -> validation
+If the input is a bead and --from is absent, resolve it with bd show:
+epic -> implementation with that epic
+child with parent -> implementation with the parent epic
+Classify complexity:
+fast: short/simple goal or --fast-path
+standard: medium goal or one scope keyword
+full: --deep, complex-operation keyword, 2+ scope keywords, or >120 chars
+Log RPI mode: rpi-phased (complexity: <level>).
+
+Track state compactly:
+
+rpi_state = {
+  goal: "<goal string>",
+  epic_id: null,
+  phase: "<discovery|implementation|validation>",
+  complexity: "<fast|standard|full>",
+  test_first: <true by default; false only when --no-test-first>,
+  cycle: 1,
+  verdicts: {}
+}
+
+
+Complex-operation keywords include refactor, migrate, rewrite, redesign, rearchitect, overhaul, decouple, deprecate, split, extract module, and port. Scope keywords include all, entire, across, everywhere, every file, system-wide, global, and codebase.
+
+Phase DAG
+
+Enter at the routed phase and run every phase after it.
+
+Discovery: invoke /discovery <goal> [--interactive] --complexity=<level>. On DONE, read .agents/rpi/execution-packet.json or the run archive and preserve its objective spine. On BLOCKED, stop with the discovery verdict.
+Implementation: invoke /crank <epic-id> when the packet has epic_id; otherwise invoke /crank .agents/rpi/execution-packet.json. Pass --test-first or --no-test-first through. On DONE, record ao ratchet record implement 2>/dev/null || true and continue. On PARTIAL or BLOCKED, retry the same objective up to 3 total attempts.
+Validation: invoke /validation <epic-id> --complexity=<level> when an epic exists; otherwise invoke /validation --complexity=<level>. Add --strict-surfaces when --quality is set. On FAIL, extract findings, re-run /crank on the same objective, then re-run /validation, up to 3 total validation attempts. On DONE, record ao ratchet record vibe 2>/dev/null || true.
+Report: summarize phase verdicts and epic status using references/report-template.md. With --loop, restart from discovery on FAIL while cycle < max_cycles. With --spawn-next, read .agents/rpi/next-work.jsonl and suggest the next command without invoking it.
+Phase Data Contract
+
+The execution packet carries the repo execution profile through contract_surfaces, done_criteria, and queue claim/finalize metadata. Keep the latest alias at .agents/rpi/execution-packet.json and read references/phase-data-contracts.md for schemas and archive paths.
+
+Complexity-Scaled Gates
+Pre-mortem
+complexity == "low" or "fast": inline review, no spawning (--quick)
+complexity == "medium" or "standard": inline fast default (--quick)
+complexity == "high" or "full": full council, 2-judge minimum; max 3 total attempts
+Final Vibe
+complexity == "low" or "fast": inline review, no spawning (--quick)
+complexity == "medium" or "standard": inline fast default (--quick)
+complexity == "high" or "full": full council, 2-judge minimum; max 3 total attempts
+Post-mortem (STEP 2)
+complexity == "low" or "fast": inline review, no spawning (--quick)
+complexity == "medium" or "standard": inline fast default (--quick)
+complexity == "high" or "full": full council, 2-judge minimum; max 3 total attempts
+Flags
+Flag	Default	Purpose
+--from=<phase>	discovery	Start at discovery, implementation, or validation
+--discovery-artifact=<path>	unset	With implementation start, convert an existing artifact into the handoff packet
+--interactive	off	Human gates in discovery/validation
+--auto	on	Fully autonomous default
+--loop --max-cycles=<n>	off / 3	Iterate when validation fails
+--spawn-next	off	Surface follow-up work after reporting
+--test-first	on	Pass strict-quality preference to /crank
+--no-test-first	off	Explicitly opt out of strict-quality
+--fast-path / --deep	auto	Force fast or full complexity
+--quality	off	Make validation strict surfaces blocking
+--dry-run / --no-budget	off	Report only, or disable phase time budgets
+Examples
+
+User says: /rpi "add user authentication" Run discovery, implementation, validation, then report.
+
+User says: /rpi --from=implementation ag-23k Resolve the bead scope, run implementation and validation, then report.
+
+User says: /rpi --deep "refactor payment module" Use full council gates across the lifecycle.
+
+Read references/examples.md for resume, interactive, loop, and artifact-mode examples.
+
+Troubleshooting
+Problem	Response
+Discovery BLOCKED	Stop and report discovery's manual-intervention reason
+/crank returns PARTIAL	Retry /crank on the same objective; do not narrow to a child slice
+Validation FAIL	Re-crank with findings, then re-validate, up to 3 total attempts
+Packet shape unclear	Read references/phase-data-contracts.md
+Reference Documents
+references/autonomous-execution.md
+references/complexity-scaling.md
+references/context-windowing.md
+references/discovery-artifact-mode.md
+references/error-handling.md
+references/examples.md
+references/gate-retry-logic.md
+references/gate4-loop-and-spawn.md
+references/phase-budgets.md
+references/phase-data-contracts.md
+references/report-template.md
+references/troubleshooting.md
+Weekly Installs
+485
+Repository
+boshu2/agentops
+GitHub Stars
+323
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykPass

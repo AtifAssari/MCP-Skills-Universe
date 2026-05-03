@@ -1,0 +1,149 @@
+---
+title: e2e-test
+url: https://skills.sh/duc01226/easyplatform/e2e-test
+---
+
+# e2e-test
+
+skills/duc01226/easyplatform/e2e-test
+e2e-test
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill e2e-test
+SKILL.md
+Skill: e2e-test
+
+Category: [Testing] Trigger: e2e test, e2e from recording, generate e2e, playwright test, cypress test, selenium test, webdriver, puppeteer
+
+Generate and maintain E2E tests using the project's configured testing framework.
+
+docs/test-specs/ — Test specifications by module (read existing TCs for E2E scenario coverage; match TC codes to E2E test implementations)
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+⚠️ MANDATORY: Read Project E2E Reference (FIRST)
+
+BEFORE ANY E2E WORK, you MUST ATTENTION:
+
+# 1. Read project-specific E2E patterns (REQUIRED)
+head -100 docs/project-reference/e2e-test-reference.md
+
+# 2. Read project config for framework, paths, commands
+grep -A 50 '"e2eTesting"' docs/project-config.json
+
+# 3. Find TC codes you need to implement
+grep -r "TC-.*-E2E-" docs/test-specs/ docs/business-features/
+
+
+The e2eTesting section in docs/project-config.json contains:
+
+Framework, language, paths, run commands, TC code format
+Project-specific best practices and entry points
+
+When investigating/fixing E2E failures, update docs/project-reference/e2e-test-reference.md with learnings.
+
+docs/project-reference/domain-entities-reference.md — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+Framework Detection (SECOND STEP)
+
+Detect the project's E2E stack before generating tests:
+
+# TypeScript/JavaScript
+grep -l "playwright\|cypress\|selenium\|webdriver" package.json 2>/dev/null
+ls playwright.config.* cypress.config.* wdio.conf.* 2>/dev/null
+
+# C# .NET
+grep -r "Selenium.WebDriver\|Microsoft.Playwright" **/*.csproj 2>/dev/null
+
+Framework	Config File	Test Extension	Run Command
+Playwright	playwright.config.ts	*.spec.ts	npx playwright test
+Cypress	cypress.config.ts	*.cy.ts	npx cypress run
+WebdriverIO	wdio.conf.js	*.e2e.ts	npx wdio run
+Selenium.NET	*.csproj	*Tests.cs	dotnet test
+Workflow Modes
+Mode	Input	Output
+from-recording	Recording JSON + feature	Test spec + page object
+update-ui	Git diff of UI changes	Updated screenshot baselines
+from-changes	Changed test specs or code	Updated test implementations
+from-spec	TC codes from test specs	New tests matching specs
+Core Principles
+1. TC Code Traceability (MANDATORY)
+
+Every E2E test MUST ATTENTION have:
+
+TC code in test name: TC-{MODULE}-E2E-{NNN}
+Tag/trait linking to spec
+Comment linking to feature doc
+// TypeScript
+test('TC-LR-E2E-001: Submit leave request', async () => { ... });
+
+// C# .NET
+[Fact]
+[Trait("TC", "TC-LR-E2E-001")]
+public async Task SubmitLeaveRequest() { ... }
+
+2. Page Object Model
+
+All frameworks should use Page Object pattern:
+
+Encapsulate page locators in page class
+Methods represent user actions
+Assertions in test file, not page object
+3. Selector Strategy (Priority Order)
+Semantic classes — BEM (.block__element), component classes
+Data attributes — [data-testid], [data-cy], [data-test]
+ARIA/Role — role=button, aria-label
+Text content — Visible user text (last resort)
+
+AVOID: Generated classes (.ng-star-inserted, .MuiButton-root), positional selectors (:nth-child), XPath
+
+4. Unique Test Data
+
+Tests must generate unique data to be repeatable:
+
+Append GUIDs/timestamps to test data
+Don't depend on specific database state
+Don't clean up data (creates side effects)
+5. Preconditions Documentation
+
+Document what must exist before test runs:
+
+System: Infrastructure running, APIs healthy
+Data: Seed data exists (users, companies)
+Feature: Configurations complete
+Steps
+Detect framework from project files
+Read project E2E docs for conventions and patterns
+Load test specs with TC codes from feature docs
+Generate/update tests following Page Object pattern
+Run tests using project's configured commands
+Update e2e-test-reference.md with any learnings
+Output
+
+Report:
+
+Files created/modified
+TC codes covered
+Run command to execute tests
+Any preconditions or setup needed
+Workflow Recommendation
+
+MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS: If you are NOT already in a workflow, you MUST ATTENTION use AskUserQuestion to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+
+Activate e2e-from-changes workflow (Recommended) — scout → e2e-test → test → watzup
+Execute /e2e-test directly — run this skill standalone
+Closing Reminders
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+MANDATORY IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+Weekly Installs
+14
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Mar 10, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

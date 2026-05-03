@@ -1,0 +1,67 @@
+---
+rating: ⭐⭐
+title: xcodebuildmcp
+url: https://skills.sh/cameroncooke/xcodebuildmcp/xcodebuildmcp
+---
+
+# xcodebuildmcp
+
+skills/cameroncooke/xcodebuildmcp/xcodebuildmcp
+xcodebuildmcp
+Originally fromgetsentry/xcodebuildmcp
+Installation
+$ npx skills add https://github.com/cameroncooke/xcodebuildmcp --skill xcodebuildmcp
+Summary
+
+Complete iOS/macOS/watchOS/tvOS/visionOS build, test, debug, and UI automation through Xcode without raw command-line tools.
+
+Simulator workflows: build, run, test, install, and launch apps on iOS simulators with state management (boot, erase, location, appearance)
+Device and macOS workflows: build, test, install, and launch on physical devices with code signing, plus native macOS app support
+Debugging and inspection: LLDB attachment with breakpoints, stack traces, variable inspection, plus screenshot capture and view hierarchy inspection with tap/swipe/gesture automation
+Session defaults: configure project, scheme, simulator, and device once to avoid repetitive parameters across commands
+Project discovery and scaffolding: find Xcode projects/workspaces, list schemes, inspect build settings, and generate new iOS/macOS templates
+SKILL.md
+XcodeBuildMCP
+
+Use XcodeBuildMCP tools instead of raw xcodebuild, xcrun, or simctl.
+
+Capabilities:
+
+Session defaults: Configure project, scheme, simulator, and device defaults to avoid repetitive parameters
+Project discovery: Find Xcode projects/workspaces, list schemes, inspect build settings
+Simulator workflows: Build, run, test, install, and launch apps on iOS simulators; manage simulator state (boot, erase, location, appearance)
+Device workflows: Build, test, install, and launch apps on physical devices with code signing
+macOS workflows: Build, run, and test macOS applications
+Log capture: Stream and capture logs from simulators and devices
+LLDB debugging: Attach debugger, set breakpoints, inspect stack traces and variables, execute LLDB commands
+UI automation: Capture screenshots, inspect view hierarchy with coordinates, perform taps/swipes/gestures, type text, press hardware buttons
+SwiftPM: Build, run, test, and manage Swift Package Manager projects
+Project scaffolding: Generate new iOS/macOS project templates
+
+Only simulator workflow tools are enabled by default. If capabilities like device, macOS, debugging, or UI automation are not available, the user must configure XcodeBuildMCP to enable them. See https://xcodebuildmcp.com/docs/configuration for workflow configuration.
+
+Step 1: Establish Session Context
+Call session_show_defaults before the first build/run/test action in a session.
+Use discover_projs only when defaults show missing or incorrect project/workspace context.
+Do not run discovery speculatively or in parallel with session_show_defaults.
+For simulator run intent, prefer the combined build-and-run tool instead of separate build then run calls.
+Do not chain build-only then build-and-run unless the user explicitly requests both.
+Step 2: Understand Workflow-Scoped Tool Availability
+Not all tools are enabled by default; tool availability depends on enabled workflows.
+If a tool is expected but missing, check enabled workflows first.
+Update enabled workflows in .xcodebuildmcp/config.yaml, then ask user to reload/restart the session to surface refreshes.
+Step 3: Report Context Clearly
+Return the active defaults context used for execution (project/workspace, scheme, simulator/device).
+For failures, include the exact failing step and the next actionable command/tool call.
+Weekly Installs
+529
+Repository
+cameroncooke/xc…buildmcp
+GitHub Stars
+5.4K
+First Seen
+Jan 26, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

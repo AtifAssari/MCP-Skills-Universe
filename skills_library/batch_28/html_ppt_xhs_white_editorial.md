@@ -1,0 +1,45 @@
+---
+title: html-ppt-xhs-white-editorial
+url: https://skills.sh/nexu-io/open-design/html-ppt-xhs-white-editorial
+---
+
+# html-ppt-xhs-white-editorial
+
+skills/nexu-io/open-design/html-ppt-xhs-white-editorial
+html-ppt-xhs-white-editorial
+Installation
+$ npx skills add https://github.com/nexu-io/open-design --skill html-ppt-xhs-white-editorial
+SKILL.md
+HTML PPT · 白底杂志风
+
+A focused entry point into the html-ppt master skill that lands the user directly on the xhs-white-editorial full-deck template.
+
+When this card is picked
+
+The Examples gallery wires "Use this prompt" to the example_prompt above. When you accept that prompt, this card is the right pick if the user wants exactly the visual identity of xhs-white-editorial (see the upstream full-decks catalog for screenshots and rationale).
+
+How to author the deck
+Read the master skill first. All authoring rules live in skills/html-ppt/SKILL.md — content/audience checklist, token rules, layout reuse, presenter mode, the keyboard runtime, and the "never put presenter-only text on the slide" rule.
+Start from the matching template folder: skills/html-ppt/templates/full-decks/xhs-white-editorial/ — copy index.html and style.css into the project, keep the .tpl-xhs-white-editorial body class.
+Bring the shared runtime with the template. The upstream index.html links the shared CSS/JS via ../../../assets/... because it sits three folders deep inside skills/html-ppt/templates/full-decks/. Once you copy index.html into the project, those parent-relative URLs no longer resolve and base.css, animations.css, and runtime.js will 404 — meaning the deck never activates and slide navigation is dead. Pick one of these two recipes per project:
+Recipe A — copy + rewrite (preferred): copy skills/html-ppt/assets/fonts.css, skills/html-ppt/assets/base.css, skills/html-ppt/assets/animations/animations.css, and skills/html-ppt/assets/runtime.js into a project-local assets/ (with assets/animations/animations.css), then rewrite the four <link>/<script> tags in index.html from ../../../assets/... to the matching project-local paths (assets/fonts.css, assets/base.css, assets/animations/animations.css, assets/runtime.js).
+Recipe B — inline: read the same four files and replace each <link rel="stylesheet" href="../../../assets/..."> with a <style>...</style> containing the file's contents, and the <script src="../../../assets/runtime.js"> with a <script>...</script> containing runtime.js. Yields a single self-contained index.html. Either way, do not ship the upstream ../../../assets/... URLs verbatim into a project artifact — they only work in-tree.
+Pick a theme. Default tokens look fine; if the user wants a different feel, swap in any of the 36 themes from skills/html-ppt/assets/themes/*.css via <link id="theme-link"> and let T cycle.
+Replace demo content, not classes. The .tpl-xhs-white-editorial scoped CSS only recognises the structural classes shipped in the template — keep them.
+Speaker notes go inside <aside class="notes"> or <div class="notes"> — never as visible text on the slide.
+Attribution
+
+Visual system, layouts, themes and the runtime keyboard model come from the upstream MIT-licensed lewislulu/html-ppt-skill. The LICENSE file ships at skills/html-ppt/LICENSE; please keep it in place when redistributing.
+
+Weekly Installs
+16
+Repository
+nexu-io/open-design
+GitHub Stars
+14.2K
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

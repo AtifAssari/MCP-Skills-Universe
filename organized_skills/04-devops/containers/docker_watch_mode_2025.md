@@ -1,0 +1,64 @@
+---
+rating: ⭐⭐
+title: docker-watch-mode-2025
+url: https://skills.sh/josiahsiegel/claude-plugin-marketplace/docker-watch-mode-2025
+---
+
+# docker-watch-mode-2025
+
+skills/josiahsiegel/claude-plugin-marketplace/docker-watch-mode-2025
+docker-watch-mode-2025
+Installation
+$ npx skills add https://github.com/josiahsiegel/claude-plugin-marketplace --skill docker-watch-mode-2025
+SKILL.md
+Docker Compose Watch Mode (2025 GA)
+
+Docker Compose Watch enables automatic hot reload during local development by synchronizing file changes instantly without manual container restarts.
+
+Three Watch Actions
+1. sync - Hot Reload
+
+For frameworks with hot reload (React, Next.js, Node.js, Flask). Copies changed files directly into running container.
+
+2. rebuild - Compilation
+
+For compiled languages (Go, Rust, Java) or dependency changes. Rebuilds image and recreates container when files change.
+
+3. sync+restart - Config Changes
+
+For configuration files requiring restart. Syncs files and restarts container.
+
+Usage
+services:
+  frontend:
+    build: ./frontend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+          ignore: [node_modules/, .git/]
+        - action: rebuild
+          path: ./frontend/package.json
+
+
+Start with: docker compose up --watch
+
+Benefits
+Better performance than bind mounts
+No file permission issues
+Intelligent syncing
+Supports rebuild capability
+Works on all platforms
+Weekly Installs
+90
+Repository
+josiahsiegel/cl…ketplace
+GitHub Stars
+33
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

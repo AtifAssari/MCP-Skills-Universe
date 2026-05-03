@@ -1,0 +1,99 @@
+---
+rating: ⭐⭐
+title: hig-foundations
+url: https://skills.sh/raintree-technology/apple-hig-skills/hig-foundations
+---
+
+# hig-foundations
+
+skills/raintree-technology/apple-hig-skills/hig-foundations
+hig-foundations
+Installation
+$ npx skills add https://github.com/raintree-technology/apple-hig-skills --skill hig-foundations
+SKILL.md
+Apple HIG: Design Foundations
+
+Check for .claude/apple-design-context.md before asking questions. Use existing context and only ask for information not already covered.
+
+Key Principles
+
+Prioritize content over chrome. Reduce visual clutter. Use system-provided materials and subtle separators rather than heavy borders and backgrounds.
+
+Build in accessibility from the start. Design for VoiceOver, Dynamic Type, Reduce Motion, Increase Contrast, and Switch Control from day one. Every interactive element needs an accessible label.
+
+Use system colors and materials. System colors adapt to light/dark mode, increased contrast, and vibrancy. Prefer semantic colors (label, secondaryLabel, systemBackground) over hard-coded values.
+
+Use platform fonts and icons. SF Pro, SF Compact, SF Mono by default. New York for serif. Follow the type hierarchy at recommended sizes. Use SF Symbols for iconography.
+
+Match platform conventions. Align look and behavior with system standards. Provide direct, responsive manipulation and clear feedback for every action.
+
+Respect privacy. Request permissions only when needed, explain why clearly, provide value before asking for data. Design for minimal data collection.
+
+Support internationalization. Accommodate text expansion, right-to-left scripts, and varying date/number formats. Use Auto Layout for dynamic content sizing.
+
+Use motion purposefully. Animation should communicate meaning and spatial relationships. Honor Reduce Motion by providing crossfade alternatives.
+
+Reference Index
+Reference	Topic	Key content
+accessibility.md	Accessibility	VoiceOver, Dynamic Type, color contrast, motor accessibility, Switch Control, audio descriptions
+app-icons.md	App Icons	Icon grid, platform-specific sizes, single focal point, no transparency
+branding.md	Branding	Integrating brand identity within Apple's design language, subtle branding, custom tints
+color.md	Color	System colors, Dynamic Colors, semantic colors, custom palettes, contrast ratios
+dark-mode.md	Dark Mode	Elevated surfaces, semantic colors, adapted palettes, vibrancy, testing in both modes
+icons.md	Icons	Glyph icons, SF Symbols integration, custom icon design, icon weights, optical alignment
+images.md	Images	Image resolution, @2x/@3x assets, vector assets, image accessibility
+immersive-experiences.md	Immersive Experiences	AR/VR design, spatial immersion, comfort zones, progressive immersion levels
+inclusion.md	Inclusion	Diverse representation, non-gendered language, cultural sensitivity, inclusive defaults
+layout.md	Layout	Margins, spacing, alignment, safe areas, adaptive layouts, readable content guides
+materials.md	Materials	Vibrancy, blur, translucency, system materials, material thickness
+motion.md	Motion	Animation curves, transitions, continuity, Reduce Motion support, physics-based motion
+privacy.md	Privacy	Permission requests, usage descriptions, privacy nutrition labels, minimal data collection
+right-to-left.md	Right-to-Left	RTL layout mirroring, bidirectional text, icons that flip, exceptions
+sf-symbols.md	SF Symbols	Symbol categories, rendering modes, variable color, custom symbols, weight matching
+spatial-layout.md	Spatial Layout	visionOS window placement, depth, ergonomic zones, Z-axis design
+typography.md	Typography	SF Pro, Dynamic Type sizes, text styles, custom fonts, font weight hierarchy, line spacing
+writing.md	Writing	UI copy guidelines, tone, capitalization rules, error messages, button labels, conciseness
+Applying Foundations Together
+
+Consider how principles interact:
+
+Color + Dark Mode + Accessibility -- Custom palettes must work in both modes while maintaining WCAG contrast ratios. Start with system semantic colors.
+
+Typography + Accessibility + Layout -- Dynamic Type must scale without breaking layouts. Use text styles and Auto Layout for the full range of type sizes.
+
+Icons + Branding + SF Symbols -- Custom icons should match SF Symbols weight and optical sizing. Brand elements should integrate without overriding system conventions.
+
+Motion + Accessibility + Feedback -- Every animation must have a Reduce Motion alternative. Motion should reinforce spatial relationships, not decorate.
+
+Privacy + Writing + Onboarding -- Permission requests need clear, specific usage descriptions. Time them to when the user will understand the benefit.
+
+Output Format
+Cite the specific HIG foundation with file and section.
+Note platform differences for the user's target platforms.
+Provide concrete code patterns (SwiftUI/UIKit/AppKit).
+Explain accessibility impact (contrast ratios, Dynamic Type scaling, VoiceOver behavior).
+Questions to Ask
+Which platforms are you targeting?
+Do you have existing brand guidelines?
+What accessibility level are you targeting? (WCAG AA, AAA, Apple baseline?)
+System colors or custom?
+Related Skills
+hig-platforms -- How foundations apply per platform (e.g., type scale differences on watchOS vs macOS)
+hig-patterns -- Interaction patterns where foundations like writing and accessibility are critical
+hig-components-layout -- Structural components implementing layout principles
+hig-components-content -- Content display using color, typography, and images
+
+Built by Raintree Technology · More developer tools
+
+Weekly Installs
+184
+Repository
+raintree-techno…g-skills
+GitHub Stars
+45
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,92 @@
+---
+title: character-relationships
+url: https://skills.sh/vangongwanxiaowan/screen-creative-skills/character-relationships
+---
+
+# character-relationships
+
+skills/vangongwanxiaowan/screen-creative-skills/character-relationships
+character-relationships
+Installation
+$ npx skills add https://github.com/vangongwanxiaowan/screen-creative-skills --skill character-relationships
+SKILL.md
+人物关系分析专家
+功能
+
+分析故事中人物间的关系，识别关系类型和特点，并描述其发展过程与变化。
+
+使用场景
+深度理解故事中的人物关系网络。
+分析人物关系对情节的推动作用。
+为人物塑造提供关系视角。
+为情节设计提供关系支撑。
+核心步骤
+识别人物: 识别故事中的所有主要人物。
+分析关系: 分析人物间的关系类型和特点。
+分类整理: 对人物关系进行分类整理。
+描述特点: 描述人物关系的具体特点。
+分析变化: 分析人物关系的发展过程和变化。
+输入要求
+包含人物关系信息的完整故事文本。
+可指定需要分析的人物关系（可选）。
+建议文本长度：500字以上。
+输出格式
+【人物关系分析】
+
+一、关系网络概览
+- 主要人物列表：[人物列表]
+- 关系类型统计：[各类关系数量]
+
+二、主要人物关系详解
+
+【关系1：人物A ↔ 人物B】
+- 关系类型：[亲情/友情/爱情/敌对/师徒/同事等]
+- 关系特点：[关系的特点描述]
+- 关系发展过程：[关系如何发展变化]
+- 关系变化原因：[导致变化的原因]
+- 关系对故事的影响：[如何影响情节发展]
+
+【关系2：人物A ↔ 人物C】
+...
+
+三、人物关系图谱
+- 中心人物：[谁是关系的中心]
+- 次级人物：[次要人物关系]
+- 边缘人物：[边缘人物关系]
+
+四、人物关系变化轨迹
+- 初始状态：[故事开始时的关系]
+- 中间变化：[关系如何变化]
+- 最终状态：[故事结束时的关系]
+
+约束条件
+严格基于提供的故事文本进行分析，不自行创作。
+确保人物关系识别的准确性和完整性。
+描述人物关系发展过程应逻辑清晰、条理分明。
+示例
+
+请参见 {baseDir}/references/examples.md 获取详细示例。该文件包含了多种故事类型（如爱情、职场、家庭等）的人物关系分析报告和分析说明。
+
+详细文档
+
+参见 {baseDir}/references/ 目录获取更多文档:
+
+guide.md - 完整的人物关系分析指南
+examples.md - 更多场景的分析示例
+版本历史
+版本	日期	变更
+2.1.0	2026-01-11	优化 description 字段，使其更精简并符合命令式语言规范；模型更改为 opus；优化功能、使用场景、核心步骤、输入要求、输出格式的描述，使其更符合命令式语言规范；添加约束条件、示例和详细文档部分。
+2.0.0	2026-01-11	按官方规范重构；添加 allowed-tools (Read) 和 model 字段
+1.0.0	2026-01-10	初始版本
+Weekly Installs
+35
+Repository
+vangongwanxiaow…e-skills
+GitHub Stars
+128
+First Seen
+Jan 22, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

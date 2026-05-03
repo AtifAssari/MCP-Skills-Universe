@@ -1,0 +1,201 @@
+---
+rating: ⭐⭐⭐
+title: demo-producer
+url: https://skills.sh/yonatangross/orchestkit/demo-producer
+---
+
+# demo-producer
+
+skills/yonatangross/orchestkit/demo-producer
+demo-producer
+Installation
+$ npx skills add https://github.com/yonatangross/orchestkit --skill demo-producer
+SKILL.md
+Demo Producer
+
+Universal demo video creation for any content type.
+
+Tool versions (2026-Q2): VHS >= 0.11, Remotion >= 4.0.448. VHS 0.11 added:
+
+Wait keyword — supersedes Sleep N with a condition-based wait (Wait "prompt>" blocks until the given string appears). Use Wait over Sleep for any prompt that can appear at variable times.
+ScrollUp N / ScrollDown N — explicit scroll steps inside a recorded session; useful for demonstrating TUI apps and long less-style output.
+
+Keep existing Sleep N only for fixed visual pacing where no event is available.
+
+Quick Start
+/ork:demo-producer                    # Interactive mode - asks what to create
+/ork:demo-producer skill explore      # Create demo for a skill
+/ork:demo-producer plugin ork     # Create demo for a plugin
+/ork:demo-producer tutorial "Building a REST API"  # Custom tutorial
+
+CRITICAL: Task Management is MANDATORY (CC 2.1.16)
+
+BEFORE doing ANYTHING else, create tasks to track progress:
+
+# 1. Create main task IMMEDIATELY
+TaskCreate(
+  subject="Demo Producer: {topic}",
+  description="Creating polished demo video for content showcase",
+  activeForm="Producing demo for {topic}"
+)
+
+# 2. Create subtasks for each production phase
+TaskCreate(subject="Content analysis", activeForm="Analyzing content for demo")
+TaskCreate(subject="Script & storyboard", activeForm="Generating script and storyboard")
+TaskCreate(subject="Record & compose", activeForm="Recording terminal and composing video")
+TaskCreate(subject="Final output", activeForm="Rendering final video outputs")
+
+# 3. Set dependencies for sequential phases
+TaskUpdate(taskId="3", addBlockedBy=["2"])
+TaskUpdate(taskId="4", addBlockedBy=["3"])
+TaskUpdate(taskId="5", addBlockedBy=["4"])
+
+# 4. Before starting each task, verify it's unblocked
+task = TaskGet(taskId="2")  # Verify blockedBy is empty
+
+# 5. Update status as you progress
+TaskUpdate(taskId="2", status="in_progress")  # When starting
+TaskUpdate(taskId="2", status="completed")    # When done
+
+Supported Content Types
+Type	Source	Example
+skill	skills/{name}/SKILL.md	/ork:demo-producer skill commit
+agent	agents/{name}.md	/ork:demo-producer agent debug-investigator
+plugin	plugins/{name}/plugin.json	/ork:demo-producer plugin ork
+marketplace	Marketplace install flow	/ork:demo-producer marketplace ork
+tutorial	Custom description	/ork:demo-producer tutorial "Git workflow"
+cli	Any CLI tool	/ork:demo-producer cli "npm create vite"
+code	Code walkthrough	/ork:demo-producer code src/api/auth.ts
+Interactive Flow
+
+When invoked without arguments, asks 4 questions:
+
+Question 1: Content Type
+What type of demo do you want to create?
+
+○ Skill - OrchestKit skill showcase
+○ Agent - AI agent demonstration
+○ Plugin - Plugin installation/features
+○ Tutorial - Custom coding tutorial
+○ CLI Tool - Command-line tool demo
+○ Code Walkthrough - Explain existing code
+
+Question 2: Format
+What format(s) do you need?
+
+☑ Horizontal (16:9) - YouTube, Twitter
+☑ Vertical (9:16) - TikTok, Reels, Shorts
+☐ Square (1:1) - Instagram, LinkedIn
+
+Question 3: Style
+What style fits your content?
+
+○ Quick Demo (6-10s) - Fast showcase, single feature
+○ Standard Demo (15-25s) - Full workflow, multiple steps
+○ Tutorial (30-60s) - Detailed explanation, code examples
+○ Cinematic (60s+) - Story-driven, high polish
+○ Scrapbook (15-35s) - Warm paper, fast cuts, social proof collage (Anthropic style)
+
+Question 4: Audio
+Audio preferences?
+
+○ Music Only - Subtle ambient background
+○ Music + SFX - Background + success sounds
+○ Silent - No audio
+
+Pipeline Architecture
+
+Load details: Read("${CLAUDE_SKILL_DIR}/references/demo-pipeline.md") for the full pipeline diagram, generation commands, and output structure.
+
+Content Detector -> Content Analyzer -> Script Generator -> Terminal Script -> VHS Recorder -> Remotion Composer -> Final Outputs (horizontal/vertical/square).
+
+Template System
+
+Four template architectures for different demo styles. Load Read("${CLAUDE_SKILL_DIR}/references/template-system.md") for detailed configuration and the SkillDemoConfig interface.
+
+Template	Use Case	Duration	Key Feature
+TriTerminalRace	Complexity comparisons	15-20s	3-panel split, color-coded difficulty
+ProgressiveZoom	Tutorials, walkthroughs	20-30s	Zoom transitions, layered reveals
+SplitThenMerge	Before/after, transformations	15-25s	Split screen -> unified merge
+ScrapbookDemo	Product launches, social proof	15-35s	Warm paper aesthetic, fast cuts
+
+Content type templates (skill, agent, plugin, tutorial, cli, code) are mapped in Read("${CLAUDE_SKILL_DIR}/references/skill-category-mapping.md").
+
+Remotion Composition
+
+Load details: Read("${CLAUDE_SKILL_DIR}/references/remotion-composition.md") for folder structure, adding new compositions, and format variant prefixes.
+
+Compositions organized under Production/ by format (Landscape, Vertical, Square) and skill category.
+
+Customization Options
+Visual Themes
+Dark mode (default): Dark backgrounds, neon accents
+Light mode: Clean whites, subtle shadows
+Terminal: Pure terminal aesthetic
+Cinematic: High contrast, dramatic lighting
+Scrapbook: Warm paper (#F0F0E8), serif typography, fast cuts, mixed media collage
+Audio Presets
+Ambient: Subtle background, no SFX
+Tech: Electronic beats, UI sounds
+Corporate: Professional, clean
+Energetic: Upbeat, fast-paced
+PushNotification on Completion (CC 2.1.110+)
+
+VHS recording and Remotion rendering commonly take 10–45 min per video, and full multi-variant productions (landscape + vertical + square) can exceed an hour. After all output files are written and verified, call PushNotification so the user knows the video is ready for review.
+
+PushNotification(
+  title="ork:demo-producer complete",
+  body=f"{topic}: {variants_count} variants rendered · output at {output_dir}"
+)
+
+
+Full rule: Read("/Users/yonatangross/coding/yonatangross/orchestkit/plugins/ork/skills/chain-patterns/rules/push-notification-on-completion.md").
+
+Best Practices
+Keep it focused - One feature/concept per video
+Show, don't tell - Demonstrate actual usage
+Use real data - Show actual command outputs
+Include context - Brief setup before the demo
+End with CTA - Always include install command
+Terminal Simulation Patterns
+
+Load details: Read("${CLAUDE_SKILL_DIR}/references/terminal-simulation.md") for TypeScript patterns: pinned header + scrolling content, agent color palette, and task spinner animation.
+
+Slop Avoidance
+
+Load details: Read("${CLAUDE_SKILL_DIR}/rules/slop-avoidance.md") for text density rules, timing compression, common slop patterns, and hook styles.
+
+Core rule: If content doesn't earn its screen time, cut it.
+
+Rules Quick Reference
+Rule	Impact	What It Covers
+analyzer-patterns (load ${CLAUDE_SKILL_DIR}/rules/analyzer-patterns.md)	MEDIUM	Frontmatter parsing, phase detection, example extraction
+production-pipeline (load ${CLAUDE_SKILL_DIR}/rules/production-pipeline.md)	HIGH	Pre-production, storyboarding, recording, VHS, manim
+production-composition (load ${CLAUDE_SKILL_DIR}/rules/production-composition.md)	HIGH	Remotion composition, audio mixing, thumbnails, captions
+slop-avoidance (load ${CLAUDE_SKILL_DIR}/rules/slop-avoidance.md)	HIGH	Text density, timing compression, hook styles
+Related Skills
+video-production: Full video production pipeline (recording, composition, audio, pacing)
+References
+
+Load on demand with Read("${CLAUDE_SKILL_DIR}/references/<file>"):
+
+File	Content
+template-system.md	Template architecture and SkillDemoConfig interface
+content-types.md	Detailed content type specs
+format-selection.md	Platform requirements and multi-format support
+script-generation.md	Script templates and generation patterns
+demo-pipeline.md	Pipeline architecture, generation commands, output structure
+remotion-composition.md	Remotion folder structure and composition guide
+skill-category-mapping.md	Skill category mapping and content type templates
+Weekly Installs
+125
+Repository
+yonatangross/orchestkit
+GitHub Stars
+163
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubWarn
+SocketPass
+SnykPass

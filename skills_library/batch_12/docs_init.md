@@ -1,0 +1,87 @@
+---
+title: docs-init
+url: https://skills.sh/duc01226/easyplatform/docs-init
+---
+
+# docs-init
+
+skills/duc01226/easyplatform/docs-init
+docs-init
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill docs-init
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Quick Summary
+
+Goal: Initialize project reference documentation by verifying the session-init-docs.cjs hook has created placeholder files, then running scan skills to populate them.
+
+Workflow:
+
+Verify -- Check that session-init-docs.cjs hook has created placeholder docs in docs/
+List -- Show which reference docs exist and which are still placeholders
+Populate -- Ask user which scan skills to run (or run all)
+
+Key Rules:
+
+Do NOT create docs manually -- the hook handles placeholder creation automatically
+Each reference doc has a corresponding /scan-* skill that populates it
+Scan skills do deep codebase scanning; expect 5-15 min per skill
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+Step 1: Verify Reference Doc Stubs
+
+Check that the session-init-docs.cjs hook has created the 10 reference doc files:
+
+docs/project-reference/project-structure-reference.md     -> /scan-project-structure
+docs/project-reference/backend-patterns-reference.md      -> /scan-backend-patterns
+docs/project-reference/frontend-patterns-reference.md     -> /scan-frontend-patterns
+docs/project-reference/integration-test-reference.md      -> /scan-integration-tests
+docs/project-reference/feature-docs-reference.md          -> /scan-feature-docs
+docs/project-reference/code-review-rules.md              -> /scan-code-review-rules
+docs/project-reference/scss-styling-guide.md             -> /scan-scss-styling
+docs/project-reference/design-system/README.md           -> /scan-design-system
+docs/project-reference/e2e-test-reference.md             -> /scan-e2e-tests
+docs/project-reference/lessons.md                        -> /learn (managed separately)
+
+
+If any files are missing, the hook should create them on next prompt. Verify by checking docs/ directory.
+
+Step 2: Detect Placeholder vs Populated
+
+Read the first 512 bytes of each file. If it contains <!-- Fill in your project's details below. -->, it is still a placeholder and needs scanning.
+
+Step 3: Offer Scan Options
+
+Use AskUserQuestion to present:
+
+"Run /claude-md-init + all scan skills" (Recommended for first-time init) -- Generates CLAUDE.md from config, then runs all 9 scan skills
+"Run all scan skills only" -- Runs all 9 scan skills without CLAUDE.md generation
+"Select specific skills" -- Let user choose which ones to run
+"Skip -- docs are already populated" -- Exit if all docs have content
+
+For each selected scan skill, invoke it via the Skill tool (e.g., /scan-backend-patterns).
+
+Configuration
+
+Reference doc definitions are in docs/project-config.json under referenceDocs. The hook reads this config to determine which files to create. See .claude/hooks/session-init-docs.cjs for the full implementation.
+
+Closing Reminders
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+MANDATORY IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality
+Weekly Installs
+35
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

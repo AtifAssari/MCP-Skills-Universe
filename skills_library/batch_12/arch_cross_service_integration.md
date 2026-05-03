@@ -1,0 +1,287 @@
+---
+title: arch-cross-service-integration
+url: https://skills.sh/duc01226/easyplatform/arch-cross-service-integration
+---
+
+# arch-cross-service-integration
+
+skills/duc01226/easyplatform/arch-cross-service-integration
+arch-cross-service-integration
+Installation
+$ npx skills add https://github.com/duc01226/easyplatform --skill arch-cross-service-integration
+SKILL.md
+
+[IMPORTANT] Use TaskCreate to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+Critical Thinking Mindset — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act. Anti-hallucination: Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+
+AI Mistake Prevention — Failure modes to avoid on every task:
+
+Check downstream references before deleting. Deleting components causes documentation and code staleness cascades. Map all referencing files before removal.
+Verify AI-generated content against actual code. AI hallucinates APIs, class names, and method signatures. Always grep to confirm existence before documenting or referencing.
+Trace full dependency chain after edits. Changing a definition misses downstream variables and consumers derived from it. Always trace the full chain.
+Trace ALL code paths when verifying correctness. Confirming code exists is not confirming it executes. Always trace early exits, error branches, and conditional skips — not just happy path.
+When debugging, ask "whose responsibility?" before fixing. Trace whether bug is in caller (wrong data) or callee (wrong handling). Fix at responsible layer — never patch symptom site.
+Assume existing values are intentional — ask WHY before changing. Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code.
+Verify ALL affected outputs, not just the first. Changes touching multiple stacks require verifying EVERY output. One green check is not all green checks.
+Holistic-first debugging — resist nearest-attention trap. When investigating any failure, list EVERY precondition first (config, env vars, DB names, endpoints, DI registrations, data preconditions), then verify each against evidence before forming any code-layer hypothesis.
+Surgical changes — apply the diff test. Bug fix: every changed line must trace directly to the bug. Don't restyle or improve adjacent code. Enhancement task: implement improvements AND announce them explicitly.
+Surface ambiguity before coding — don't pick silently. If request has multiple interpretations, present each with effort estimate and ask. Never assume all-records, file-based, or more complex path.
+
+Evidence-Based Reasoning — Speculation is FORBIDDEN. Every claim needs proof.
+
+Cite file:line, grep results, or framework docs for EVERY claim
+Declare confidence: >80% act freely, 60-80% verify first, <60% DO NOT recommend
+Cross-service validation required for architectural changes
+"I don't have enough evidence" is valid and expected output
+
+BLOCKED until: - [ ] Evidence file path (file:line) - [ ] Grep search performed - [ ] 3+ similar patterns found - [ ] Confidence level stated
+
+Forbidden without proof: "obviously", "I think", "should be", "probably", "this is because" If incomplete → output: "Insufficient evidence. Verified: [...]. Not verified: [...]."
+
+docs/project-reference/domain-entities-reference.md — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+Quick Summary
+
+Goal: Design and implement cross-service communication, data sync, and service boundary patterns.
+
+Workflow:
+
+Pre-Flight — Identify source/target services, data ownership, sync vs async
+Choose Pattern — Entity Event Bus (recommended), Direct API, never shared DB
+Implement — Producer + Consumer with dependency waiting and race condition handling
+Test — Verify create/update/delete flows, out-of-order messages, force sync
+
+Key Rules:
+
+Never access another service's database directly
+Use LastMessageSyncDate for conflict resolution (only update if newer)
+Consumers must wait for dependencies with TryWaitUntilAsync
+Messages defined in shared project (search for: shared message definitions, bus message classes)
+
+Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).
+
+MANDATORY IMPORTANT MUST ATTENTION Plan ToDo Task to READ the following project-specific reference doc:
+
+backend-patterns-reference.md — backend CQRS, entity event bus, message bus patterns
+
+If file not found, search for: cross-service message definitions, entity event producers, message bus consumers.
+
+Cross-Service Integration Workflow
+When to Use This Skill
+Designing service-to-service communication
+Implementing data synchronization
+Analyzing service boundaries
+Troubleshooting cross-service issues
+Pre-Flight Checklist
+ Identify source and target services
+ Determine data ownership
+ Choose communication pattern (sync vs async)
+ Map data transformation requirements
+Service Boundaries
+
+Note: Search for project-structure-reference.md or the project's service directories to discover the platform's service map, data ownership matrix, and shared infrastructure components.
+
+Communication Patterns
+Pattern 1: Entity Event Bus (Recommended)
+
+Use when: Source service owns data, target services need copies.
+
+Source Service                    Target Service
+┌────────────┐                   ┌────────────┐
+│  Employee  │──── Create ────▶ │ Repository │
+│ Repository │                   └────────────┘
+└────────────┘                          │
+      │                                 │
+      │ Auto-raise                      │
+      ▼                                 ▼
+┌────────────┐                   ┌────────────┐
+│  Producer  │── MsgBus  ────▶ │  Consumer  │
+└────────────┘                   └────────────┘
+
+
+⚠️ MUST ATTENTION READ: CLAUDE.md for Entity Event Bus Producer and Message Bus Consumer implementation patterns.
+
+Pattern 2: Direct API Call
+
+Use when: Real-time data needed, no local copy required.
+
+// In Service A, calling Service B API
+public class ServiceBApiClient
+{
+    private readonly HttpClient _client;
+
+    public async Task<UserDto?> GetUserAsync(string userId)
+    {
+        var response = await _client.GetAsync($"/api/User/{userId}");
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserDto>();
+    }
+}
+
+
+Considerations:
+
+Add circuit breaker for resilience
+Cache responses when possible
+Handle service unavailability
+Pattern 3: Shared Database View (Anti-Pattern!)
+
+:x: DO NOT USE: Violates service boundaries
+
+// WRONG - Direct cross-service database access
+var accountsData = await accountsDbContext.Users.ToListAsync();
+
+Data Ownership Matrix
+
+Note: Search for project-structure-reference.md or the project's documentation for the entity ownership matrix. Each entity should have exactly ONE owning service; consumers receive synced copies via message bus.
+
+Synchronization Patterns
+Full Sync (Initial/Recovery)
+// For initial data population or recovery
+public class FullSyncJob : BackgroundJobExecutor // project background job base (see docs/project-reference/backend-patterns-reference.md)
+{
+    public override async Task ProcessAsync(object? param)
+    {
+        // Fetch all from source
+        var allEmployees = await sourceApi.GetAllAsync();
+
+        // Upsert to local
+        foreach (var batch in allEmployees.Batch(100))
+        {
+            await localRepo.CreateOrUpdateManyAsync(
+                batch.Select(MapToLocal),
+                dismissSendEvent: true);
+        }
+    }
+}
+
+Incremental Sync (Event-Driven)
+// Normal operation via message bus
+internal sealed class EmployeeSyncConsumer : MessageBusConsumer<EmployeeEventBusMessage> // project message bus base (see docs/project-reference/backend-patterns-reference.md)
+{
+    public override async Task HandleLogicAsync(EmployeeEventBusMessage message, string routingKey)
+    {
+        // Check if newer than current (race condition prevention)
+        if (existing?.LastMessageSyncDate > message.CreatedUtcDate)
+            return;
+
+        // Apply change
+        await ApplyChange(message);
+    }
+}
+
+Conflict Resolution
+
+Use LastMessageSyncDate for ordering - only update if message is newer. See CLAUDE.md Message Bus Consumer pattern for full implementation.
+
+Integration Checklist
+Before Integration
+ Define data ownership clearly
+ Document which fields sync
+ Plan for missing dependencies
+ Define conflict resolution strategy
+Implementation
+ Message defined in shared project
+ Producer filters appropriate events
+ Consumer waits for dependencies
+ Race condition handling implemented
+ Soft delete handled
+Testing
+ Create event flows correctly
+ Update event flows correctly
+ Delete event flows correctly
+ Out-of-order messages handled
+ Missing dependency handled
+ Force sync works
+Troubleshooting
+Message Not Arriving
+# Check message broker queues (search for: queue management commands)
+
+# Check producer is publishing
+grep -r "HandleWhen" --include="*Producer.cs" -A 5
+
+# Check consumer is registered
+grep -r "AddConsumer" --include="*.cs"
+
+Data Mismatch
+# Compare source and target counts
+# In source service DB
+SELECT COUNT(*) FROM Employees WHERE IsActive = 1;
+
+# In target service DB
+SELECT COUNT(*) FROM SyncedEmployees;
+
+Stuck Messages
+// Check for waiting dependencies
+Logger.LogWarning("Waiting for Company {CompanyId}", companyId);
+
+// Force reprocess
+await messageBus.PublishAsync(message.With(m => m.IsForceSync = true));
+
+Anti-Patterns to AVOID
+
+:x: Direct database access
+
+// WRONG
+await otherServiceDbContext.Table.ToListAsync();
+
+
+:x: Synchronous cross-service calls in transaction
+
+// WRONG
+using var transaction = await db.BeginTransactionAsync();
+await externalService.NotifyAsync();  // If fails, transaction stuck
+await transaction.CommitAsync();
+
+
+:x: No dependency waiting
+
+// WRONG - FK violation if company not synced
+await repo.CreateAsync(employee);  // Employee.CompanyId references Company
+
+// CORRECT
+await Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(...));
+
+
+:x: Ignoring message order
+
+// WRONG - older message overwrites newer
+await repo.UpdateAsync(entity);
+
+// CORRECT - check timestamp
+if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
+
+Verification Checklist
+ Data ownership clearly defined
+ Message bus pattern used (not direct DB)
+ Dependencies waited for in consumers
+ Race conditions handled with timestamps
+ Soft delete synchronized properly
+ Force sync mechanism available
+ Monitoring/alerting in place
+Related
+arch-security-review
+api-design
+Closing Reminders
+MANDATORY IMPORTANT MUST ATTENTION break work into small todo tasks using TaskCreate BEFORE starting
+MANDATORY IMPORTANT MUST ATTENTION search codebase for 3+ similar patterns before creating new code
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim (confidence >80% to act)
+MANDATORY IMPORTANT MUST ATTENTION add a final review todo task to verify work quality MANDATORY IMPORTANT MUST ATTENTION READ the following files before starting:
+MANDATORY IMPORTANT MUST ATTENTION cite file:line evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+MUST ATTENTION apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
+MUST ATTENTION apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
+
+[TASK-PLANNING] Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+
+Weekly Installs
+44
+Repository
+duc01226/easyplatform
+GitHub Stars
+6
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,184 @@
+---
+title: test-automator
+url: https://skills.sh/charon-fan/agent-playbook/test-automator
+---
+
+# test-automator
+
+skills/charon-fan/agent-playbook/test-automator
+test-automator
+Installation
+$ npx skills add https://github.com/charon-fan/agent-playbook --skill test-automator
+SKILL.md
+Test Automator
+
+Expert in creating and maintaining automated tests for various frameworks and languages.
+
+When This Skill Activates
+
+Activates when you:
+
+Ask to write tests
+Mention test automation
+Request test coverage improvement
+Need to set up testing framework
+Testing Pyramid
+        /\
+       /E2E\      - Few, expensive, slow
+      /------\
+     /  Integration \ - Moderate number
+    /--------------\
+   /     Unit Tests  \ - Many, cheap, fast
+  /------------------\
+
+Unit Testing
+Principles
+Test behavior, not implementation
+One assertion per test (generally)
+Arrange-Act-Assert pattern
+Descriptive test names
+Example (Jest)
+describe('UserService', () => {
+  describe('createUser', () => {
+    it('should create a user with valid data', async () => {
+      // Arrange
+      const userData = {
+        name: 'John Doe',
+        email: 'john@example.com'
+      };
+
+      // Act
+      const user = await userService.create(userData);
+
+      // Assert
+      expect(user.id).toBeDefined();
+      expect(user.email).toBe(userData.email);
+    });
+
+    it('should throw error for invalid email', async () => {
+      // Arrange
+      const userData = { email: 'invalid' };
+
+      // Act & Assert
+      await expect(userService.create(userData))
+        .rejects.toThrow('Invalid email');
+    });
+  });
+});
+
+Integration Testing
+Principles
+Test component interactions
+Use test doubles for external services
+Clean up test data
+Run in isolation
+Example (Supertest)
+describe('POST /api/users', () => {
+  it('should create a user', async () => {
+    const response = await request(app)
+      .post('/api/users')
+      .send({
+        name: 'John Doe',
+        email: 'john@example.com'
+      })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.id).toBeDefined();
+        expect(res.body.email).toBe('john@example.com');
+      });
+  });
+});
+
+E2E Testing
+Principles
+Test critical user flows
+Use realistic test data
+Handle async operations properly
+Clean up after tests
+Example (Playwright)
+test('user can login', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('[name="email"]', 'user@example.com');
+  await page.fill('[name="password"]', 'password123');
+  await page.click('button[type="submit"]');
+
+  await expect(page).toHaveURL('/dashboard');
+  await expect(page.locator('h1')).toContainText('Welcome');
+});
+
+Test Coverage
+Coverage Goals
+Type	Target
+Lines	> 80%
+Branches	> 75%
+Functions	> 80%
+Statements	> 80%
+Coverage Reports
+# Jest
+npm test -- --coverage
+
+# Python (pytest-cov)
+pytest --cov=src --cov-report=html
+
+# Go
+go test -coverprofile=coverage.out
+go tool cover -html=coverage.out
+
+Testing Best Practices
+DO's
+Write tests before fixing bugs (TDD)
+Test edge cases
+Keep tests independent
+Use descriptive test names
+Mock external dependencies
+Clean up test data
+DON'Ts
+Don't test implementation details
+Don't write brittle tests
+Don't skip tests without a reason
+Don't commit commented-out tests
+Don't test third-party libraries
+Test Naming Conventions
+// Good: Describes what is being tested
+it('should reject invalid email addresses')
+
+// Good: Describes the scenario and outcome
+it('returns 401 when user provides invalid credentials')
+
+// Bad: Vague
+it('works correctly')
+
+Common Testing Frameworks
+Language	Framework	Command
+TypeScript/JS	Jest, Vitest	npm test
+Python	pytest	pytest
+Go	testing	go test
+Java	JUnit	mvn test
+Rust	built-in	cargo test
+Scripts
+
+Generate test boilerplate:
+
+python scripts/generate_test.py <filename>
+
+
+Check test coverage:
+
+python scripts/coverage_report.py
+
+References
+references/best-practices.md - Testing best practices
+references/examples/ - Framework-specific examples
+references/mocking.md - Mocking guidelines
+Weekly Installs
+465
+Repository
+charon-fan/agen…playbook
+GitHub Stars
+49
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

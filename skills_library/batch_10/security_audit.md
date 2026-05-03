@@ -1,0 +1,108 @@
+---
+title: security-audit
+url: https://skills.sh/dirnbauer/webconsulting-skills/security-audit
+---
+
+# security-audit
+
+skills/dirnbauer/webconsulting-skills/security-audit
+security-audit
+Installation
+$ npx skills add https://github.com/dirnbauer/webconsulting-skills --skill security-audit
+SKILL.md
+Security Audit Skill
+
+Security audit patterns (OWASP Top 10, LLM Top 10 2025, CWE Top 25 2025, CVSS v4.0), cloud/IaC checks, GitHub security. 80+ PHP/TYPO3 checkpoints (v14.3 LTS in typo3-security.md).
+
+Expertise Areas
+Vulnerabilities: XXE, SQLi, XSS, CSRF, command injection, path traversal, file upload, deserialization, SSRF, SSTI, JWT, type juggling
+Standards: OWASP Top 10 / API / LLM (2025), CWE Top 25, CVSS v3.1/v4.0, OWASP ASVS
+Cloud & IaC: AWS, Azure, GCP; Terraform, Kubernetes, Docker, Helm
+API & Frontend: REST/GraphQL authZ, rate limits, mass assignment, CSP, DOM-XSS
+AI Agents: SKILL.md/AGENTS.md/CLAUDE.md/mcp.json/hooks.json audit; prompt injection; excessive agency
+Reference Files (in references/, .md implied)
+Core: owasp-top10, cwe-top25, xxe-prevention, cvss-scoring, api-key-encryption
+Prevention: deserialization-prevention, path-traversal-prevention, file-upload-security, input-validation, error-message-sanitization
+Architecture: authentication-patterns, security-headers, security-logging, cryptography-guide
+Language features (*-security-features): php, python, javascript-typescript, nodejs, java, csharp, go, rust, ruby
+Frameworks (*-security): typo3, typo3-fluid, typo3-typoscript, symfony, laravel, django, flask, fastapi, spring, dotnet, blazor, rails, gin, react, vue, angular, nextjs, nuxt, express, nestjs
+Mobile: android-sdk-security, ios-sdk-security
+Cloud & IaC: aws-security, azure-security, gcp-security, iac-security
+API & Frontend: api-security, frontend-security
+AI Agent: llm-security (OWASP LLM Top 10 2025)
+Shared: framework-security
+Threats: modern-attacks, cve-patterns, cve-database
+DevSecOps: ci-security-pipeline, supply-chain-security, automated-scanning, gha-security
+Incident: supply-chain-incident-response
+Quick Patterns
+
+XML parsing (prevent XXE):
+
+$doc->loadXML($input, LIBXML_NONET);
+
+
+SQL (prevent injection):
+
+$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+$stmt->execute([$id]);
+
+
+Output (prevent XSS):
+
+echo htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+
+API keys, passwords, randomness:
+
+$n = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+$enc = 'enc:' . base64_encode($n . sodium_crypto_secretbox($apiKey, $n, $key));
+password_hash($pw, PASSWORD_ARGON2ID);
+bin2hex(random_bytes(32));   // never mt_rand/rand
+
+
+Automated scanners: references/automated-scanning.md.
+
+Security Checklist
+ semgrep/opengrep, trivy fs --severity HIGH,CRITICAL, gitleaks clean
+ bcrypt/Argon2 passwords, CSRF on state changes, TLS 1.2+
+ Server-side input validation; parameterized SQL; XML entities off
+ Output encoding + CSP; no unserialize() on user input
+ API keys encrypted; exception messages sanitized
+ Secrets out of VCS; audit logging on
+ Uploads validated, renamed, outside web root
+ Headers HSTS + X-Content-Type-Options; dependencies scanned
+GitHub Actions Security
+NEVER interpolate ${{ inputs.* }} / ${{ github.event.* }} in run: — use env:
+Dependency triage: upgrade > override > dismiss. Full patterns: references/gha-security.md.
+Verification
+./scripts/security-audit-dispatcher.sh /path/to/project  # auto-detect stack
+./scripts/security-audit.sh /path/to/project             # PHP-only
+./scripts/github-security-audit.sh owner/repo            # GH repo
+
+
+Dispatcher detects the stack from indicator files and runs matching scripts/scanners/*.sh (17 ecosystems; see references/ index).
+
+Contributing: https://github.com/netresearch/security-audit-skill
+
+Credits & Attribution
+
+This skill is based on the excellent work by Netresearch DTT GmbH.
+
+Original repository: https://github.com/netresearch/security-audit-skill
+
+Copyright (c) Netresearch DTT GmbH — Methodology and best practices (MIT / CC-BY-SA-4.0)
+
+Special thanks to Netresearch DTT GmbH for their generous open-source contributions to the TYPO3 community, which helped shape this skill collection. Adapted by webconsulting.at for this skill collection
+
+Weekly Installs
+58
+Repository
+dirnbauer/webco…g-skills
+GitHub Stars
+27
+First Seen
+Jan 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

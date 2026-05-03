@@ -1,0 +1,95 @@
+---
+rating: ⭐⭐
+title: analyzing-malicious-url-with-urlscan
+url: https://skills.sh/mukul975/anthropic-cybersecurity-skills/analyzing-malicious-url-with-urlscan
+---
+
+# analyzing-malicious-url-with-urlscan
+
+skills/mukul975/anthropic-cybersecurity-skills/analyzing-malicious-url-with-urlscan
+analyzing-malicious-url-with-urlscan
+Installation
+$ npx skills add https://github.com/mukul975/anthropic-cybersecurity-skills --skill analyzing-malicious-url-with-urlscan
+SKILL.md
+Analyzing Malicious URL with URLScan
+Overview
+
+URLScan.io is a free service for scanning and analyzing suspicious URLs. It captures screenshots, DOM content, HTTP transactions, JavaScript behavior, and network connections of web pages in an isolated environment. This skill covers using URLScan's web interface and API to investigate phishing URLs, credential harvesting pages, and malicious redirects without exposing the analyst's system to risk.
+
+When to Use
+When investigating security incidents that require analyzing malicious url with urlscan
+When building detection rules or threat hunting queries for this domain
+When SOC analysts need structured procedures for this analysis type
+When validating security monitoring coverage for related attack techniques
+Prerequisites
+URLScan.io account (free tier available, API key for automation)
+Python 3.8+ with requests library
+Understanding of HTTP protocols and web technologies
+Familiarity with phishing URL patterns
+Key Concepts
+URLScan Capabilities
+Safe browsing: Renders URLs in isolated Chromium instance
+Screenshot capture: Visual snapshot of the rendered page
+DOM analysis: Full HTML content after JavaScript execution
+Network log: All HTTP requests made by the page (HAR format)
+Certificate analysis: SSL/TLS certificate details
+Technology detection: Identifies web frameworks and libraries
+IP/ASN mapping: Infrastructure intelligence
+Verdict: Community and automated classification
+Phishing URL Red Flags
+Newly registered domains (< 30 days)
+Free hosting services (Wix, GitHub Pages, Firebase)
+URL shorteners hiding final destination
+Excessive subdomain depth (login.microsoft.com.evil.com)
+Brand name in subdomain or path, not domain
+Non-standard ports
+Data URIs or base64-encoded content
+JavaScript-heavy pages with minimal HTML
+Workflow
+Step 1: Submit URL to URLScan
+Web: Navigate to https://urlscan.io and submit the suspicious URL
+API: POST https://urlscan.io/api/v1/scan/
+     Header: API-Key: your-api-key
+     Body: {"url": "https://suspicious-url.com", "visibility": "private"}
+
+Step 2: Analyze Results
+Review screenshot for brand impersonation
+Check redirects and final destination URL
+Examine DOM for credential input forms
+Review network requests for data exfiltration endpoints
+Check SSL certificate validity and issuer
+Step 3: Extract IOCs
+Domains and IPs contacted
+URLs in redirect chain
+SHA-256 hashes of page resources
+JavaScript file hashes
+Step 4: Cross-Reference with Threat Intelligence
+
+Use the scripts/process.py to automate URL scanning, extract IOCs, and cross-reference with VirusTotal, PhishTank, and Google Safe Browsing.
+
+Tools & Resources
+URLScan.io: https://urlscan.io/
+URLScan API: https://urlscan.io/docs/api/
+VirusTotal URL Scanner: https://www.virustotal.com/
+PhishTank: https://phishtank.org/
+Google Safe Browsing: https://transparencyreport.google.com/safe-browsing/search
+Any.Run: https://any.run/ (interactive sandbox)
+Hybrid Analysis: https://www.hybrid-analysis.com/
+Validation
+Successfully scan a suspicious URL via API
+Extract screenshot and identify brand impersonation
+Document complete redirect chain
+Generate IOC list from scan results
+Cross-reference findings with at least 2 threat intelligence sources
+Weekly Installs
+56
+Repository
+mukul975/anthro…y-skills
+GitHub Stars
+5.9K
+First Seen
+Mar 15, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

@@ -1,0 +1,61 @@
+---
+title: yeet
+url: https://skills.sh/paulrberg/agent-skills/yeet
+---
+
+# yeet
+
+skills/paulrberg/agent-skills/yeet
+yeet
+Installation
+$ npx skills add https://github.com/paulrberg/agent-skills --skill yeet
+SKILL.md
+GitHub Contribution Workflows
+
+Facilitate GitHub-based open source contribution workflows including pull requests, issues, and discussions. Emphasizes semantic analysis over mechanical operations — understand the intent and context of changes before generating titles, descriptions, or selecting templates. All generated content should be conversational and informal.
+
+Prerequisites
+
+Verify GitHub CLI authentication before any workflow:
+
+gh auth status
+
+
+For pull request workflows, also verify:
+
+Working tree is clean or changes are committed
+Current branch has commits ahead of the base branch
+Remote tracking is configured
+Related Skills
+
+For detailed GitHub CLI command syntax, flags, and patterns, activate the cli-gh skill.
+
+Workflows
+
+Each workflow is fully documented in its reference file. Load the appropriate reference based on user intent.
+
+Workflow	Trigger	Reference
+Create PR	"create PR", "open PR", "yeet a PR"	references/create-pr.md
+Update PR	"update PR", "edit PR"	references/update-pr.md
+Create Issue	"create issue", "file issue" (generic repo)	references/create-issue.md
+Claude Code Issue	"Claude Code issue", "report bug in CC"	references/issue-claude-code.md
+Codex CLI Issue	"Codex issue", "report bug in Codex"	references/issue-codex-cli.md
+Sablier Issue	"Sablier issue", "sablier-labs issue"	references/issue-sablier.md
+Biome Issue	"Biome issue", "biomejs issue"	references/issue-biome.md
+Comment on Issue	"comment on issue", "reply on issue", "post a comment"	references/comment-issue.md
+Create Discussion	"create discussion", "start discussion"	references/create-discussion.md
+
+Shared patterns (auth validation, admonitions, HEREDOC syntax, semantic analysis, tone, platform normalization, error handling, file links) are in references/commons.md.
+
+Weekly Installs
+846
+Repository
+paulrberg/agent-skills
+GitHub Stars
+51
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

@@ -1,0 +1,137 @@
+---
+title: guided-demo
+url: https://skills.sh/sammcj/agentic-coding/guided-demo
+---
+
+# guided-demo
+
+skills/sammcj/agentic-coding/guided-demo
+guided-demo
+Installation
+$ npx skills add https://github.com/sammcj/agentic-coding --skill guided-demo
+SKILL.md
+Guided Demo Pattern
+
+Add a self-narrating walkthrough to any HTML/web application. A declarative step array drives a setTimeout loop that toggles CSS classes on DOM elements and writes text character-by-character into a fixed panel. The engine overlays the existing page without modifying its code. When the demo stops, all state resets.
+
+About 100 lines of JS and 30 lines of CSS for the core. Interstitials, speed controls, keyboard shortcuts, and progress bar are optional layering.
+
+Before implementing
+
+Ask the user these questions (skip any already answered in conversation):
+
+What are the sections? Tabs, routes, scroll positions, slide indices? Determines how section switching works.
+Framework? Vanilla HTML works directly. React/Vue/Svelte need the engine as a conditional overlay component, and querySelector must run after render.
+Presenter talking over it, or self-narrating? Talking over: shorter text, longer pauses. Self-narrating: detailed text, moderate pauses.
+Interactive elements to trigger? Map to step actions. Confirm CSS selectors are stable (not framework-generated hashes).
+Offline requirement? Keep everything in one file if so. No CDN dependencies without fallbacks.
+How many steps? Under 15 for a pitch, 20-30 for a detailed walkthrough. Over 40 loses attention.
+Touch device support needed? Most guided demos target desktop/laptop presentation contexts. The narrator panel has on-screen prev/play/next buttons that work on touch, but swipe gestures or mobile-specific layout are rarely needed.
+Implementation
+
+Read references/implementation.md for all code snippets (vanilla JS / static HTML). If the target application uses React with React Router, also read references/react-integration.md for React-specific patterns covering stale closures, route navigation timing, and component architecture. For other SPA frameworks (Vue, Svelte, etc.), the same concepts apply (poll for elements after route change, store timer-relevant state outside the reactivity system) but the implementation details differ.
+
+The four required pieces are:
+
+Narrator panel - fixed-position bar with text container and progress bar
+Highlight class - outline (not border) with animated glow, no layout shift
+Typewriter function - recursive setTimeout, narration text set via textContent (never set user-authored narration via innerHTML), blinking cursor via CSS. The innerHTML = '' clearing before each tick is intentional and safe (no user content involved)
+Playback loop - playStep(idx) that switches sections, runs actions, highlights, types, and auto-advances
+Step array
+
+The single source of truth. Each step is a plain object:
+
+const DEMO_SCRIPT = [
+  { section: 0, target: '.card', text: "Narration text." },
+  { section: 1, target: null, text: "Transition.", transition: true },
+  { section: 1, target: '#el', text: "Detail.", action: 'open', actionTarget: 'panel-id' },
+];
+
+
+Properties: section (which view), target (CSS selector or null), text (narrator copy), transition (show interstitial), action/actionTarget (trigger UI change), delay (optional per-step pause override in ms, defaults to PAUSE_MS).
+
+Timing defaults
+Constant	Default	When to adjust
+TYPE_SPEED	5ms/char	3ms for long text, 15ms for dramatic short statements
+PAUSE_MS	3000ms	4-5s if audience reads rather than listens
+Speed range	0.5x-2x	Both constants divided by multiplier
+Writing narrator copy
+
+The typewriter effect means each word lands individually, so writing style matters:
+
+Short declarative sentences. Each step should make exactly one point.
+Conversational tone, present tense. Address the audience directly.
+Describe what the element means, not what the UI shows: "This column quantifies the cost impact" not "The cost is shown in this column".
+No jargon the audience wouldn't know. Match terminology to the domain, not the implementation.
+Under 30 words per step for presenter-led demos, up to 50 for self-narrating.
+Keyboard controls
+
+Gate all keyboard capture behind an isActive flag so it does not interfere with normal page interaction. Space = play/pause, arrows = step, M = toggle TTS narration, Escape = exit and reset.
+
+Text-to-speech narration
+
+Browser-native TTS using the speechSynthesis Web Speech API. Reads each step's narration aloud alongside the typewriter effect. Include in all guided demos but must be off by default - never start speaking without explicit user action. The user toggles TTS via a speaker icon in the control bar (dimmed when off, full opacity when on).
+
+Key requirements:
+
+Default off. The toggle icon renders in the control bar but TTS is muted until the user clicks it.
+Voice selection. Voices load asynchronously in some browsers. Listen for speechSynthesis.addEventListener('voiceschanged', ...) and cache the selected voice. Implement a preference cascade: filter speechSynthesis.getVoices() by predicate functions in priority order, returning the first match. Adjust the locale cascade to suit the project's target audience (e.g. en-AU, en-GB, en-US).
+Playback integration. Call speakText() at the start of every step, before both the typewriter branch (auto-play) and the instant-text branch (paused/manual stepping). One call site, not two. Set utterance.rate to track the demo's speed setting.
+Cancellation. speechSynthesis.cancel() must be called in: clearAllTimers(), stopDemo(), component unmount cleanup, and inside the mute toggle when muting. speakText() itself should cancel before speaking so stepping to a new step cuts off the previous utterance. Guard every speechSynthesis call with if ('speechSynthesis' in window) for SSR/test environments.
+Keyboard shortcut. M to toggle. Gate behind the isActive flag and skip when focus is in form inputs, same as existing keyboard controls.
+Step countdown indicator
+
+A subtle progress bar that fills left-to-right during the pause after the typewriter text finishes, showing how much time remains before auto-advancing. Gives the viewer a sense of pacing without being distracting. Include in all guided demos.
+
+Key design decisions:
+
+CSS animation, not JS intervals. The fill uses a @keyframes animation with animation-duration set dynamically from the actual pause duration. No setInterval, no requestAnimationFrame. The browser handles smooth rendering.
+Placement. Directly below the overall step progress bar (the "step X of Y" bar), above the narrator text. This keeps the two progress indicators visually grouped. Do not place it between the narrator text and the controls.
+Cleanup via clearAllTimers(). Every action that interrupts the current step (manual step, pause, stop) calls clearAllTimers() first. Resetting the countdown there means you never need to clear it elsewhere.
+No countdown on last step. The onDone callback only starts the countdown when stepIdx < script.length - 1. There is nothing to count down to on the final step.
+Speed changes mid-countdown. The current bar keeps its original duration. The new speed applies to the next step's countdown. Restarting the animation mid-step to match the new speed is not worth the complexity.
+Visual tuning. 2px height. Container background at rgba(255, 255, 255, 0.06) reads as a subtle track when empty. Fill colour should be the application's accent colour at 0.6-0.8 opacity. Use linear timing, not ease - the viewer reads it as a countdown and easing makes the remaining time harder to judge.
+Optional: transition interstitials
+
+Full-screen overlay with cycling status messages between sections. Simulates processing time. Define messages per section in a 2D array. Fade each message, then dismiss overlay via callback.
+
+Optional: step actions
+
+String-matched in executeStep(). Actions run before highlighting because elements inside collapsed panels can't be found by querySelector until the panel is open. Adding a new action is one if block. Keep it simple. Common patterns beyond expand/collapse: expandOne (open one panel, close all siblings - accordion style), call (trigger a named function like requestBriefing()), addClass/removeClass (toggle a CSS class on document.body for global state changes).
+
+Gotchas
+
+These are the failure points that come up repeatedly:
+
+Layout shift: Use outline not border for highlighting. Outline does not affect box model.
+Hidden elements: If target is inside a collapsed container, the action must open it first. This is why actions execute before highlighting.
+Dynamic selectors: Framework-generated class names (.css-1a2b3c) break between builds. Use data-* attributes or IDs.
+Scroll conflicts: scrollIntoView({ block: 'center' }) conflicts with fixed headers/panels. Set scroll-padding-bottom on the scroll container to account for the narrator panel height.
+Z-index: Narrator panel at 500+, interstitials at 490, highlighted elements at 2+. Check for conflicts with existing modals or dropdowns.
+Cleanup on exit: Reset every piece of state the demo touched: close opened panels, remove highlights, clear timers. Missing cleanup leaves confusing UI state.
+Form inputs: If the page has text inputs, textareas, or selects, the keyboard handler must skip them. Otherwise pressing Space in a text field triggers play/pause instead of typing. Check e.target.tagName and bail out for INPUT, TEXTAREA, SELECT.
+ES modules: If using <script type="module">, all demo functions called from onclick must be on window.*.
+Print: Hide demo panel and interstitial in @media print.
+Accessibility: Narrator panel should have role="status" and aria-live="polite". Highlight outlines must meet contrast requirements.
+TTS cancellation leaks: If speechSynthesis.cancel() is missing from any cleanup path (stop, step, mute, unmount), the previous utterance plays over the new one. Every function that clears timers must also cancel speech. Guard all speechSynthesis calls with if ('speechSynthesis' in window).
+TTS voices async: speechSynthesis.getVoices() returns an empty array on first call in some browsers. Always listen for the voiceschanged event and cache the result.
+Applicability
+
+Works for: prototypes, PoCs, HTML slide decks, data storytelling dashboards, product demos, workshop facilitation, investor pitches, onboarding walkthroughs.
+
+Does not replace: user testing tools, screen recorders, production onboarding tours (use a tour library with persistence and analytics for those).
+
+For framework apps, mount the demo engine as a conditional overlay component and pass the script array as a prop. For single-file demos, inline everything for offline/USB-stick distribution.
+
+Weekly Installs
+13
+Repository
+sammcj/agentic-coding
+GitHub Stars
+125
+First Seen
+Mar 20, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

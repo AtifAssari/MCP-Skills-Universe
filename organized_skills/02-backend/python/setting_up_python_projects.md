@@ -1,0 +1,244 @@
+---
+rating: ⭐⭐⭐
+title: setting-up-python-projects
+url: https://skills.sh/quick-brown-foxxx/coding_rules_python/setting-up-python-projects
+---
+
+# setting-up-python-projects
+
+skills/quick-brown-foxxx/coding_rules_python/setting-up-python-projects
+setting-up-python-projects
+Installation
+$ npx skills add https://github.com/quick-brown-foxxx/coding_rules_python --skill setting-up-python-projects
+SKILL.md
+Setting Up Python Projects
+
+New projects start with the full safety net configured. Templates are in the repo: https://github.com/quick-brown-foxxx/coding_rules_python/tree/master/templates`.
+
+Make sure to read repo's readme.
+
+Project Layout
+project/
+├── src/appname/
+│   ├── __init__.py           # __version__ = "0.1.0"
+│   ├── __main__.py           # Entry point
+│   ├── constants.py          # Shared constants
+│   ├── core/                 # Business logic
+│   │   ├── models.py         # Data types (dataclasses)
+│   │   ├── manager.py        # Business operations
+│   │   └── exceptions.py     # Custom exception hierarchy
+│   ├── cli/                  # CLI interface
+│   │   ├── commands.py       # Command implementations
+│   │   ├── parser.py         # Argument parsing
+│   │   └── output.py         # Formatted output helpers
+│   ├── ui/                   # Qt GUI (if applicable)
+│   │   ├── main_window.py
+│   │   ├── dialogs/
+│   │   └── widgets/
+│   ├── utils/                # Stateless utilities
+│   │   ├── paths.py
+│   │   └── logging.py
+│   ├── wrappers/             # Third-party lib wrappers
+│   │   └── some_wrapper.py
+│   └── stubs/                # Type stubs for untyped libs
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── fixtures/
+│   └── conftest.py
+├── scripts/                  # Dev utilities
+│   ├── bootstrap.py          # Setup script
+│   └── check_type_ignore.py
+├── docs/
+│   ├── coding_rules.md       # Copy from rules/coding_rules.md
+│   └── PHILOSOPHY.md          # Copy from PHILOSOPHY.md
+├── shared/                   # Cross-cutting (copy from coding_rules_python/reusable/)
+│   ├── logging/              # Logging + colored output (if needed)
+│   └── shortcuts/            # Keyboard shortcuts (if PySide6 app)
+├── AGENTS.md                 # Copy from templates/AGENTS.md, customize
+├── CLAUDE.md                 # Symlink → AGENTS.md
+├── pyproject.toml            # Copy from templates/pyproject.toml, customize
+├── .pre-commit-config.yaml   # Copy from templates/pre-commit-config.yaml
+├── .gitignore                # Copy from templates/gitignore
+└── .vscode/
+    ├── settings.json         # Copy from templates/vscode_settings.json
+    └── extensions.json       # Copy from templates/vscode_extensions.json
+
+Setup Checklist
+
+Create directory structure:
+
+mkdir -p src/APPNAME tests/unit tests/integration tests/fixtures scripts docs .vscode
+
+
+Copy template and reference files:
+
+templates/pyproject.toml → pyproject.toml (update [project] section)
+templates/AGENTS.md → AGENTS.md (fill TODO sections)
+templates/pre-commit-config.yaml → .pre-commit-config.yaml
+templates/gitignore → .gitignore
+templates/vscode_settings.json → .vscode/settings.json
+templates/vscode_extensions.json → .vscode/extensions.json
+rules/coding_rules.md → docs/coding_rules.md
+PHILOSOPHY.md → docs/PHILOSOPHY.md
+Create symlink: ln -s AGENTS.md CLAUDE.md
+
+Copy reusable code (if needed):
+
+From coding_rules_python/reusable/ copy modules you need into shared/
+logging/ — colored logging, file rotating logs, CLI output (see setting-up-logging skill)
+shortcuts/ — keyboard shortcuts for PySide6 apps (see setting-up-shortcuts skill)
+Also copy matching tests from coding_rules_python/reusable_tests/ into your tests/ (e.g., test_shortcuts_base.py, test_shortcuts_manager.py)
+Update import paths after copying (reusable. → shared. or your package path, reusable_tests. → your test package)
+
+Create entry points:
+
+# src/APPNAME/__init__.py
+__version__ = "0.1.0"
+
+# src/APPNAME/__main__.py
+import sys
+
+def main() -> int:
+    if len(sys.argv) > 1:
+        return cli_main()  # CLI mode
+    return gui_main()      # GUI mode (if applicable)
+
+if __name__ == "__main__":
+    sys.exit(main())
+
+
+Create initial test:
+
+# tests/test_main.py
+from APPNAME.__main__ import main
+
+def test_main_runs(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main() == 0
+
+
+Initialize environment:
+
+git init
+uv sync --all-extras --group dev
+uv run pre-commit install
+uv run poe lint_full
+uv run poe test
+
+
+Verify everything works:
+
+uv run poe app runs the application
+uv run poe lint_full passes with 0 errors
+uv run poe test passes
+Graceful Shutdown
+
+Design every app to be interruptible without corruption, hanging, or ugly tracebacks. The shutdown strategy depends on what the app does:
+
+App type                              → Strategy
+─────────────────────────────────────────────────────────────
+Simple script/CLI                     → catch KeyboardInterrupt, exit 130
+CLI wrapping a quick subtask          → kill process group immediately
+CLI wrapping complex tool (vagrant…)  → SIGTERM → wait → SIGKILL
+Qt/async app                          → see building-qt-apps skill
+
+Scripts and simple CLIs
+# __main__.py
+def main() -> int:
+    try:
+        return run()
+    except KeyboardInterrupt:
+        return 130  # 128 + SIGINT(2), Unix convention
+
+Subprocess wrappers
+
+Always pass start_new_session=True — creates a process group so you can kill the entire tree, not just the parent.
+
+Quick subtask (immediate kill):
+
+import os, signal, subprocess
+
+process = subprocess.Popen(cmd, start_new_session=True)
+try:
+    process.wait()
+except KeyboardInterrupt:
+    os.killpg(process.pid, signal.SIGKILL)
+
+
+Complex tool wrapper (escalation):
+
+process = subprocess.Popen(cmd, start_new_session=True)
+try:
+    process.wait()
+except KeyboardInterrupt:
+    os.killpg(process.pid, signal.SIGTERM)
+    try:
+        process.wait(timeout=5.0)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+
+
+Async subprocess (complex apps using asyncio):
+
+process = await asyncio.create_subprocess_exec(*cmd, start_new_session=True)
+try:
+    await process.wait()
+except asyncio.CancelledError:
+    process.terminate()
+    try:
+        await asyncio.wait_for(process.wait(), timeout=5.0)
+    except TimeoutError:
+        process.kill()
+    raise
+
+Bootstrap Script
+# scripts/bootstrap.py
+"""Set up development environment."""
+import subprocess
+
+def main() -> None:
+    subprocess.run(["uv", "sync", "--all-extras", "--group", "dev"], check=True)
+    subprocess.run(["uv", "run", "pre-commit", "install"], check=True)
+    print("Development environment ready.")
+
+if __name__ == "__main__":
+    main()
+
+Adapt to Tech Stack & Domain
+
+After scaffolding, adapt everything to the specific project. The templates are a starting point, not a straitjacket. docs/PHILOSOPHY.md is the only ruling constant — everything else bends to fit the project's tech stack, domain, and constraints.
+
+What to adapt
+Area	How to adapt
+Directory layout	Add/remove/rename directories to match the domain. Not every project needs cli/, ui/, wrappers/, shared/. A data pipeline might need pipelines/, schemas/, extractors/. A web service might need routes/, middleware/, repositories/.
+Dependencies	Add domain-specific libraries. Remove unused template defaults. Research current best-in-class libraries for the domain (e.g. SQLAlchemy vs raw asyncpg, Pydantic vs attrs).
+pyproject.toml	Adjust ruff rules, pytest markers, basedpyright overrides for the domain. Some domains need relaxed rules (e.g. data science may need broader type: ignore for numpy interop).
+AGENTS.md	Fill TODO sections with project-specific architecture, key decisions, domain vocabulary, and workflows. This is the agent's primary orientation document — make it specific. Skills section: remove skills the project won't use (e.g. building-multi-ui-apps for a pure CLI), add domain-specific skills (e.g. building-qt-apps, setting-up-shortcuts).
+coding_rules.md	Extend or override rules for the domain. Add domain-specific conventions (e.g. database migration rules, API versioning policy, data validation requirements).
+Test structure	Adjust to match what matters. A CLI tool needs heavy e2e tests. A library needs heavy unit tests. A web service needs API integration tests.
+CI/CD	Add domain-appropriate checks (e.g. migration consistency, API schema validation, container builds).
+Research before building
+
+When setting up a project in an unfamiliar domain or with unfamiliar libraries:
+
+Research the domain's conventions — look up how well-maintained projects in the same space are structured
+Check library compatibility — verify libraries work together and with basedpyright strict mode (some libraries have poor type stubs; plan wrappers early)
+Identify domain-specific tooling — some domains have their own linters, formatters, or validation tools that complement the base toolchain
+Check for basedpyright known issues — some libraries (numpy, pandas, SQLAlchemy) need specific configuration or stub packages to work cleanly in strict mode
+Quick customization checklist
+ Directory layout matches the domain, not the generic template
+ Dependencies are domain-appropriate (researched, not guessed)
+ AGENTS.md describes this project, not a generic Python project
+ coding_rules.md has domain-specific additions if needed
+ Test structure reflects what matters most for this project
+ basedpyright config accounts for domain-specific library quirks
+Weekly Installs
+14
+Repository
+quick-brown-fox…s_python
+First Seen
+Mar 8, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

@@ -1,0 +1,188 @@
+---
+title: cmux-agent-role
+url: https://skills.sh/hummer98/cmux-team/cmux-agent-role
+---
+
+# cmux-agent-role
+
+skills/hummer98/cmux-team/cmux-agent-role
+cmux-agent-role
+Installation
+$ npx skills add https://github.com/hummer98/cmux-team --skill cmux-agent-role
+SKILL.md
+cmux-team サブエージェント行動規範
+
+あなたは cmux-team の Conductor によって起動されたサブエージェントです。 このドキュメントに従い、タスクを遂行してください。
+
+完了したら停止するだけ。報告は不要。上位が監視する。
+
+1. エージェント識別
+
+起動時に以下のマーカー付きプロンプトを受け取ります:
+
+[CMUX-TEAM-AGENT]
+Role: <role-id>
+Task: <タスク内容>
+Output: .team/output/<role-id>.md
+
+
+必ず:
+
+Role と Task を認識する
+出力ファイルパスを記憶する
+2. 出力プロトコル
+
+すべての成果物は指定された出力ファイルに書き込みます:
+
+# Output: <role-id>
+
+## Task
+<元のタスク内容>
+
+## Findings
+<構造化された結果>
+
+## Recommendations
+<該当する場合>
+
+## Tasks Raised
+- See .team/tasks/NNN-*.md
+
+
+ルール:
+
+インクリメンタルに書き込む（作業の進行に合わせてセクションを追加）
+明確な Markdown 構造を使用する
+読んだファイル、実行したコマンドへの参照を含める
+明示的な指示がない限り、プロジェクト外のファイルに書き込まない
+3. 作業境界
+割り当てられた git worktree の範囲内で作業すること
+worktree 外のファイルを直接変更しない
+共有データは .team/ ディレクトリを通じてやり取りする
+4. タスク作成
+
+判断が必要な事項、ブロッカー、発見事項がある場合にタスクを作成:
+
+# タスク作成は CLI で行う（ID 自動採番・task-state.json 更新を一括実行）
+cmux-team create-task --title "タイトル" --body "詳細"
+
+5. 他エージェントとの連携
+
+サブエージェント同士は直接通信しない。 すべての連携は以下を通じて行う:
+
+.team/ 内の共有ファイル
+Conductor（cmux 経由）
+
+他エージェントの成果が必要な場合:
+
+.team/output/<other-role>.md が存在すれば読む
+存在しない場合は blocker タイプのタスクを作成する
+6. ロール別ガイドライン
+Researcher（リサーチャー）
+事実の収集に集中し、設計判断はしない
+ソースを引用する（URL、ファイルパス、ドキュメント参照）
+構造: Context → Facts → Analysis → Recommendations
+Architect（アーキテクト）
+すべてのリサーチャー出力を読んでから設計する
+.team/specs/requirements.md の要件を参照する
+根拠付きの設計判断を生成する
+アーキテクチャには Mermaid ダイアグラムを使用する
+Reviewer（レビュアー）
+レビュー対象のアーティファクトを読む
+要件と設計に照らし合わせてチェックする
+出力: Approved/Changes Requested + 具体的なフィードバック
+重要な懸念事項はタスクとして起票する
+Implementer（実装者）
+.team/specs/design.md に厳密に従う
+.team/specs/tasks.md のアサインされたタスクを読む
+コードを書いたら、変更ファイルを出力に記録する
+関係のないコードをリファクタリングしない
+Tester（テスター）
+実装出力を読み、何が作られたかを理解する
+要件を検証するテストを書く
+テストを実行し結果を報告する
+テスト失敗はタスクとして起票する
+DocKeeper（ドキュメント管理者）
+すべての出力と仕様を読む
+docs/ を現在の状態に反映させる
+ドキュメントは簡潔かつ正確に
+TaskManager（タスク管理者）
+.team/tasks/ と task-state.json で新しいタスクを監視する
+カテゴリ分類、関連タスクのリンク
+Conductor のリクエストに応じてオープンタスクを要約する
+7. daemon ステータス取得
+
+Manager daemon の状態を確認するには CLI を使う:
+
+# ダッシュボード表示（Master / Conductors / Tasks / Log）
+cmux-team status
+
+# ログ末尾を多めに表示
+cmux-team status --log 20
+
+
+出力内容: daemon の稼働状態、Master surface、稼働中 Conductor 一覧（タスクタイトル付き）、open/closed タスク数、manager.log 末尾。
+
+cmux read-screen でダッシュボードの TUI を読む必要はない。status コマンドが同じ情報を返す。
+
+タスク完了待ち
+
+バックグラウンドでタスクの完了を待つ場合:
+
+# Claude Code の Bash run_in_background で起動
+cmux-team await-task --task-id 108
+# → 完了時に summary.md が stdout に出力される
+
+8. トレース検索
+
+過去の API リクエスト履歴を検索できる:
+
+# タスクに関連するトレースを表示
+cmux-team trace --task <task-id>
+
+# 全文検索
+cmux-team trace --search "keyword"
+
+# 特定トレースの詳細（リクエスト/レスポンス本文含む）
+cmux-team trace --show <trace-id>
+
+9. Artifact 出力
+
+作業中に以下に該当する知見が生まれた場合、Artifact として .team/artifacts/ に保存する:
+
+調査結果（複数の選択肢の比較、技術的な発見）→ type: research
+設計判断（なぜその方法を選んだか）→ type: decision
+セッション要約（重要な発見・学び）→ type: session
+手順
+採番: ls .team/artifacts/ 2>/dev/null | grep -oE '^A[0-9]+' | sort | tail -1 で最大番号 + 1
+ファイル作成: .team/artifacts/Axxx-<slug>.md
+フロントマター必須: id, type, title, created, author
+フロントマター任意: updated, task, tags
+---
+id: A001
+type: research
+title: "タイトル"
+created: <ISO 8601>
+author: <自分のロール ID>
+task: <関連タスク ID>
+tags: [tag1]
+---
+
+
+判断基準: output ファイル（.team/output/）に書く成果物とは別に、後のセッションで参照される価値のある知見があれば Artifact にする。すべての作業に Artifact が必要なわけではない。
+
+10. 言語ルール
+ドキュメント・コメント: 日本語
+コード: 英語
+Weekly Installs
+20
+Repository
+hummer98/cmux-team
+GitHub Stars
+9
+First Seen
+Mar 22, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

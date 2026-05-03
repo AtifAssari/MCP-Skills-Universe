@@ -1,0 +1,93 @@
+---
+rating: ⭐⭐
+title: harper-best-practices
+url: https://skills.sh/harperfast/skills/harper-best-practices
+---
+
+# harper-best-practices
+
+skills/harperfast/skills/harper-best-practices
+harper-best-practices
+Installation
+$ npx skills add https://github.com/harperfast/skills --skill harper-best-practices
+SKILL.md
+Harper Best Practices
+
+Guidelines for building scalable, secure, and performant applications on Harper. These practices cover everything from initial schema design to advanced deployment strategies.
+
+When to Use
+
+Reference these guidelines when:
+
+Defining or modifying database schemas
+Implementing or extending REST/WebSocket APIs
+Handling authentication and session management
+Working with custom resources and extensions
+Optimizing data storage and retrieval (Blobs, Vector Indexing)
+Deploying applications to Harper Fabric
+How It Works
+Review the requirements for the task (schema design, API needs, or infrastructure setup).
+Consult the relevant category under "Rule Categories by Priority" to understand the impact of your decisions.
+Apply specific rules from the "Quick Reference" section below by reading their detailed rule files.
+If you're building a new table, prioritize the schema- rules.
+If you're extending functionality, consult the logic- and api- rules.
+Validate your implementation against the ops- rules before deployment.
+Examples
+
+See the concrete examples embedded in each rule subsection below (GraphQL schemas, REST query patterns, and deployment workflow snippets).
+
+Rule Categories by Priority
+Priority	Category	Impact	Prefix
+1	Schema & Data Design	HIGH	schema-
+2	API & Communication	HIGH	api-
+3	Logic & Extension	MEDIUM	logic-
+4	Infrastructure & Ops	MEDIUM	ops-
+Quick Reference
+1. Schema & Data Design (HIGH)
+adding-tables-with-schemas - Define tables using GraphQL schemas and directives
+schema-design-tooling - Core directives and GraphQL IDE/agent configuration
+defining-relationships - Link tables using the @relationship directive
+vector-indexing - Efficient similarity search with vector indexes
+using-blob-datatype - Store and retrieve large data (Blobs)
+handling-binary-data - Manage binary data like images or MP3s
+2. API & Communication (HIGH)
+automatic-apis - Leverage automatically generated CRUD endpoints
+querying-rest-apis - Filters, sorting, and pagination in REST requests
+real-time-apps - WebSockets and Pub/Sub for Real-Time Apps
+checking-authentication - Secure apps with session-based identity verification
+3. Logic & Extension (MEDIUM)
+custom-resources - Define custom REST endpoints using JS/TS
+extending-tables - Add custom logic to generated table resources
+programmatic-table-requests - Advanced filtering and sorting in code
+typescript-type-stripping - Use TypeScript without build tools
+caching - Implement and define caching for performance
+4. Infrastructure & Ops (MEDIUM)
+deploying-to-harper-fabric - Scale globally with Harper Fabric
+creating-a-fabric-account-and-cluster - Setting up your Harper Fabric cloud infrastructure
+creating-harper-apps - Quickstart with npm create harper@latest
+serving-web-content - Ways to serve web content from Harper
+How to Use
+
+Read individual rule files for detailed explanations and code examples:
+
+rules/adding-tables-with-schemas.md
+rules/schema-design-tooling.md
+rules/automatic-apis.md
+rules/creating-harper-apps.md
+
+Full Compiled Document
+
+For the complete guide with all rules expanded: AGENTS.md
+
+Weekly Installs
+226
+Repository
+harperfast/skills
+GitHub Stars
+1
+First Seen
+Feb 28, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

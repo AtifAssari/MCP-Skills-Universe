@@ -1,0 +1,339 @@
+---
+title: gmail
+url: https://skills.sh/odyssey4me/agent-skills/gmail
+---
+
+# gmail
+
+skills/odyssey4me/agent-skills/gmail
+gmail
+Installation
+$ npx skills add https://github.com/odyssey4me/agent-skills --skill gmail
+SKILL.md
+Gmail
+
+Interact with Gmail for email management, search, and organization.
+
+Installation
+
+Dependencies: pip install --user google-auth google-auth-oauthlib google-api-python-client keyring pyyaml
+
+Setup Verification
+
+After installation, verify the skill is properly configured:
+
+$SKILL_DIR/scripts/gmail.py check
+
+
+This will check:
+
+Python dependencies (google-auth, google-auth-oauthlib, google-api-python-client, keyring, pyyaml)
+Authentication configuration
+Connectivity to Gmail API
+
+If anything is missing, the check command will provide setup instructions.
+
+Authentication
+
+Gmail uses OAuth 2.0 for authentication. For complete setup instructions, see:
+
+GCP Project Setup Guide - Create project, enable Gmail API
+Google OAuth Setup Guide - Configure credentials
+Quick Start
+
+Create ~/.config/agent-skills/google.yaml:
+
+oauth_client:
+  client_id: your-client-id.apps.googleusercontent.com
+  client_secret: your-client-secret
+
+
+Run $SKILL_DIR/scripts/gmail.py check to trigger OAuth flow and verify setup.
+
+On scope or authentication errors, see the OAuth troubleshooting guide.
+
+Commands
+
+See permissions.md for read/write classification of each command.
+
+check
+
+Verify configuration and connectivity.
+
+$SKILL_DIR/scripts/gmail.py check
+
+
+This validates:
+
+Python dependencies are installed
+Authentication is configured
+Can connect to Gmail API
+Displays your email address and mailbox statistics
+auth setup
+
+Store OAuth 2.0 client credentials for custom OAuth flow.
+
+$SKILL_DIR/scripts/gmail.py auth setup \
+  --client-id YOUR_CLIENT_ID \
+  --client-secret YOUR_CLIENT_SECRET
+
+
+Credentials are saved to ~/.config/agent-skills/gmail.yaml.
+
+auth reset
+
+Clear stored OAuth token. The next command that needs authentication will trigger re-authentication automatically.
+
+$SKILL_DIR/scripts/gmail.py auth reset
+
+
+Use this when you encounter scope or authentication errors.
+
+auth status
+
+Show current OAuth token information without making API calls.
+
+$SKILL_DIR/scripts/gmail.py auth status
+
+
+Displays: whether a token is stored, granted scopes, refresh token presence, token expiry, and client ID.
+
+messages list
+
+List messages matching a query.
+
+# List recent messages
+$SKILL_DIR/scripts/gmail.py messages list
+
+# Search for unread messages
+$SKILL_DIR/scripts/gmail.py messages list --query "is:unread"
+
+# Search with max results
+$SKILL_DIR/scripts/gmail.py messages list --query "from:user@example.com" --max-results 20
+
+
+Arguments:
+
+--query: Gmail search query (optional)
+--max-results: Maximum number of results (default: 10)
+
+Search Query Examples:
+
+For complete Gmail search syntax, see gmail-queries.md.
+
+Common queries:
+
+is:unread - Unread messages
+from:user@example.com - Messages from sender
+subject:meeting - Messages with subject keyword
+has:attachment - Messages with attachments
+after:2024/01/01 - Messages after date
+label:important - Messages with label
+messages get
+
+Get a message by ID.
+
+# Get full message
+$SKILL_DIR/scripts/gmail.py messages get MESSAGE_ID
+
+# Get minimal format
+$SKILL_DIR/scripts/gmail.py messages get MESSAGE_ID --format minimal
+
+
+Arguments:
+
+message_id: The message ID (required)
+--format: Message format (full, minimal, raw, metadata) - default: full
+send
+
+Send an email message.
+
+# Send simple email
+$SKILL_DIR/scripts/gmail.py send \
+  --to recipient@example.com \
+  --subject "Hello" \
+  --body "This is the message body"
+
+# Send with CC and BCC
+$SKILL_DIR/scripts/gmail.py send \
+  --to recipient@example.com \
+  --subject "Team Update" \
+  --body "Here's the update..." \
+  --cc team@example.com \
+  --bcc boss@example.com
+
+
+Arguments:
+
+--to: Recipient email address (required)
+--subject: Email subject (required)
+--body: Email body text (required)
+--cc: CC recipients (comma-separated)
+--bcc: BCC recipients (comma-separated)
+drafts list
+
+List draft messages.
+
+# List drafts
+$SKILL_DIR/scripts/gmail.py drafts list
+
+# List with custom max results
+$SKILL_DIR/scripts/gmail.py drafts list --max-results 20
+
+
+Arguments:
+
+--max-results: Maximum number of results (default: 10)
+drafts create
+
+Create a draft email.
+
+# Create draft
+$SKILL_DIR/scripts/gmail.py drafts create \
+  --to recipient@example.com \
+  --subject "Draft Subject" \
+  --body "This is a draft message"
+
+# Create draft with CC
+$SKILL_DIR/scripts/gmail.py drafts create \
+  --to recipient@example.com \
+  --subject "Meeting Notes" \
+  --body "Notes from today's meeting..." \
+  --cc team@example.com
+
+
+Arguments:
+
+--to: Recipient email address (required)
+--subject: Email subject (required)
+--body: Email body text (required)
+--cc: CC recipients (comma-separated)
+--bcc: BCC recipients (comma-separated)
+drafts send
+
+Send a draft message.
+
+# Send draft by ID
+$SKILL_DIR/scripts/gmail.py drafts send DRAFT_ID
+
+
+Arguments:
+
+draft_id: The draft ID to send (required)
+labels list
+
+List all Gmail labels.
+
+# List labels
+$SKILL_DIR/scripts/gmail.py labels list
+
+labels create
+
+Create a new label.
+
+# Create label
+$SKILL_DIR/scripts/gmail.py labels create "Project X"
+
+
+Arguments:
+
+name: Label name (required)
+Examples
+Verify Setup
+$SKILL_DIR/scripts/gmail.py check
+
+Find unread emails
+$SKILL_DIR/scripts/gmail.py messages list --query "is:unread"
+
+Search for emails from a sender
+$SKILL_DIR/scripts/gmail.py messages list --query "from:boss@example.com" --max-results 5
+
+Send a quick email
+$SKILL_DIR/scripts/gmail.py send \
+  --to colleague@example.com \
+  --subject "Quick Question" \
+  --body "Do you have time for a meeting tomorrow?"
+
+Create and send a draft
+# Create draft
+$SKILL_DIR/scripts/gmail.py drafts create \
+  --to team@example.com \
+  --subject "Weekly Update" \
+  --body "Here's this week's update..."
+
+# List drafts to get the ID
+$SKILL_DIR/scripts/gmail.py drafts list
+
+# Send the draft
+$SKILL_DIR/scripts/gmail.py drafts send DRAFT_ID
+
+Organize with labels
+# Create a label
+$SKILL_DIR/scripts/gmail.py labels create "Project Alpha"
+
+# List all labels
+$SKILL_DIR/scripts/gmail.py labels list
+
+Advanced searches
+# Find emails with attachments from last week
+$SKILL_DIR/scripts/gmail.py messages list --query "has:attachment newer_than:7d"
+
+# Find important emails from specific sender
+$SKILL_DIR/scripts/gmail.py messages list --query "from:ceo@example.com is:important"
+
+# Find emails in a conversation
+$SKILL_DIR/scripts/gmail.py messages list --query "subject:project-alpha"
+
+Gmail Search Query Syntax
+
+Common search operators:
+
+Operator	Description	Example
+from:	Sender email	from:user@example.com
+to:	Recipient email	to:user@example.com
+subject:	Subject contains	subject:meeting
+label:	Has label	label:important
+has:attachment	Has attachment	has:attachment
+is:unread	Unread messages	is:unread
+is:starred	Starred messages	is:starred
+after:	After date	after:2024/01/01
+before:	Before date	before:2024/12/31
+newer_than:	Newer than period	newer_than:7d
+older_than:	Older than period	older_than:30d
+
+Combine operators with spaces (implicit AND) or OR:
+
+# AND (implicit)
+from:user@example.com subject:meeting
+
+# OR
+from:user@example.com OR from:other@example.com
+
+# Grouping with parentheses
+(from:user@example.com OR from:other@example.com) subject:meeting
+
+
+For the complete reference, see gmail-queries.md.
+
+Error Handling
+
+Authentication and scope errors are not retryable. If a command fails with an authentication error, insufficient scope error, or permission denied error (exit code 1), stop and inform the user. Do not retry or attempt to fix the issue autonomously — these errors require user interaction (browser-based OAuth consent). Point the user to the OAuth troubleshooting guide.
+
+Retryable errors: Rate limiting (HTTP 429) and temporary server errors (HTTP 5xx) may succeed on retry after a brief wait. All other errors should be reported to the user.
+
+Model Guidance
+
+This skill makes API calls requiring structured input/output. A standard-capability model is recommended.
+
+Weekly Installs
+167
+Repository
+odyssey4me/agent-skills
+GitHub Stars
+3
+First Seen
+5 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykFail

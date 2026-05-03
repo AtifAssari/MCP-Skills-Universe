@@ -1,0 +1,40 @@
+---
+rating: ⭐⭐
+title: devops-specialist
+url: https://skills.sh/caomeiyouren/momei/devops-specialist
+---
+
+# devops-specialist
+
+skills/caomeiyouren/momei/devops-specialist
+devops-specialist
+Installation
+$ npx skills add https://github.com/caomeiyouren/momei --skill devops-specialist
+SKILL.md
+DevOps Specialist Skill (DevOps 专家技能)
+能力 (Capabilities)
+容器化: 编写和优化 Dockerfile 与 docker-compose.yml。
+CI/CD: 编写 GitHub Actions 工作流脚本。
+部署适配: 配置 Vercel、Cloudflare Workers 等平台的部署文件。
+环境配置: 管理 .env 模板与 Nuxt runtimeConfig 配置。
+指令 (Instructions)
+分支与环境对齐: 核心部署配置的修改应在 master 分支或专门的 infra 分支中执行。
+路径安全: 在执行任何涉及删除的操作前，必须进行路径校验。
+构建验证: 在提交构建配置变更前，应尝试在本地进行模拟构建。
+最小镜像: 追求 Docker 镜像的分层优化与体积精简。
+使用示例 (Usage Example)
+
+输入: "更新 Docker 配置以支持 PostgreSQL。" 动作: 修改 docker-compose.yml 增加 db 服务，并在 Dockerfile 中安装相应的驱动。
+
+Weekly Installs
+165
+Repository
+caomeiyouren/momei
+GitHub Stars
+7
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

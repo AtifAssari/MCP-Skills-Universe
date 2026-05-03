@@ -1,0 +1,132 @@
+---
+rating: ⭐⭐⭐
+title: trc20 token toolkit
+url: https://skills.sh/bofai/skills/trc20-token-toolkit
+---
+
+# trc20 token toolkit
+
+skills/bofai/skills/TRC20 Token Toolkit
+TRC20 Token Toolkit
+Installation
+$ npx skills add https://github.com/bofai/skills --skill 'TRC20 Token Toolkit'
+SKILL.md
+TRC20 Token Toolkit
+
+Universal TRC20 token operations for AI agents on TRON. Check balances, transfer tokens, manage approvals, and fetch metadata for any TRC20 token. Supports symbol-based lookups for common tokens (USDT, USDD, SUN, etc.) and direct contract addresses for any token.
+
+Quick Start
+
+Wallet required: Run agent-wallet list first.
+If no wallets exist, invoke bankofai-guide (Section C — Wallet Guard) before proceeding.
+
+Install dependencies:
+cd trc20-toolkit-skill && npm install
+
+Set environment variables:
+export TRON_PRIVATE_KEY="<your-private-key>"
+export TRON_NETWORK="mainnet"
+export TRONGRID_API_KEY="<optional>"
+
+
+[!CAUTION] Never display or log the private key.
+
+Available Scripts
+1. info.js — Token Metadata
+node scripts/info.js <tokenAddressOrSymbol>
+node scripts/info.js USDT
+node scripts/info.js TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+
+
+Output: name, symbol, decimals, total_supply
+
+2. balance.js — Token Balances
+# Single token balance
+node scripts/balance.js USDT
+node scripts/balance.js USDT TWalletAddress123
+
+# Batch balance check
+node scripts/balance.js --batch USDT,USDD,SUN
+node scripts/balance.js --batch USDT,USDD TWalletAddress123
+
+
+Output: trx_balance, tokens[] (each with symbol, balance, decimals)
+
+Behavior note: In --batch mode, invalid token inputs are returned as per-item errors instead of aborting the entire batch.
+
+3. transfer.js — Transfer Tokens
+Parameter	Required	Description
+token	Yes	Token address or symbol
+toAddress	Yes	Recipient TRON address
+amount	Yes	Human-readable amount
+--dry-run	No	Validate only, no transaction
+node scripts/transfer.js USDT TRecipientAddress 10.5 --dry-run
+node scripts/transfer.js USDT TRecipientAddress 10.5
+
+
+Output: status, tx_id, amount, symbol
+
+Validation rules: Recipient addresses must be valid TRON addresses, self-transfers are rejected, and amount must be greater than 0 even in --dry-run.
+
+4. approve.js — Manage Allowances
+# Set allowance (use the exact amount needed, never unlimited)
+node scripts/approve.js USDT TSpenderAddress 1000 --dry-run
+node scripts/approve.js USDT TSpenderAddress 1000
+
+# Check current allowance
+node scripts/approve.js USDT TSpenderAddress --check
+node scripts/approve.js USDT TSpenderAddress --check TWalletAddress
+
+
+Output: allowance, is_max, status, tx_id
+
+Validation rules: Spender and optional owner addresses must be valid TRON addresses, amount must be greater than 0, and unlimited approvals remain disabled.
+
+Usage Patterns
+Pattern 1: Check Before Transfer (Recommended)
+node scripts/balance.js USDT
+node scripts/transfer.js USDT TRecipient 100 --dry-run
+# Confirm with user
+node scripts/transfer.js USDT TRecipient 100
+
+Pattern 2: Portfolio Overview
+node scripts/balance.js --batch USDT,USDD,SUN,JST,BTT
+
+Security Rules
+
+[!CAUTION]
+
+Never display private keys in output or logs.
+Never transfer without user confirmation. Always use --dry-run first.
+Prevent self-transfers. The script rejects transfers to the sender's own address.
+Validate addresses. Ensure all addresses start with T and are valid TRON base58 addresses.
+Check balances before transfer. The script validates sufficient balance automatically.
+Never use unlimited approvals. Always approve only the exact amount needed for the intended swap or transfer. Infinite (MAX_UINT256) approvals are rejected by the script. This prevents a compromised or malicious spender contract from draining the entire token balance.
+Treat multi-permission wallets carefully. These scripts assume a directly usable signing key; wallets that require explicit permissionId selection may need a different transaction flow.
+Supported Tokens
+
+Common tokens resolved by symbol: USDT, USDD, USDC, WTRX, SUN, JST, BTT, WIN. Any TRC20 token can be used via its contract address.
+
+See resources/well_known_tokens.json for the full list.
+
+Common Issues
+Problem	Solution
+Unknown token symbol	Use the full contract address instead
+Insufficient balance	Check balance first with balance.js
+TRON_PRIVATE_KEY required	Set the environment variable
+Cannot find module 'tronweb'	Run npm install
+
+Version 1.0.0 — Created by M2M Agent Registry for Bank of AI
+
+Weekly Installs
+–
+Repository
+bofai/skills
+GitHub Stars
+35
+First Seen
+–
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykWarn

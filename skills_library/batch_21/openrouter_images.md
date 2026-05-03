@@ -1,0 +1,125 @@
+---
+title: openrouter-images
+url: https://skills.sh/openrouterteam/skills/openrouter-images
+---
+
+# openrouter-images
+
+skills/openrouterteam/skills/openrouter-images
+openrouter-images
+Installation
+$ npx skills add https://github.com/openrouterteam/skills --skill openrouter-images
+SKILL.md
+OpenRouter Images
+
+Generate images from text prompts and edit existing images via OpenRouter's chat completions API with image modalities.
+
+Prerequisites
+
+The OPENROUTER_API_KEY environment variable must be set. Get a key at https://openrouter.ai/keys
+
+First-Time Setup
+cd <skill-path>/scripts && npm install
+
+Decision Tree
+
+Pick the right script based on what the user is asking:
+
+User wants to...	Script	Example
+Generate an image from a text description	generate.ts "prompt"	"Create an image of a sunset over mountains"
+Generate with specific aspect ratio	generate.ts "prompt" --aspect-ratio 16:9	"Make a wide landscape image of a forest"
+Generate with a different model	generate.ts "prompt" --model <id>	"Generate using gemini-2.5-flash-image"
+Edit or modify an existing image	edit.ts path "prompt"	"Make the sky purple in photo.png"
+Transform an image with instructions	edit.ts path "prompt"	"Add a party hat to the animal in this image"
+Generate Image
+
+Create a new image from a text prompt:
+
+cd <skill-path>/scripts && npx tsx generate.ts "a red panda wearing sunglasses"
+cd <skill-path>/scripts && npx tsx generate.ts "a futuristic cityscape at night" --aspect-ratio 16:9
+cd <skill-path>/scripts && npx tsx generate.ts "pixel art of a dragon" --output dragon.png
+cd <skill-path>/scripts && npx tsx generate.ts "a watercolor painting" --model google/gemini-2.5-flash-image
+
+Options
+Flag	Description	Default
+--model <id>	OpenRouter model ID	google/gemini-3.1-flash-image-preview
+--output <path>	Output file path	image-YYYYMMDD-HHmmss.png
+--aspect-ratio <r>	Aspect ratio (e.g. 16:9, 1:1, 4:3)	Model default
+--image-size <s>	Image size (e.g. 1K, 2K)	Model default
+Edit Image
+
+Modify an existing image with a text prompt:
+
+cd <skill-path>/scripts && npx tsx edit.ts photo.png "make the sky purple"
+cd <skill-path>/scripts && npx tsx edit.ts avatar.jpg "add a party hat" --output avatar-hat.png
+cd <skill-path>/scripts && npx tsx edit.ts scene.png "convert to watercolor style" --model google/gemini-2.5-flash-image
+
+Options
+Flag	Description	Default
+--model <id>	OpenRouter model ID	google/gemini-3.1-flash-image-preview
+--output <path>	Output file path	image-YYYYMMDD-HHmmss.png
+--aspect-ratio <r>	Aspect ratio (e.g. 16:9, 1:1, 4:3)	Model default
+--image-size <s>	Image size (e.g. 1K, 2K)	Model default
+
+Supported input formats: .png, .jpg, .jpeg, .webp, .gif
+
+Output Format
+generate.ts
+{
+  "model": "google/gemini-3.1-flash-image-preview",
+  "prompt": "a red panda wearing sunglasses",
+  "images_saved": ["/absolute/path/to/image-20260305-143022.png"],
+  "count": 1
+}
+
+edit.ts
+{
+  "model": "google/gemini-3.1-flash-image-preview",
+  "source_image": "photo.png",
+  "prompt": "make the sky purple",
+  "images_saved": ["/absolute/path/to/image-20260305-143055.png"],
+  "count": 1
+}
+
+API Response Shapes
+
+Image generation uses POST /api/v1/responses with modalities: ["image", "text"]. See the Responses API reference and image generation guide for full request details.
+
+The image-specific output item type is image_generation_call — this is not obvious from the general Responses API docs:
+
+{
+  "type": "image_generation_call",
+  "id": "imagegen-abc123",
+  "status": "completed",
+  "result": "<base64-encoded image data>"
+}
+
+
+This appears alongside standard message output items in the output array. Text and image outputs may each be absent depending on the model and prompt.
+
+Using a Different Model
+
+The default model is google/gemini-3.1-flash-image-preview (Nano Banana 2). To use a different model, pass --model <id> with any OpenRouter model ID that supports image output modalities.
+
+Use the openrouter-models skill to discover image-capable models:
+
+cd <openrouter-models-skill-path>/scripts && npx tsx search-models.ts --modality image
+
+Presenting Results
+After generating or editing, display the saved image to the user
+Include the model used and any text response the model provided (printed to stderr)
+If multiple images are returned, show all of them
+When the user doesn't specify an output path, tell them where the file was saved
+For edit operations, mention the source image that was modified
+Weekly Installs
+93
+Repository
+openrouterteam/skills
+GitHub Stars
+118
+First Seen
+Mar 5, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass
