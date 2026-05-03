@@ -1,0 +1,101 @@
+---
+rating: ⭐⭐⭐
+title: awesome-ai-security-overview
+url: https://skills.sh/gmh5225/awesome-ai-security/awesome-ai-security-overview
+---
+
+# awesome-ai-security-overview
+
+skills/gmh5225/awesome-ai-security/awesome-ai-security-overview
+awesome-ai-security-overview
+Installation
+$ npx skills add https://github.com/gmh5225/awesome-ai-security --skill awesome-ai-security-overview
+SKILL.md
+Awesome AI Security - Project Overview
+Purpose
+
+This is a curated collection of AI/ML security materials and resources for pentesters, red teamers, and security researchers. The goal is to keep the list AI-focused, high-signal, well-categorized, and non-duplicated.
+
+Project Structure
+awesome-ai-security/
+├── README.md                # Main resource list (curated)
+├── LICENSE                  # License
+├── .claude/
+│   └── skills/              # Claude skills (this directory)
+└── ref/                     # Reference notes (not curated)
+    ├── my_collect.md        # Personal collection
+    ├── Awesome-AI-Security-1/
+    ├── awesome-ai-security-2/
+    ├── 模型安全/             # Model security notes
+    ├── 渗透测试相关/          # Pentesting notes
+    └── 网络安全相关/          # Network security notes
+
+README.md Format Convention
+Heading Structure
+Top-level categories use ##.
+Subcategories use ### (e.g., inside AI Security & Attacks).
+Starter Pack uses bold bullets for sub-sections (e.g., - **CTFs / Practice**).
+Link Format
+Use full URLs, one per bullet line.
+Add a short description in square brackets: - https://... [Short description]
+Keep descriptions concise.
+Do not add the same URL in multiple places.
+Example Entry
+### Prompt Injection
+- https://github.com/example/tool [Prompt injection detector]
+
+Categorization Rules (How to Place a New Link)
+AI Security Starter Pack: CTFs, courses, blogs, newsletters, beginner resources.
+AI/LLM Guide: LLM fundamentals, tutorials, awesome lists.
+AI Security & Attacks: Prompt injection, adversarial attacks, poisoning, privacy, model security.
+AI Pentesting & Red Teaming: AI-powered pentesting tools, red teaming, MCP security tools.
+AI Security Tools & Frameworks: AI vulnerability detection, CVE analysis, OSINT, security libraries, TLS / fingerprint / bot signals (JA3 clients, site bot detection, automation hardening research—use only ethically and on authorized targets).
+AI Agents & Frameworks: Agent frameworks, formal methods / Lean agents (e.g. AI-assisted theorem proving orchestration), AI memory & long context (latent memory, recursive context, long-memory RAG), RAG stacks/collections, browser automation, MCP servers, agent sandboxes & isolation (policy-enforced runtimes, container/VM boundaries).
+AI Development & Training: Training frameworks, local models, uncensored models, prompts.
+AI Applications: Chat assistants, deep research, search engines, code analysis, web scraping, vision / domain apps (e.g. agricultural or specialized image understanding with LLMs).
+AI Image & Video: Image generation, video generation, TTS, face recognition.
+Benchmarks & Standards: AI safety benchmarks, threat frameworks, standards.
+AI-Relevance Filter
+
+Only include AI/ML-related resources. Do not add:
+
+Traditional security tools (unless AI-powered)
+Web3/blockchain tools (unless AI-related)
+General pentesting tools without AI integration
+Browser vulnerabilities, phishing tools, CVE collections (unless AI-analyzed)
+Duplicate Policy
+
+No duplicate URLs in README.md. If a link fits multiple categories, pick the primary one.
+
+Contribution Checklist
+Check for duplicates in README.md before adding.
+Verify the resource is AI/ML-related.
+Verify the link points to the canonical source (avoid low-value forks).
+Keep the description concise and useful.
+Put it into the most appropriate category.
+Prefer minimal changes over reformatting large sections.
+Utilities Section
+
+End of README.md includes Utilities (mixed): agent-facing CLIs, productivity, and mail/identity (e.g. self-hosted domain mail, encrypted P2P email) when they support ops or privacy around AI workflows—keep entries concise.
+
+Data Source
+
+For detailed and up-to-date resources, fetch the complete list from:
+
+https://raw.githubusercontent.com/gmh5225/awesome-ai-security/refs/heads/main/README.md
+
+
+Use this URL to get the latest curated links when you need specific tools, papers, or resources.
+
+Weekly Installs
+19
+Repository
+gmh5225/awesome…security
+GitHub Stars
+16
+First Seen
+Feb 23, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

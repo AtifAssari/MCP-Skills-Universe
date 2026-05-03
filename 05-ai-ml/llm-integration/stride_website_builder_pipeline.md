@@ -1,0 +1,589 @@
+---
+title: stride-website-builder-pipeline
+url: https://skills.sh/joshpocock/stride-website-builder-pipeline/stride-website-builder-pipeline
+---
+
+# stride-website-builder-pipeline
+
+skills/joshpocock/stride-website-builder-pipeline/stride-website-builder-pipeline
+stride-website-builder-pipeline
+Installation
+$ npx skills add https://github.com/joshpocock/stride-website-builder-pipeline --skill stride-website-builder-pipeline
+SKILL.md
+Website Builder Pipeline
+
+Guided, survey-driven workflow for building premium animated websites end-to-end. Chains every tool and skill from the 2026 creator playbook into one interactive experience with pre-built prompts under the hood.
+
+Philosophy: Claude is a collaborator, not autopilot. Survey first, confirm before executing, checkpoint at every phase. The user stays in the driver's seat.
+
+Who this is for: Anyone who wants to build a $5K-$10K quality landing page in 15-30 minutes for $2-10 total cost, without manually chaining 8 different tools.
+
+Pipeline Phases
+Phase 0: PREFLIGHT (env + skills + tools + MCP detection)
+    ↓
+Phase 1: SURVEY (13 adaptive questions)
+    ↓ [user confirms plan]
+Phase 2: BRAND EXTRACTION (Firecrawl / manual / screenshots / AI decides)
+    ↓
+Phase 2.5: STITCH LAYOUT GEN (optional — only if Stitch MCP detected)
+    ↓
+Phase 3: SKILL INSTALLATION (guided peer install)
+    ↓
+Phase 4: ASSET GENERATION (Wavespeed / Kie — images + Kling/Veo video)
+    ↓   ↳ Phase 4c: PAPER GRAPHIC EXPORTS (optional — only if Paper MCP running)
+Phase 5: PROJECT SCAFFOLD (skipped if Q1 = add-to-existing)
+    ↓
+Phase 6: BUILD (Claude Code + peer skills + Stitch scaffolds + 21st.dev components)
+    ↓
+Phase 6.5: VERIFY (agent-browser screenshots + a11y tree + fix loop)
+    ↓
+Phase 7: SEO PASS (JSON-LD, meta, sitemap, llms.txt, Lighthouse)
+    ↓
+Phase 7.5: VERIFY AGAIN (agent-browser re-check after SEO changes)
+    ↓
+Phase 8: DEPLOY (Vercel/Netlify CLI)
+    ↓
+Phase 8.5: PROD VERIFY (agent-browser against live URL)
+    ↓
+Phase 9: LEARNINGS LOG (self-improving)
+
+Phase 0: Preflight Check
+
+Start Phase 0 immediately on activation. Do not ask clarifying questions before running preflight — the Phase 1 survey collects every piece of information the skill needs (project type, tech stack, brand source, vibe, sections, deploy target, SEO tier, and more). Asking upfront questions like "what kind of site?" or "what do you want on it?" before loading this SKILL.md duplicates work the skill already does and wastes the user's turns. Load straight into the status audit below.
+
+Before asking any questions, run a preflight audit. Show the user what is ready vs. what needs setup.
+
+Check for required CLIs: ffmpeg, node, python, gh, vercel, netlify, lighthouse
+
+Check for environment variables across multiple sources (see references/env-template.env for the full list). Load values in this order, with earlier sources winning:
+
+Shell environment (process.env) — primary source
+.env in the current working directory — if present, parse and merge any keys that weren't already set in the shell
+.env in parent directories up to the project root — walk upward from cwd until hitting a .git/, package.json, pyproject.toml, or 3 levels up; merge any .env files found along the way
+.env in the skill's own root directory — ~/.claude/skills/stride-website-builder-pipeline/.env for user-scope installs, or <project>/.claude/skills/stride-website-builder-pipeline/.env for project-scope installs. Merge as the lowest-priority fallback.
+
+Why this matters: users commonly keep their keys in a .env file rather than exporting them to the shell every session. If Phase 0 only checks process.env, legitimate keys will look unset and the preflight will misreport. Always check files too. Shell values always win over file values so users can temporarily override a key without editing files.
+
+Implementation: run cat ./.env 2>/dev/null, cat ../.env 2>/dev/null, and cat <skill-root>/.env 2>/dev/null, parse each for KEY=value lines, and merge into a working env dict. Do NOT modify the user's shell. Only use the merged dict for this Phase 0 status check and for passing to the script subprocesses that need keys (e.g., scripts/call-wavespeed.py).
+
+Check for installed peer skills: taste-skill, front-end design, cc-nano-banana, mager/frontend-design
+
+Check for brand.json in current directory (if present, offer to reuse)
+
+Check ~/.claude/website-builder/history.json for prior runs (memory-aware)
+
+Detect registered MCPs. Run claude mcp list and parse for three integrations:
+
+Stitch MCP (tool names start with mcp__stitch__) — Google Stitch AI layout generator. If detected, enables Phase 2.5.
+Paper.design MCP (tool names include paper) — then additionally HEAD-request http://127.0.0.1:29979/mcp with a 1-second timeout. Only counted as "available" if both the MCP is registered AND the endpoint responds (meaning Paper Desktop is actually running with a file open). If detected, enables Phase 4c.
+21st.dev Magic MCP — premium component library. If detected, enables mid-Phase 6 component injection. For each detected MCP, ask the user explicitly via AskUserQuestion (do not just show it in the status table — present each as a yes/no question the user must actively answer): "Stitch MCP detected — generate per-section layout scaffolds after brand extraction? [Y/n]". The user answers once; the skill remembers the choice for this run.
+
+Smoke-test provider scripts. Script rot is real — a production run in April 2026 found call-kie.py completely broken because the Kie.ai API surface changed. Instead of trusting file-exists as "green," run one cheap read call per provider:
+
+Wavespeed: curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $WAVESPEED_API_KEY" $BASE_URL/models or similar model-list endpoint. If 200 → ✓; if 4xx/5xx → ⚠ "Wavespeed API returned {code} — script may be stale"
+Kie.ai: curl -s -H "Authorization: Bearer $KIE_AI_API_KEY" https://api.kie.ai/api/v1/chat/credit. If {"code":200} → ✓; else → ⚠ "Kie.ai credit check failed — script may be stale"
+Firecrawl: curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $FIRECRAWL_API_KEY" https://api.firecrawl.dev/v1/scrape -X POST -d '{}'. If 400 (bad request but auth worked) → ✓; if 401/403 → ⚠ "Firecrawl auth failed" Total cost: $0 (read-only calls, no generation). Total time: <3 seconds. If any provider flags ⚠, tell the user which script is suspect and recommend checking the script's header comments for known issues before relying on that provider in later phases.
+
+Env var tiers:
+
+Required for any run: one image provider (WAVESPEED_API_KEY or KIE_AI_API_KEY) — pipeline cannot generate hero assets without one.
+Required only if user picks Q2 = "Existing URL": FIRECRAWL_API_KEY. If missing when URL path is chosen, tell the user and let them switch to manual / screenshot / AI-decide path instead of blocking.
+Optional: everything else (Vercel, Netlify, Gemini, Google AI Studio). Their absence just disables that specific feature, never blocks the run.
+
+Present results as a color-coded table:
+
+✓ Ready (green)
+⚠ Needs key (yellow)
+✗ Not installed (red)
+
+Offer "install all recommended" or let the user cherry-pick. Always ask before installing anything — auto-installing skills or tools on someone's machine without consent is a trust violation that's hard to recover from, and a one-sentence confirmation is cheap.
+
+If this is a repeat run, pre-fill the survey with the user's last answers from history.
+
+Phase 1: The Survey (13 Adaptive Questions)
+
+Use AskUserQuestion for each step. Adapt — skip questions when answers from earlier questions make them unnecessary. Typical user answers 8–10 questions after adaptive skips.
+
+See references/survey-questions.md for the full question spec with all options, adaptive rules, and escape hatches. Summary:
+
+Project type — Landing / Multi-page / Full app / Portfolio / Add to existing project
+Q1b follow-up if "Add to existing project": pick a mode — Add (preserve code, extend), Rebuild (keep infrastructure, rewrite UI), or Replace (archive everything, start fresh in the same repo). Always ask — do not default. Rebuild and Replace delete/move files and must run inside Plan Mode with the file list surfaced before approval.
+Tech stack — Next.js / Nuxt / Astro / SvelteKit / Remix / Vite+React / Plain HTML / AI decides. Skipped if Q1 = "Add to existing project" (any mode); stack is auto-detected from the repo.
+Brand source — URL (Firecrawl) / Manual / Screenshots / Build from scratch / Let AI decide
+Business info — Company name, tagline, one-sentence description (pre-filled from Firecrawl if available)
+Target audience — Free text
+Vibe archetype — 6 presets + Custom + Let AI decide
+Color palette — Skipped if Q3 already provided colors
+Font pairing — Skipped if Q3 already provided fonts
+Hero images — three sub-axes: source (AI generates / upload as-is / upload + AI edits / AI decides), prompt (AI writes from 6-stage Cinematic Frame Method / user writes / AI decides), model (auto-picked from env: Wavespeed Gemini 3 Pro → Kie Nano Banana Pro)
+Video & animation — four sub-axes: placements (hero background video / scroll-driven frame-by-frame / section accent video / static only / own MP4 — multi-select, user describes each), model (Kling 3.0 via Kie / Seedance via Wavespeed / Veo 3 Fast / AI picks), prompt (AI writes / user writes / AI decides), playback mode per placement (autoplay MP4 vs scroll-driven canvas — different asset pipelines, different implementation). Skipped entirely if "static only"
+Sections — multi-select with smart pre-selection from Q1 + Q6, plus a free-text "+ add your own" field for custom sections
+Deploy target — Vercel / Netlify / Cloudflare / Manual / Skip
+SEO tier — Full audit / Basic / Skip. Never forced — user's answer always wins, even for local service businesses (we only recommend).
+
+After Q13, present the generated plan and wait for explicit confirmation before any execution.
+
+Adaptive rules (examples):
+
+If Q1 = "Add to existing project" → skip Q2 tech stack, detect from repo; skip Phase 5 scaffold; Phase 6 build respects existing code conventions
+If Q3 = "Build from scratch" or "Let AI decide" → skip Q7 + Q8
+If Q10a = "Static" or "Own MP4" → skip Q10b + Q10c
+If Q9a = "Upload as-is" → skip Q9b prompt source
+If user provides a Figma file → skip Q7, Q8 entirely
+If Stitch MCP not detected → skip Phase 2.5 entirely; no mention to user
+If Paper MCP not running → skip Phase 4c entirely; no mention to user
+If 21st.dev Magic MCP not detected → skip mid-Phase 6 component injection; Claude builds all sections from scratch
+
+Removed from prior spec: old Q12 budget tier (overlapped with provider-key detection), old Q13 integrations list (now auto-detected from env vars in Phase 0), old Q14 separate inspiration question (merged with Q4b above Q5).
+
+Escape hatches: every question supports "skip this / paste manually / let me show you / let AI decide".
+
+Phase 2: Brand Extraction
+
+Four possible paths based on Q2. brand.json is the single output format regardless of path — it IS the brand guidelines doc the rest of the pipeline reads from. Do not create a separate markdown brand guide; brand.json is canonical.
+
+Path A — Existing URL (requires FIRECRAWL_API_KEY):
+
+Read the URL
+Call scripts/call-firecrawl.py with the URL and a custom extract schema for brand fields
+Parse response into brand.json:
+{
+  "name": "...",
+  "tagline": "...",
+  "colors": {"primary": "#...", "secondary": "#...", "accent": "#...", "bg": "#..."},
+  "fonts": {"heading": "...", "body": "..."},
+  "logo_url": "...",
+  "personality": ["..."]
+}
+
+Show extracted brand to user, ask "any corrections?"
+
+Path B — Screenshots (no API key needed): use Claude vision to extract the same fields from user-uploaded images and write brand.json. Uses the prompt in references/build-prompts/brand-extract.md.
+
+Path C — Manual (no API key needed): ask the user for each field directly via AskUserQuestion — name, tagline, primary/secondary/accent/bg colors (hex), heading + body font, 3 personality adjectives. Write brand.json from their answers.
+
+Path D — Let AI decide (no API key needed): user provides only company name + one-sentence description + target audience (already collected in Q3/Q4). Claude picks vibe, palette, and fonts from the vibe archetype that best matches the business, then writes brand.json. Show the AI-picked brand to user and let them tweak any field before proceeding. This is the "just do what it wants" escape hatch — useful when the user has no brand yet or doesn't care about design specifics.
+
+Firecrawl is NOT required for Paths B/C/D. If FIRECRAWL_API_KEY is missing and the user picked Path A, surface the missing key and offer to switch to Path B, C, or D instead of blocking.
+
+Phase 2.5: Stitch Layout Generation (optional)
+
+Skip this phase if Stitch MCP was not detected in Phase 0 or the user declined. If active, Stitch (Google's free AI UI design tool, Gemini 3.1 Pro) generates themed HTML + Tailwind scaffolds per section. We use them as structural scaffolding for Phase 6 — Claude ports the output to the chosen tech stack and layers in animations, real images, and taste-skill rules. $0 cost, 2-5 min typical (5-12 with optional variants).
+
+Read references/phases/phase-2-5-stitch.md for the full flow — brand.json → Stitch DesignTheme mapping (font enum, color variant, roundness), per-section generate_screen_from_text calls, parallelization, variants, user selection, and Phase 6 handoff.
+
+Phase 3: Skill Installation
+
+Do not skip this phase. Even if the user didn't mention skills, check what's installed and ask about anything missing. This phase runs every time — it's not gated on a survey question.
+
+Installation scope: project-only. All skill installs go into the current project's .claude/skills/ or .agents/skills/ directory — never into the user-scope ~/.claude/skills/. The pipeline should not pollute other projects with skills that are only relevant to this build. If a skill is already installed at user scope, that's fine (it'll be detected in the scan), but new installs always target project scope.
+
+Step 1 — Scan what's already installed. List the contents of ~/.claude/skills/, <project>/.claude/skills/, and <project>/.agents/skills/. Note which of the slot skills are present in any of these locations.
+
+Step 2 — Check each slot and ask via AskUserQuestion for any missing critical skill. See references/recommended-skills.json for install commands and details.
+
+Slot 1 — Rules + dials (always taste-skill): If taste-skill is not in the installed list, ask explicitly:
+
+taste-skill is not installed. It's the anti-slop ruleset that prevents generic AI patterns and gives you 3 tunable dials (DESIGN_VARIANCE, MOTION_INTENSITY, VISUAL_DENSITY). Every build is better with it. Install into this project? git clone https://github.com/Leonxlnx/taste-skill .claude/skills/taste-skill [Y/n]
+
+Slot 2 — Aesthetic opinion (pick ONE based on vibe): Check if any of these are already installed: frontend-design, mager/frontend-design, uiux-pro-max. If one is present, confirm it's the right pick for this project's vibe. If none are present, recommend one based on vibe and ask:
+
+Trustworthy / service / local business → recommend Anthropic frontend-design (git clone from https://github.com/anthropics/skills → copy skills/frontend-design into .claude/skills/frontend-design) or UIUX Pro Max
+Dark neon / SaaS / brutalist / minimalist → recommend mager/frontend-design (git clone https://github.com/mager/frontend-design .claude/skills/frontend-design)
+Animated product landing → recommend Anthropic frontend-design
+
+Don't stack multiple aesthetic-opinion skills — they give contradictory signals about type hierarchy and the output gets muddy. One per project.
+
+Slot 3 — Utility: If agent-browser is not installed, ask:
+
+agent-browser (Vercel Labs) is not installed. It's a Rust CLI used in Phase 6.5 for automated visual verification — desktop/mobile screenshots, accessibility tree checks, and a self-correcting fix loop. Install globally? npm install -g agent-browser && agent-browser install [Y/n] (This is a system binary, not a Claude Code skill — it installs globally via npm, not into .claude/skills/)
+
+Step 3 — Run confirmed installs one at a time. After each install, verify it succeeded (check the skills directory for the new folder) before moving to the next. If an install fails, tell the user the error and offer to skip that skill — don't block the pipeline.
+
+Skills NOT to auto-install (mention as "manual install" only if the user asks):
+
+Skool-gated skills (Nate Herk Video-to-Website, Jack Roberts 3D Builder) — community-only, require manual download
+Owl-Listener designer-skills bundle — heavy (63 skills), only if the user specifically wants research/strategy/design-ops depth
+TypeUI.sh themes — design-file downloads from typeui.sh, not a git-installable skill
+AccessLint — WCAG compliance, safe to co-install, mention only if SEO tier = "Full Audit"
+Phase 4: Asset Generation
+
+When to run this phase: Phase 4 runs if Q10a selected ANY of these placements:
+
+✓ "Hero background video" → generate hero image + video (autoplay MP4)
+✓ "Scroll-driven frame-by-frame" → generate start/end images + video + ffmpeg frame extraction
+✓ "Section accent video" → generate image + short video per section
+✗ If Q10a = "Static images only" or "I have my own MP4(s)" → skip Phase 4 entirely
+
+Q10 answer mapping — read the user's Q10 answers and use them here:
+
+Q10a (placements) = WHAT to generate. Each selected placement is a separate deliverable.
+Q10b (model) = WHICH video model to use: Kling 3.0 via Kie (scripts/call-kie.py video) or Seedance/Veo via Wavespeed (scripts/call-wavespeed.py video)
+Q10c (prompt) = WHERE the video prompt comes from: AI writes / user writes / auto
+Q10d (playback mode) = HOW the video plays: autoplay MP4 or scroll-driven canvas with extracted frames
+Q10e (animation style) = the specific animation concept, presented during this phase after images are picked
+
+The pipeline for each placement is: generate 4-5 images → user picks → present 4-5 animation styles → user picks → generate video → if scroll-driven: extract frames with ffmpeg. This is the ONLY way to create video/animation content. Do NOT code animations by hand (no terminal typewriters, no CSS-only parallax, no framer-motion scroll sequences) — the skill uses AI-generated images and video, not hand-coded components. The only code you write is the playback component (<video> tag for autoplay, or the canvas scroll scrubber for frame-by-frame).
+
+Generate for EVERY placement the user selected in Q10a, not just the first one. Two placements = two full pipeline runs.
+
+4a. Image Generation (per placement)
+
+Generate two image prompts from the survey answers (product, vibe, brand colors) using references/build-prompts/image-gen-nanobanana.md as the fill-in template and references/build-prompts/cinematic-frame-method.md as the underlying framework for non-standard projects.
+
+Provider selection (check env vars in order):
+
+If WAVESPEED_API_KEY is set → PREFERRED. Use Gemini 3 Pro Image via scripts/call-wavespeed.py:
+
+Model: gemini-3-pro (shortcut for google/gemini-3-pro-image/text-to-image)
+Aspect ratio: 16:9
+Native 4K output (no upscale needed for retina desktop heroes)
+Cost: ~$0.025/img
+Gemini 3 Pro returns exactly 1 variant per call regardless of --n. For N variants, issue N separate generate_image() calls with different --seed values (costs N × $0.025). This is a Gemini 3 Pro limitation — other Wavespeed models (Nano Banana Pro, Gemini 2.5 Flash) do support true --n batching.
+Why preferred: newest Gemini family model, genuine 4K native
+
+Else if KIE_AI_API_KEY is set → FALLBACK. Use Nano Banana Pro via scripts/call-kie.py:
+
+Model: nanoBananaPro (default — https://kie.ai/nano-banana-pro). Alternative: nanoBanana2 (cheaper — https://kie.ai/nano-banana-2)
+Aspect ratio: 16:9
+Resolution: 2K
+Batch: up to 4 variants per call (true batching works here)
+Note: call-kie.py is partially broken as of April 2026 (the Kie.ai API surface changed). The script tries both the old /images/generations endpoint and the new /playground/createTask pattern. If both fail, fall back to Wavespeed even for non-preferred paths.
+Safety rules: do NOT use quality param on Kie.ai (breaks the request); use size (standard/high), aspect_ratio
+
+Else → ERROR. Tell the user to set one of the two keys in .env before rerunning. Do not try to proceed without image generation.
+
+Image selection flow (mandatory per placement — do not skip):
+
+For each image placement (hero bg, scroll start frame, scroll end frame, section accent):
+
+Generate 4-5 variants. Use different seeds or slight prompt variations so the user has real choices. If Gemini 3 Pro (1 per call), issue 4-5 calls. If Nano Banana Pro (supports batching), issue 1 call with n=4.
+
+Present ALL variants to the user via AskUserQuestion:
+
+Here are 5 options for your [hero image / scroll start frame / etc.]:
+
+[describe variant 1 — composition, lighting, mood]
+[describe variant 2]
+[describe variant 3]
+[describe variant 4]
+[describe variant 5] Pick a number, say "AI choose" for me to pick the strongest, or describe what you'd change.
+
+If user says "AI choose" → pick the variant with the best composition (centered subject, clean background, brand-appropriate lighting) and tell them which you picked and why.
+
+If user says "upload my own" → accept their image URL or file path.
+
+If user doesn't like any → ask what to change, regenerate with adjusted prompts, repeat.
+
+Download the picked image to project/assets/. Move to the next placement.
+
+Then for each VIDEO placement, present animation style options:
+
+Generate 4-5 animation concept descriptions tailored to the specific picked image (not generic). Example for a solar panel image:
+
+Here are 5 animation ideas for your scroll-driven section:
+
+Panels installing one by one onto the roof, frame by frame as user scrolls
+Camera slowly orbiting the completed installation, golden hour shift
+Day-to-night timelapse — panels power on, house lights glow warm at dusk
+Storm rolls in, then clears to sunny sky — resilience narrative
+Zoom from street level up to rooftop, revealing the full solar array Pick a number, say "AI choose", or describe your own idea.
+
+Same selection flow — user picks, AI chooses, or user describes their own.
+
+Generate the video using the picked animation style + the picked start image (and end image if applicable).
+
+If scroll-driven playback mode → extract frames with ffmpeg after video generation.
+
+This "show options → user picks → generate" flow runs for EVERY placement. Two placements = two rounds of image selection + two rounds of animation selection. Never generate one thing and move on without asking.
+
+4a.5 Lock-Pair Matching Pass — CURRENTLY BROKEN (skip)
+
+⚠️ The lock_pair() function in call-wavespeed.py returns HTTP 400 as of April 2026. The nano-banana-pro/edit-multi parameter schema drifted (suspected: images field name, num_images, or aspect_ratio changed). The function is deprecated with a clear NotImplementedError until the correct body shape is re-verified.
+
+Workaround: skip the lock-pair step entirely. Generate start + end frames with consistent prompts (same scene, same lighting, same camera angle described in text) and different subject states. Rely on prompt consistency to carry coherence across the pair. The downstream video transition (Seedance / Kling) will still work — the transition will just be slightly less visually locked between the two frames than with a verified lock-pair pass. For most landing pages, the quality difference is negligible.
+
+4b. Video Animation (Kling 3.0 via Kie.ai / Seedance & Veo via Wavespeed)
+
+Pick the video model from Q10b. Two providers available:
+
+Kie.ai — Kling 3.0 (verified April 2026):
+
+Model	Script	--model flag	Takes end frame?	Duration	Best for
+Kling 3.0	scripts/call-kie.py video	kling-3.0	✅ Yes (via image_urls[1])	1-12s	Scroll-bound hero with start+end frames (recommended default)
+
+Critical: the Kie.ai model ID is "kling-3.0/video" — NOT "kling3", "kling-3", or "kling-3.0". The /video suffix is required. The script handles this automatically. Supports mode: "pro" (higher resolution) or "standard" (faster/cheaper).
+
+Wavespeed — Seedance & Veo (verified April 2026):
+
+Model	Script	--model flag	Takes end frame?	Duration	Best for
+Seedance v1 Pro	scripts/call-wavespeed.py video	seedance-pro	✅ Yes (via last_image)	any	Alternative to Kling for start+end interpolation
+Veo 3 Fast	scripts/call-wavespeed.py video	veo3-fast	❌ No	4, 6, or 8s only	Freeform hero motion from single frame
+
+Provider selection: If KIE_AI_API_KEY is set, prefer Kling 3.0 on Kie.ai (cheapest, best start+end support). If Kie credits are exhausted or key is missing, fall back to Wavespeed Seedance Pro. If WAVESPEED_API_KEY is also exhausted, try Veo 3 Fast through the Google Gemini API if GEMINI_API_KEY is set.
+
+Prompt generation (Q10c):
+
+If user chose "AI writes" → fill references/build-prompts/video-gen-kling.md with survey answers (the prompt template works for any i2v model, not just Kling)
+If user chose "I'll write my own" → ask them for the prompt directly via AskUserQuestion
+If user chose "Let AI decide" → auto-pick model based on Q10a (exploded/orbit → Seedance Pro since those need locked start+end; dolly/pan → Veo 3 Fast for freeform)
+
+Call call-wavespeed.py video:
+
+--start → picked start frame URL (always — use the URL: line printed by the image subcommand, not the local path)
+--end → picked end frame URL (only for Seedance models; Veo doesn't support end frames)
+--prompt → from the prompt step above
+--duration → 5 (Seedance) or 4/6/8 (Veo 3 Fast — other values rejected)
+--aspect → 16:9
+--model → from Q10b
+
+Download the MP4 to project/assets/hero.mp4. Run ffmpeg to extract a mobile still: hero-mobile.jpg.
+
+Cost budget: Seedance Pro ~$0.50, Veo Fast ~$1.50 per clip. Full run budget: $2-10. Alert user if they hit $10.
+
+4c. Paper.design Graphic Exports (optional)
+
+Skip this sub-phase if Paper.design MCP was not detected, not running, or the user declined. If active, Paper's get_screenshot tool exports composed graphics from the currently-open Paper file as PNGs — useful for decorative section art, typographic compositions, and custom brand graphics the user already designed. Complementary to Nano Banana / Gemini, not competing (those generate photorealistic imagery from prompts; Paper exports user-composed visuals). $0 cost, ~1 sec per export.
+
+Read references/phases/phase-4c-paper.md for the full flow — artboard enumeration, user placement selection, get_screenshot export, build prompt augmentation, and failure handling.
+
+Phase 5: Project Scaffold
+
+Behavior depends on Q1 + Q1b:
+
+Q1 = new project (Landing / Multi-page / Full app / Portfolio) → run the normal scaffold flow below using scripts/scaffold-project.py.
+Q1 = "Add to existing project", Q1b = Add → skip scaffold. cd to the user-provided project root, detect the existing tech stack (package.json, astro.config.*, svelte.config.*, next.config.*, nuxt.config.*, remix.config.*, vite.config.*, plain index.html), read existing conventions (component folder layout, CSS approach, routing pattern), and drop brand.json + assets/ into a sensible location inside the existing repo (typically public/brand.json and public/assets/ or src/assets/). Never overwrite existing files without explicit confirmation.
+Q1 = "Add to existing project", Q1b = Rebuild → skip scaffold creation, but do the detection work (stack, conventions, preserved infrastructure). Phase 6 handles the tear-down-and-rewrite step with a file deletion list in Plan Mode. Drop brand.json + assets/ in the same location as Add mode.
+Q1 = "Add to existing project", Q1b = Replace → run the in-place archive-then-scaffold flow. First move everything except .git/, node_modules/, and .env* files into ./archive-{YYYY-MM-DD-HHMM}/ (use the current timestamp, UTC). Then run scripts/scaffold-project.py in the now-empty repo directory. Tell the user the archive path and that they can delete it once they're satisfied with the rebuild.
+
+For new projects, run scripts/scaffold-project.py to create:
+
+project-name/
+├── .env                    # Populated from survey + user's existing keys
+├── brand.json              # From Phase 2
+├── inspiration/            # Any competitor URLs/screenshots from Q14
+│   ├── source-1.html       # From view-page-source.com
+│   └── screenshot-1.png
+├── assets/
+│   ├── hero.mp4            # From Kling
+│   ├── hero-mobile.jpg     # ffmpeg still
+│   ├── start-frame.webp    # From NanoBanana
+│   └── end-frame.webp
+├── README.md               # Survey summary + next steps
+└── build-plan.md           # The master prompt that will drive the build
+
+
+Pre-populate .env with:
+
+User's existing keys (from environment or prior runs)
+Placeholders for missing keys
+Comments explaining which keys are required vs optional
+Install script fallback
+
+Scaffolders (create-next-app, nuxi init, npm create astro, npm create svelte, npm create vite, create-remix) sometimes prompt interactively or hang waiting for input when Claude Code runs them. Always pass non-interactive flags so the scaffold runs clean:
+
+Next.js: npx create-next-app@latest {name} --ts --tailwind --app --src-dir --import-alias "@/*" --no-eslint --use-npm --yes
+Nuxt: npx nuxi@latest init {name} --packageManager npm --gitInit false --force
+Astro: npm create astro@latest {name} -- --template minimal --typescript strict --install --no-git --yes
+SvelteKit: npm create svelte@latest {name} -- --template skeleton --types ts --no-prettier --no-eslint --no-playwright --no-vitest
+Vite: npm create vite@latest {name} -- --template react-ts
+Remix: npx create-remix@latest {name} --template remix-run/remix/templates/remix --install --no-git-init --yes
+
+If the scaffolder still fails (network error, prompt can't be bypassed, version mismatch), do NOT keep retrying. Stop and print the exact command for the user to run manually in their own terminal, then wait for them to confirm it finished before continuing to Phase 6. Tell them: "I couldn't run <command> non-interactively. Please run it yourself and reply 'done' when the folder is created." This keeps the skill unblocked without making the user debug a subprocess failure.
+
+Phase 6: Build
+
+Build behavior depends on Q1 + Q1b:
+
+Q1b = Add (existing project, preserve): use site-build-premium.md as a guide but adapt to the existing codebase — match the detected stack's patterns, reuse existing components where possible, stay inside the user's folder conventions, never refactor unrelated code. This is the "extend, don't disrupt" mode.
+
+Q1b = Rebuild (existing project, rewrite UI): this is the destructive mode and requires extra care. Before writing or deleting anything:
+
+Enumerate every UI component and page file in the repo. Look in src/app/, src/components/, src/pages/, app/, components/, pages/, src/routes/ — wherever the detected stack puts them. Also include app/globals.css or equivalent root stylesheet.
+Look for spec docs in the repo: *SPEC*.md, *-SPEC.md, AGENTS.md, PROJECT.md, CLAUDE.md, and any README with detailed requirements. Read them — they carry user intent the survey doesn't capture.
+Enter Plan Mode. The plan must have three clearly-labeled sections:
+Files to delete (full list of UI components and pages, with paths)
+Files to preserve (configs, API routes, public/*, env files, spec docs, node_modules/, .git/)
+Files to create (new component/page layout per survey + spec)
+Wait for user approval. If the user says "skip the delete of X", respect it — remove X from the delete list but keep the rest.
+After approval, execute: delete the files in the delete list, then build the new UI following the survey answers + spec docs + existing infrastructure conventions (import aliases, TypeScript/JavaScript choice, CSS approach).
+If the repo is not a git repo or has uncommitted changes, warn the user in the plan and recommend a commit before proceeding. Do not hard-block — some users work without git.
+
+Q1b = Replace (existing project, archive and restart): Phase 5 already archived everything into ./archive-{timestamp}/. Phase 6 runs as a greenfield build in the now-empty repo. No special handling beyond a one-line reminder at the end: "Your original files are in ./archive-{timestamp}/ — delete the archive folder once you're happy with the rebuild."
+
+New project (Q1 = Landing / Multi-page / Full app / Portfolio): read references/build-prompts/site-build-premium.md (for premium tier) or site-build-minimal.md (for simpler runs) and fill in template variables from the survey:
+
+{{brand_name}}, {{tagline}}, {{colors}}, {{fonts}}
+{{vibe}}, {{motion_intensity}}, {{design_variance}}, {{visual_density}}
+{{sections}}, {{animation_type}}
+{{inspiration_refs}}
+
+The filled prompt invokes Claude Code with:
+
+taste-skill active with tuned dials
+front-end design skill active
+Reference to brand.json, assets/, inspiration/
+Stitch scaffold folder (./stitch-scaffold/) if Phase 2.5 ran
+Paper graphic exports (./assets/graphics/) if Phase 4c ran
+Plan Mode first (Nate Herk strategy)
+
+Use the Plan Mode → Bypass Permissions workflow for the build. Plan Mode surfaces Claude's plan so the user can catch wrong assumptions before any files get written, and switching to Bypass Permissions only after approval means the actual build doesn't get interrupted by per-tool confirmations (which would pull the user out of the flow every few seconds during a 10-20 minute build). The checkpoint is upfront, the execution is smooth.
+
+Mid-build: 21st.dev Magic MCP component injection (optional)
+
+Skip if 21st.dev Magic MCP was not detected or the user declined. If active, 21st.dev injects premium pre-built React/Tailwind components into standardized sections (Pricing, Testimonials, grid Features, FAQ, Footer, Nav) instead of having Claude build them from scratch. Never eligible for Hero, About, or custom sections — those stay custom-built.
+
+Read references/phases/phase-6-components.md for the full flow — eligibility rules, per-section query pattern, brand-token styling, and conflict handling with Phase 2.5 Stitch scaffolds.
+
+Dev server spins up when done. User verifies, gives feedback, skill iterates.
+
+Phase 6.5: Visual Verification (agent-browser)
+
+Do not skip this phase. Read references/build-prompts/verify-build.md and execute the full verification flow against the running dev server. This phase catches broken scroll animations, missing mobile fallbacks, inaccessible tap targets, and layout issues before the user sees them.
+
+If agent-browser CLI is installed (check with which agent-browser):
+
+Run Phase A (desktop screenshots + accessibility tree) from verify-build.md
+Run Phase B (mobile viewport + video suppression check)
+Run Phase C (interaction tests — CTA, form fill, navigation)
+Run Phase D (Lighthouse if available)
+For each failure, run the fix loop (max 5 cycles) and re-verify
+Print the final verification report
+
+If agent-browser is NOT installed, don't silently skip. Ask the user:
+
+agent-browser is not installed, so I can't do automated visual verification. Options:
+
+Install it now (npm install -g agent-browser && agent-browser install) and I'll run automated checks
+I'll do manual verification instead — I'll print a checklist of what to check and wait for your confirmation
+
+Both options execute Phase 6.5. There is no "skip verification" option — the user must either run automated checks or confirm manual checks before proceeding to Phase 7. If they pick option 2, print this checklist and wait for them to confirm each item:
+
+ Hero renders correctly (video plays or static image shows)
+ Mobile viewport (375px): no horizontal scroll, tap targets >= 44px, video replaced with poster
+ Primary CTA works (opens form, mailto, or target page)
+ All sections visible in correct order
+ No console errors in browser dev tools
+Phase 7: SEO Optimization Pass
+
+Read references/build-prompts/seo-pass.md and invoke it on the built site.
+
+The SEO pass does:
+
+Meta tags — title, description, OG, Twitter Card, canonical
+JSON-LD schemas — Organization, LocalBusiness, Service, FAQ, Review (conditional on survey)
+Files — generate robots.txt, sitemap.xml, llms.txt
+Images — convert to AVIF/WebP, rename descriptively, add alt text, loading="lazy", fetchpriority="high" on hero
+Semantic HTML5 — ensure <main>, <article>, <section>, <nav>, <header>, <footer> landmarks
+Core Web Vitals — verify LCP <2.5s, CLS <0.1, INP <200ms
+Lighthouse audit — run lighthouse --output=json via CLI, report scores
+Analytics injection — if GA4_MEASUREMENT_ID or PLAUSIBLE_DOMAIN env vars are set, inject their tracking snippets into <head>. Both can coexist. Silent no-op if neither set. See references/build-prompts/seo-pass.md for the exact snippet templates.
+
+Full 2026 SEO reference lives at references/seo-research-2026.md.
+
+User sees the Lighthouse scores and any issues before deploy.
+
+Phase 7.5: Re-verify After SEO Changes
+
+Re-run the Phase 6.5 verification flow (read references/build-prompts/verify-build.md again) against the dev server after the SEO pass. The SEO pass modifies layout (semantic HTML changes), adds scripts (GA4, Plausible), and restructures images (AVIF conversion, lazy-loading) — all of which can introduce visual regressions or performance changes. Quick re-verify catches these before deploy.
+
+If agent-browser is not installed and the user chose to skip verification in Phase 6.5, skip this phase too (don't re-ask).
+
+Phase 8: Deploy
+
+Based on Q11:
+
+Vercel: vercel --prod (after gh repo create + git push)
+Netlify: netlify deploy --prod
+Cloudflare Pages: wrangler pages deploy
+Manual: skip deploy, show build output dir
+
+Confirm URL works, show final metrics, celebrate.
+
+Phase 8.5: Production Verification
+
+If the site was deployed (not manual/skip), run a final agent-browser verification pass against the live production URL (not localhost). This catches deployment-specific issues: missing env vars on the hosting platform, CDN caching of stale assets, HTTPS redirect issues, DNS propagation delays, and CORS errors on fonts/images that worked locally.
+
+Same flow as Phase 6.5 but against the live URL. If any checks fail, tell the user what's wrong and whether it's a deploy config issue (their side) or a code issue (fixable).
+
+If agent-browser is not installed and user previously opted to skip verification, skip this too.
+
+Phase 9: Learnings Log
+
+After successful deploy, ask:
+
+What worked well? What would you change? Anything to tune for next time?
+
+
+Append the user's answers + the survey answers + final metrics to ~/.claude/website-builder/history.json. Next run pre-fills the survey with these preferences.
+
+Also offer to update specific build-prompts/*.md files with learnings (Nate Herk self-improving pattern).
+
+Key Files
+File	Purpose
+references/phases/phase-2-5-stitch.md	Full Stitch flow — load only when Stitch MCP is detected and user opted in
+references/phases/phase-4c-paper.md	Full Paper.design export flow — load only when Paper MCP is running and user opted in
+references/phases/phase-6-components.md	Full 21st.dev mid-build injection flow — load only when 21st.dev MCP is detected
+references/survey-questions.md	Full survey spec with adaptive rules
+references/vibe-archetypes.md	6 preset aesthetics with dials + sample references
+references/env-template.env	All env vars the skill can use
+references/recommended-skills.json	Peer skills + install commands
+scripts/call-kie.py	Kie.ai API wrapper — Nano Banana image fallback + Kling 3.0 / Veo 3 / Veo 3.1 video
+scripts/call-wavespeed.py	Wavespeed wrapper — Gemini 3 Pro Image (preferred) + Nano Banana Pro Edit Multi
+scripts/call-firecrawl.py	Firecrawl brand extraction
+scripts/scaffold-project.py	Project folder creator
+references/seo-research-2026.md	Deep SEO 2026 playbook
+references/build-prompts/brand-extract.md	Vision extraction prompt (screenshots → brand.json)
+references/build-prompts/image-gen-nanobanana.md	NanoBanana prompt template (fill-in)
+references/build-prompts/cinematic-frame-method.md	6-layer cinematic prompt framework (ANCHOR/WORLD/LUMINANCE/AIR/OPTICS/EXCLUSIONS) + locked-pair workflow
+references/build-prompts/video-gen-kling.md	Kling prompt template
+references/build-prompts/site-build-premium.md	Master build prompt (full stack)
+references/build-prompts/site-build-minimal.md	Master build prompt (free tier)
+references/build-prompts/seo-pass.md	Full SEO audit + fix prompt
+references/build-prompts/verify-build.md	agent-browser visual verification + fix loop
+references/build-prompts/deploy-vercel.md	Deploy orchestration prompt
+references/build-prompts/stitch-section-prompts.md	Per-section Stitch prompt templates for Phase 2.5
+references/design-inspiration.md	Curated Dribbble/Godly/Pinterest links
+references/integration-verification.md	Verified integrations (Firecrawl, 21st.dev Magic MCP, Stitch MCP, Paper.design MCP)
+Quick Commands
+
+Instead of running the full pipeline, invoke individual phases:
+
+Command	What it does
+"preflight"	Phase 0 only — check env/skills/tools
+"extract brand from [url]"	Phase 2 only
+"generate hero animation for [brand]"	Phase 4 only
+"seo pass on [dir]"	Phase 7 only
+"deploy [dir] to vercel"	Phase 8 only
+"rebuild [competitor url]"	Full pipeline w/ HTML scaffolding
+Safety & Cost Guardrails
+Always confirm before: API calls that cost money, installing skills, running deploy, overwriting files
+Budget cap: alert if a single run exceeds $10 in API costs
+Never: skip the Plan Mode checkpoint, auto-commit to git, push to prod without user approval
+Always: persist .env at project root (never to skill folder), keep brand.json as backup, log everything for self-improvement
+Differentiators (What This Does That Competitors Don't)
+One-shot execution — competitors describe the process in videos; this skill executes it
+Pre-built battle-tested prompts — distilled from 13 creator videos, no prompt engineering required
+Auto brand extraction — no manual JSON writing from Firecrawl dashboard
+Auto API calls — no browser-hopping between Higgsfield, Kie.ai, Google AI Studio
+Full SEO baked in — most creators skip SEO entirely
+Memory-aware — learns your preferences across runs
+Self-improving — prompts get better with every project
+Screenshot-driven — answer any question with an image via Claude vision
+Competitor scaffolding — view-page-source.com integration for structural copying
+Vibe archetypes — 6 premium presets that bundle font/color/motion/dial tuning
+
+Ship version 1.0 with the Stride AI Academy video. Iterate publicly based on community feedback.
+
+Weekly Installs
+20
+Repository
+joshpocock/stri…pipeline
+GitHub Stars
+1
+First Seen
+Apr 5, 2026
+Security Audits
+Gen Agent Trust HubFail
+SocketWarn
+SnykWarn

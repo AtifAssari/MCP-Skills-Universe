@@ -1,0 +1,90 @@
+---
+title: typo3-conformance
+url: https://skills.sh/netresearch/typo3-conformance-skill/typo3-conformance
+---
+
+# typo3-conformance
+
+skills/netresearch/typo3-conformance-skill/typo3-conformance
+typo3-conformance
+Installation
+$ npx skills add https://github.com/netresearch/typo3-conformance-skill --skill typo3-conformance
+SKILL.md
+TYPO3 Extension Conformance Checker
+
+Evaluate TYPO3 extensions against TYPO3 coding standards, architecture patterns, and best practices.
+
+When to Use
+Extension quality / TER readiness
+Scored conformance reports
+Modernization to v12/v13/v14 (v14.3 LTS is default/gold standard)
+Delegation
+
+Testing -> typo3-testing | Docs -> typo3-docs | OpenSSF -> enterprise-readiness
+
+Workflow
+Step 0: Context
+
+Read ext_emconf.php + composer.json for TYPO3/PHP version, type, scope.
+
+Steps 1-11: Checks
+Metadata -- Extension key, TYPO3 version, type
+Structure -- composer.json, ext_emconf.php, Classes/, Configuration/, Resources/
+Coding -- strict_types, PSR-12, PHP 8.4 explicit nullable, PHP 8.5 float-to-int
+Prohibited -- No $GLOBALS, no GeneralUtility::makeInstance() for services
+Architecture -- Constructor DI, Services.yaml, PSR-14 events
+Backend -- ES6 modules, Modal API, CSRF, CSP (v13+)
+Testing -- PHPUnit, Playwright E2E, coverage >70%
+Practices -- DDEV, runTests.sh, CI/CD, quality tools
+TER -- Publish workflow, upload comment format
+Audit -- PHPStan baseline, TCA searchFields/default_sortby, XLIFF completeness, cache has()+get() anti-pattern, Extbase query property names, multi-version adapters
+v14 readiness -- no ext_tables.php/HashService/magic repo finders; Fluid VHs strict-typed; XLF 2-space. See references/v14-deprecations.md.
+Step 12: Verify
+
+Re-run after fixes. Document score delta ("58 -> 82").
+
+Quick Grep Recipes
+grep -rL 'strict_types' Classes/ --include='*.php'                   # missing strict_types
+grep -rn '\$GLOBALS' Classes/ --include='*.php'                       # prohibited $GLOBALS
+grep -rn 'GeneralUtility::makeInstance' Classes/ --include='*.php'    # makeInstance for services
+grep -rPn '\(\s*[A-Za-z\\]+\s+\$\w+\s*=\s*null' Classes/ --include='*.php' | grep -v '?'  # PHP 8.4 implicit nullable
+grep -rn '->has(' Classes/ --include='*.php'                          # cache has()+get() anti-pattern
+grep -l 'strict_types' ext_emconf.php                                 # ext_emconf must NOT have strict_types
+grep -rn '(int)\s*\$' Classes/ --include='*.php'                      # PHP 8.5 implicit float-to-int
+grep -rn 'data-toggle\|data-dismiss\|data-ride' Resources/ --include='*.html'  # Bootstrap 4 in Fluid
+grep -rn 'HashService\|GeneralUtility::hmac(\|->findBy[A-Z]\|->findOneBy[A-Z]\|->countBy[A-Z]' Classes/ --include='*.php'  # v14 removals
+[ -f ext_tables.php ] && echo "WARN: ext_tables.php deprecated (#109438)"   # v14.3 deprecation
+
+Scoring
+
+Base (0-100): Architecture(20) + Guidelines(20) + PHP(20) + Testing(20) + Practices(20). Excellence bonus up to 22. Critical issues block regardless.
+
+Range	Level	Action
+90+	Excellent	Production/TER ready
+80-89	Good	Minor fixes
+70-79	Acceptable	Fix before release
+50-69	Needs Work	Significant effort
+<50	Critical	Block deployment
+References
+
+See references/ for deep-dives:
+
+Architecture & code: extension-architecture.md, php-architecture.md, coding-guidelines.md, best-practices.md
+Validation: composer-validation.md, ext-emconf-validation.md, version-requirements.md, testing-standards.md
+Multi-version: dual-version-compatibility.md (v12+v13), v13-v14-dual-compatibility.md (v13+v14), multi-version-dependency-compatibility.md, v13-deprecations.md, v14-deprecations.md
+Backend & publishing: backend-module-v13.md, ter-publishing.md, report-template.md, excellence-indicators.md, localization-coverage.md
+
+Asset templates in assets/Build/: PHPStan, PHP-CS-Fixer, Rector, ESLint, Stylelint, TypoScript lint.
+
+Weekly Installs
+24
+Repository
+netresearch/typ…ce-skill
+GitHub Stars
+6
+First Seen
+Mar 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

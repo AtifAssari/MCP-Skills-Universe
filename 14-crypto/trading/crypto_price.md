@@ -1,0 +1,67 @@
+---
+rating: ⭐⭐
+title: crypto-price
+url: https://skills.sh/evgyur/crypto-price/crypto-price
+---
+
+# crypto-price
+
+skills/evgyur/crypto-price/crypto-price
+crypto-price
+Installation
+$ npx skills add https://github.com/evgyur/crypto-price --skill crypto-price
+SKILL.md
+Crypto Price & Chart
+
+Get cryptocurrency token price and generate candlestick charts.
+
+Usage
+
+Execute the script with token symbol and optional duration:
+
+python3 {baseDir}/scripts/get_price_chart.py <SYMBOL> [duration]
+
+
+Examples:
+
+python3 {baseDir}/scripts/get_price_chart.py HYPE
+python3 {baseDir}/scripts/get_price_chart.py HYPE 12h
+python3 {baseDir}/scripts/get_price_chart.py BTC 3h
+python3 {baseDir}/scripts/get_price_chart.py ETH 30m
+python3 {baseDir}/scripts/get_price_chart.py SOL 2d
+
+Duration format: 30m, 3h, 12h, 24h (default), 2d
+
+Output
+
+Returns JSON with:
+
+price - Current price in USD/USDT
+change_period_percent - Price change percentage for the period
+chart_path - Path to generated PNG chart (if available)
+text_plain - Formatted text description
+
+If chart_path is present, attach the PNG along with the text. Return text exactly as text_plain with no extra formatting.
+
+Chart Details
+Format: Candlestick chart (8x8 square)
+Theme: Dark (#0f141c background)
+Output: /tmp/crypto_chart_{SYMBOL}_{timestamp}.png
+Data Sources
+Hyperliquid API - For HYPE and other Hyperliquid tokens (preferred)
+CoinGecko API - Fallback for other tokens
+
+Price data cached for 300 seconds (5 minutes) in /tmp/crypto_price_*.json.
+
+Weekly Installs
+33
+Repository
+evgyur/crypto-price
+GitHub Stars
+2
+First Seen
+2 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykPass

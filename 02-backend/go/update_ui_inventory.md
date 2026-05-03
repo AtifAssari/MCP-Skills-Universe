@@ -1,0 +1,213 @@
+---
+title: update-ui-inventory
+url: https://skills.sh/autumnsgrove/groveengine/update-ui-inventory
+---
+
+# update-ui-inventory
+
+skills/autumnsgrove/groveengine/update-ui-inventory
+update-ui-inventory
+Installation
+$ npx skills add https://github.com/autumnsgrove/groveengine --skill update-ui-inventory
+SKILL.md
+Update UI Inventory Skill
+When to Activate
+
+Activate this skill when:
+
+Adding new UI components to the engine
+Removing or deprecating components
+The component-inventory CI check fails
+You want to verify docs match the actual component count
+After merging PRs that add/remove components
+Files Involved
+File	Purpose
+.github/component-inventory.json	Source of truth for component counts
+docs/design-system/COMPONENT-REFERENCE.md	User-facing component documentation
+libs/engine/src/lib/ui/components/	Actual component source files
+Inventory Structure
+
+The inventory tracks 13 component categories:
+
+{
+	"components": {
+		"total": 186,
+		"breakdown": {
+			"primitives": 45,
+			"nature": 64,
+			"ui": 29,
+			"typography": 11,
+			"chrome": 6,
+			"terrarium": 7,
+			"gallery": 4,
+			"charts": 4,
+			"content": 4,
+			"states": 4,
+			"forms": 3,
+			"indicators": 3,
+			"icons": 2
+		}
+	}
+}
+
+Step-by-Step Process
+1. Count Components in Each Category
+
+Run these commands to get actual counts:
+
+# Count .svelte files in each category
+for dir in primitives nature ui typography chrome terrarium gallery charts content states forms indicators icons; do
+  count=$(find libs/engine/src/lib/ui/components/$dir -name "*.svelte" 2>/dev/null | wc -l | tr -d ' ')
+  echo "$dir: $count"
+done
+
+2. Compare with Inventory
+
+Read the current inventory and compare:
+
+cat .github/component-inventory.json
+
+3. Identify Discrepancies
+
+Look for:
+
+New components: Files exist but aren't in the count
+Removed components: Count includes files that no longer exist
+Moved components: Component relocated to different category
+4. Update Inventory JSON
+
+Edit .github/component-inventory.json:
+
+{
+  "lastUpdated": "YYYY-MM-DD",
+  "lastAuditedBy": "claude/<context>",
+  "components": {
+    "total": <sum of all categories>,
+    "breakdown": {
+      "<category>": <new count>,
+      ...
+    }
+  }
+}
+
+5. Update Component Reference
+
+Edit docs/design-system/COMPONENT-REFERENCE.md:
+
+Update the intro line:
+
+> 186 components organized by category...
+
+
+Update Quick Links (the anchor links include counts):
+
+- [ui/ - Core UI Components](#ui---core-ui-components-29)
+
+
+Update section headers:
+
+## ui/ - Core UI Components (29)
+
+
+Add new component to relevant table (if significant): For Glass components, add to "Other Glass Components" table:
+
+| `GlassNewComponent` | Description of what it does |
+
+
+Update the last updated date at the bottom:
+
+_Last updated: YYYY-MM-DD_
+
+6. Commit Changes
+git add .github/component-inventory.json docs/design-system/COMPONENT-REFERENCE.md
+git commit -m "docs: update component inventory
+
+- Update <category> count: X -> Y
+- Add <ComponentName> to COMPONENT-REFERENCE.md
+- Bump total: A -> B"
+
+Quick Reference: Counting Commands
+# Single category count
+find libs/engine/src/lib/ui/components/ui -name "*.svelte" | wc -l
+
+# List all files in a category (to identify new ones)
+ls libs/engine/src/lib/ui/components/ui/*.svelte
+
+# Find Glass components specifically
+ls libs/engine/src/lib/ui/components/ui/ | grep -i glass
+
+# Total across all categories
+find libs/engine/src/lib/ui/components -name "*.svelte" | wc -l
+
+Documentation Guidelines
+
+When adding components to COMPONENT-REFERENCE.md:
+
+Glass Components (Always Document)
+
+Glass components define Grove's visual language - always add them to the "Other Glass Components" table with a clear description.
+
+Standard Components
+
+Add to the "Standard Components" table if it's a general-purpose wrapper.
+
+Specialized Components
+
+For category-specific components (nature, charts, etc.), add to the appropriate section if it's significant or has unique props worth documenting.
+
+Example: Adding a New Glass Component
+
+After adding GlassStatusWidget.svelte:
+
+Count confirms ui went from 28 to 29
+
+Update inventory:
+
+"ui": 29,
+"total": 186,
+"lastUpdated": "2026-01-21"
+
+
+Update COMPONENT-REFERENCE.md:
+
+Line 3: > 186 components...
+Line 13: - [ui/ - Core UI Components](#ui---core-ui-components-29)
+Line 74: ## ui/ - Core UI Components (29)
+After line 209, add to table:
+| `GlassStatusWidget` | Real-time status widget with auto-refresh |
+
+Last line: *Last updated: 2026-01-21*
+CI Integration
+
+The .github/workflows/component-inventory.yml workflow:
+
+Runs on PRs touching libs/engine/src/lib/ui/components/**
+Counts actual components vs inventory
+Fails if there's a mismatch
+Provides helpful output showing discrepancies
+
+When CI fails, run this skill to fix the mismatch.
+
+Checklist
+
+Before finishing:
+
+ All category counts match actual file counts
+ Total equals sum of all categories
+ lastUpdated date is today
+ COMPONENT-REFERENCE.md counts match inventory
+ New significant components added to appropriate documentation table
+ Quick Links anchors updated if section headers changed
+ Changes committed with descriptive message
+Weekly Installs
+66
+Repository
+autumnsgrove/groveengine
+GitHub Stars
+5
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

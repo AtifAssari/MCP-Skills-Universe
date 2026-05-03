@@ -1,0 +1,98 @@
+---
+title: plan
+url: https://skills.sh/jh941213/my-claude-code-asset/plan
+---
+
+# plan
+
+skills/jh941213/my-claude-code-asset/plan
+plan
+Installation
+$ npx skills add https://github.com/jh941213/my-claude-code-asset --skill plan
+SKILL.md
+작업 계획 수립
+
+새로운 기능이나 복잡한 작업을 시작하기 전에 계획을 세웁니다.
+
+언제 Plan을 사용하는가
+상황	Plan 필요	대신 사용
+3단계 이상 구현	O	—
+아키텍처 결정 포함	O	—
+여러 파일 변경	O	—
+1-2줄 수정	X	바로 구현
+버그 수정 (원인 명확)	X	바로 수정
+"무엇을 만들까" 결정	X	/prd 사용
+기술 명세서 필요	X	/spec 사용
+계획 수립 프로세스
+1. 요구사항 분석
+성공 기준 정의 ("완료"란 무엇인가?)
+가정과 제약사항 명시
+스코프 경계 설정 (하지 않을 것도 명시)
+2. 현재 코드 파악
+관련 파일/함수 탐색 (Grep, Glob)
+기존 패턴과 컨벤션 파악
+유사한 구현 검토
+3. 접근 방식 비교
+최소 2개 방안 제시
+각 방안의 트레이드오프 분석
+추천 방안 선택 + 이유
+4. 작업 분해
+
+각 단계에 포함:
+
+구체적 작업 (파일 경로, 함수명)
+의존성 (선행 단계)
+예상 복잡도 (Low/Med/High)
+검증 방법
+5. 위험 요소 + 완화책
+출력 형식
+## 요구사항 요약
+- 성공 기준: ...
+- 스코프: ...
+- 하지 않을 것: ...
+
+## 접근 방식
+- **방안 A**: ... (추천)
+- **방안 B**: ...
+- 선택 이유: ...
+
+## 구현 단계
+
+### 1단계: [단계명] (Low)
+- 작업: ...
+- 파일: path/to/file.ts
+- 의존성: 없음
+- 검증: `npm run typecheck`
+
+### 2단계: [단계명] (Med)
+- 작업: ...
+- 의존성: 1단계
+- 검증: `npm test`
+
+## 수정할 파일
+- 파일1: 변경 내용
+- 파일2: 변경 내용
+
+## 위험 요소
+- **위험**: [설명] → **완화**: [대책]
+
+## 테스트 전략
+- 단위: ...
+- 통합: ...
+
+계획 확정 후
+사용자 승인 대기
+승인 시 CHECKPOINT.md 생성 (3단계 이상일 때)
+실수 발생 시 즉시 STOP → re-plan (밀어붙이지 않기)
+Weekly Installs
+15
+Repository
+jh941213/my-cla…de-asset
+GitHub Stars
+117
+First Seen
+Feb 27, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

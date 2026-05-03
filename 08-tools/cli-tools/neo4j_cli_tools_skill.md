@@ -1,0 +1,266 @@
+---
+title: neo4j-cli-tools-skill
+url: https://skills.sh/neo4j-contrib/neo4j-skills/neo4j-cli-tools-skill
+---
+
+# neo4j-cli-tools-skill
+
+skills/neo4j-contrib/neo4j-skills/neo4j-cli-tools-skill
+neo4j-cli-tools-skill
+Installation
+$ npx skills add https://github.com/neo4j-contrib/neo4j-skills --skill neo4j-cli-tools-skill
+SKILL.md
+Neo4j CLI Tools skill
+
+This skill provides comprehensive guidance on Neo4j command-line tools for database administration, query execution, cloud management, and AI agent integration.
+
+When to Use
+Admin tasks: backup, restore, import, memory sizing → neo4j-admin
+Ad-hoc queries, scripting, CI/CD → cypher-shell
+Aura cloud provisioning → aura-cli
+MCP server install → neo4j-mcp
+When NOT to Use
+Writing or optimizing Cypher queries → use neo4j-cypher-skill
+Upgrading Neo4j drivers or migrating Cypher syntax → use neo4j-migration-skill
+Starting a new Neo4j project from scratch → use neo4j-getting-started-skill
+Available CLI Tools
+1. neo4j-admin
+
+Purpose: Comprehensive database administration tool
+
+Categories:
+
+dbms - System-wide administration for single and clustered environments
+server - Server-level management tasks
+database - Database-specific operations (backup, restore, import, migrate)
+backup - Backup and restore operations
+
+Common Use Cases:
+
+Database backup and restore
+Data import and export
+Server memory recommendations
+Initial password setup
+Database health checks
+
+Reference: neo4j-admin-reference.md
+
+2. cypher-shell
+
+Purpose: Interactive command-line tool for executing Cypher queries
+
+Key Features:
+
+Interactive REPL for ad-hoc queries
+Script execution from files
+Parameterized query support
+Multiple output formats (verbose, plain, auto)
+Remote database connections
+
+Common Use Cases:
+
+Running Cypher queries from terminal
+Batch processing with query files
+Database exploration and debugging
+CI/CD pipeline integration
+Scripted data operations
+
+Requirements: Java 21
+
+Reference: cypher-shell-reference.md
+
+3. aura-cli
+
+Purpose: Command-line interface for managing Neo4j Aura cloud resources
+
+Key Features:
+
+Instance provisioning and management
+Tenant administration
+Credential management
+Graph Analytics operations
+Customer-managed keys
+
+Common Use Cases:
+
+Automating Aura instance creation
+Managing cloud database lifecycles
+CI/CD integration for cloud deployments
+Programmatic resource provisioning
+
+Reference: aura-cli-reference.md
+
+4. neo4j-mcp
+
+Purpose: Model Context Protocol server for Neo4j integration with AI agents
+
+For full installation and editor configuration guidance, use neo4j-mcp-skill — it covers all editors (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Kiro), stdio vs HTTP transport, and troubleshooting.
+
+Quick install:
+
+pip install neo4j-mcp-server
+neo4j-mcp --version  # verify
+
+
+Reference: neo4j-mcp-reference.md
+
+Instructions
+
+When a user asks about Neo4j CLI tools:
+
+Identify the appropriate tool based on the use case:
+
+Administration tasks → neo4j-admin
+Query execution → cypher-shell
+Cloud management → aura-cli
+AI agent integration → neo4j-mcp
+
+Check prerequisites:
+
+For cypher-shell: Verify Java 21 is installed
+For neo4j-mcp: Verify APOC plugin is available
+For aura-cli: Verify credentials are configured
+
+Provide practical examples:
+
+Always include actual command syntax
+Show common parameter combinations
+Include environment variable alternatives
+Demonstrate error handling where relevant
+
+Reference detailed documentation:
+
+Include the appropriate reference file from references/ directory
+Point to official Neo4j documentation for latest updates
+Mention version-specific considerations
+
+Installation guidance:
+
+neo4j-admin and cypher-shell: Included with Neo4j installation
+aura-cli: Download from GitHub releases
+neo4j-mcp: Download binary from official repository
+Include installation verification steps
+Backup and Recovery
+Edition gate
+
+Online backup requires Enterprise Edition. Community Edition users must use dump/load only (database must be offline).
+
+Backup (Enterprise — database stays online)
+# Full online backup — database stays online during backup
+neo4j-admin database backup \
+  --to-path=/backups/ \
+  --database=neo4j \
+  --compress
+
+# Differential backup — only changes since last full backup (faster)
+neo4j-admin database backup \
+  --to-path=/backups/ \
+  --database=neo4j \
+  --type=DIFF \
+  --compress
+
+# Backup to cloud storage (S3, GCS, or HTTPS)
+neo4j-admin database backup \
+  --to-path=s3://my-bucket/neo4j-backups/ \
+  --database=neo4j
+
+Restore (Enterprise)
+
+AGENT GATE — destructive operation: Before running restore, show the user the exact command and target database name, and wait for explicit confirmation. A restore overwrites the existing database.
+
+# Restore from a full or differential backup
+# Requires DB to be stopped, or use --force-offline for a running instance
+neo4j-admin database restore \
+  --from-path=/backups/neo4j-2026-01-15T10-00-00/ \
+  --database=neo4j \
+  --overwrite-destination=true
+
+# Restore to a new database name (non-destructive path)
+neo4j-admin database restore \
+  --from-path=/backups/neo4j-2026-01-15T10-00-00/ \
+  --database=neo4j-restored
+
+Dump / Load (all editions — database must be offline)
+
+Use for migrations, dev/test data transfers, and Community Edition backups.
+
+# Dump — stop the database first, or pass --force-offline
+neo4j-admin database dump --to-path=/exports/ neo4j
+
+# Load — overwrites if target DB exists
+neo4j-admin database load \
+  --from-path=/exports/neo4j.dump \
+  --database=neo4j \
+  --overwrite-destination=true
+
+
+AGENT GATE — destructive operation: Before running load with --overwrite-destination=true, confirm target database name and path with the user.
+
+Key flags
+Flag	Notes
+--compress	Zstd compression on backup archives
+--type=DIFF	Differential: only changes since last full backup
+--to-path	Local path or s3://, gs://, https://
+--overwrite-destination=true	Required if target database already exists
+--force-offline	Allow backup/restore of a running database in some scenarios
+Point-in-time restore strategy
+Full backup: weekly (e.g. every Sunday)
+Differential backup: daily (captures only changes since last full)
+Naming convention: include timestamp in path — e.g. /backups/neo4j-2026-01-19T02-00-00/
+Restore sequence: apply full backup first, then each differential in chronological order
+# Example: restore Sunday full + Monday + Tuesday differentials
+neo4j-admin database restore \
+  --from-path=/backups/neo4j-2026-01-19T02-00-00/ \
+  --database=neo4j --overwrite-destination=true
+
+neo4j-admin database restore \
+  --from-path=/backups/neo4j-2026-01-20T02-00-00/ \
+  --database=neo4j --overwrite-destination=true
+
+neo4j-admin database restore \
+  --from-path=/backups/neo4j-2026-01-21T02-00-00/ \
+  --database=neo4j --overwrite-destination=true
+
+
+Reference: neo4j-admin-reference.md
+
+Important Notes
+All commands support --help for detailed usage information
+Configuration priority: CLI flags > environment variables > config files
+Neo4j 2026.01 is the current version (as of documentation date)
+Always execute neo4j-admin commands as the Neo4j system user
+Exit code 0 indicates success; non-zero indicates errors
+Environment Variables
+
+Common environment variables across tools:
+
+NEO4J_URI / NEO4J_ADDRESS - Database connection URI
+NEO4J_USERNAME - Database username
+NEO4J_PASSWORD - Database password
+NEO4J_DATABASE - Target database name
+NEO4J_CONF - Path to neo4j.conf directory
+NEO4J_HOME - Neo4j installation directory
+Resources
+Neo4j Operations Manual
+Cypher Shell Documentation
+Aura CLI GitHub
+Neo4j MCP Documentation
+Neo4j Developer Portal
+Checklist
+ Correct tool selected: neo4j-admin / cypher-shell / aura-cli / neo4j-mcp
+ Credentials via env (NEO4J_USERNAME, NEO4J_PASSWORD); not hardcoded
+ Destructive ops confirmed before execution
+ Post-op verify: connect + SHOW INDEXES + count
+ Backup taken before restore or schema change
+Weekly Installs
+107
+Repository
+neo4j-contrib/n…j-skills
+GitHub Stars
+39
+First Seen
+1 day ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

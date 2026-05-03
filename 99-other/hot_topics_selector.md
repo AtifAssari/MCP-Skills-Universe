@@ -1,0 +1,298 @@
+---
+title: hot_topics_selector
+url: https://skills.sh/cyhzzz/finance_aigc_skills/hot_topics_selector
+---
+
+# hot_topics_selector
+
+skills/cyhzzz/finance_aigc_skills/hot_topics_selector
+hot_topics_selector
+Installation
+$ npx skills add https://github.com/cyhzzz/finance_aigc_skills --skill hot_topics_selector
+SKILL.md
+财经热点选题工具
+
+本 Skill 用于从财经热点中筛选出适合引导投资理财的优质选题。
+
+核心工作流
+Phase 0: 数据抓取（Python）
+   → 获取133个新闻标题
+Phase 1: Agent 智能筛选（Markdown 提示词）
+   → 筛选出5个选题
+Phase 2: 内容抓取（Python）
+   → 抓取5篇新闻详细内容
+Phase 3: Agent 智能解析（Markdown 提示词）
+   → 生成5个完整选题方案
+
+
+职责分离：
+
+Python 脚本：数据抓取（Phase 0, 2）
+Agent：智能筛选和解析（Phase 1, 3）
+Phase 0: 数据抓取
+
+执行方式：
+
+cd scripts
+python3 fetch_hot_topics.py
+
+
+输出：/tmp/hot_topics.json
+
+包含内容：
+
+133个新闻标题（5个平台）
+微博、百度、今日头条、抖音、财联社
+
+数据格式：
+
+{
+  "fetch_time": "2026-02-13T19:36:24+08:00",
+  "total_items": 133,
+  "data": {
+    "weibo": { "items": [...], "count": 30 },
+    "baidu": { "items": [...], "count": 30 }
+  }
+}
+
+Phase 1: Agent 智能筛选
+
+Agent 执行提示词：
+
+你是一个财经内容选题专家。请根据以下新闻标题，筛选出5个最适合引导证券开户/基金投资的选题。
+
+标题列表
+
+{从 /tmp/hot_topics.json 读取的133个标题}
+
+筛选标准（投资关联性为核心）
+最高优先级（90-100分）
+
+可直接关联投资产品：
+
+赚钱故事 → AI基金/科技股票/券商产品
+投资案例 → 黄金ETF/资产配置
+理财话题 → 基金定投/证券开户
+
+示例：
+
+"AI月入200万" → 可推荐AI基金（95分）
+"黄金赚196万" → 可推荐黄金ETF（92分）
+高优先级（80-89分）
+
+可关联理财规划：
+
+薪资话题 → 工资收入vs投资收入
+储蓄话题 → 存钱vs投资
+消费话题 → 理财规划
+
+示例：
+
+"年终奖1.8亿" → 可推荐基金定投（85分）
+中优先级（60-79分）
+
+勉强可关联：
+
+教育话题 → 教育基金
+养老话题 → 养老金投资
+
+示例：
+
+"衡水中学变了" → 可关联教育基金（70分）
+不选择（<60分）
+
+无法关联投资：
+
+纯娱乐八卦
+纯社会新闻
+与财经无关的话题
+输出格式（JSON）
+{
+  "selected_indices": [1, 3, 5, 7, 9],
+  "reasons": {
+    "1": "✅ 可直接关联：AI赚钱 → AI基金投资。投资关联度95分，大众关注度高",
+    "3": "✅ 可直接关联：黄金案例 → 黄金ETF。投资关联度92分，数据冲击强"
+  },
+  "investment_angles": {
+    "1": "可以推荐：AI主题基金、科技股票、券商AI产品",
+    "3": "可以推荐：黄金ETF、券商黄金产品、资产配置服务"
+  },
+  "investment_relevance_score": {
+    "1": 95,
+    "3": 92
+  }
+}
+
+
+严格要求：
+
+固定选择5个标题（不多不少）
+每个标题投资关联度 ≥80分
+说明具体的投资产品推荐方向
+优先选择可直接关联产品的选题（≥90分）
+Phase 2: 内容抓取
+
+执行方式：
+
+cd scripts
+python3 fetch_news_content.py \
+  --input /tmp/hot_topics.json \
+  --indices 1,3,5,7,9 \
+  --output /tmp/news_content.json
+
+
+输入：Phase 1 输出的5个选题索引
+
+输出：/tmp/news_content.json
+
+包含内容：
+
+5篇新闻的完整内容
+标题、URL、平台、正文、关键词
+
+数据格式：
+
+{
+  "fetch_time": "2026-02-13T21:00:00+08:00",
+  "total_articles": 5,
+  "articles": [
+    {
+      "index": 1,
+      "title": "杭州大哥开1人公司靠AI月入200万",
+      "url": "https://...",
+      "platform": "微博",
+      "content": "完整新闻内容...",
+      "keywords": ["AI", "创业", "月入200万"]
+    }
+  ]
+}
+
+Phase 3: Agent 智能解析
+
+Agent 执行提示词：
+
+你是一个财经内容策划专家。请根据以下5篇新闻内容，为每篇新闻生成完整的选题方案。
+
+新闻列表
+
+{从 /tmp/news_content.json 读取的5篇新闻}
+
+解析要求
+1. 新闻内容概要
+提取核心信息（100-150字）
+保留关键数据和案例
+突出与投资相关的信息
+2. 选题理由
+说明投资关联度（80-100分）
+分析大众关注度
+预测传播潜力
+3. 引导策略
+切入点：如何从新闻话题切入
+转折点：如何自然转向投资
+产品推荐：具体推荐哪些投资产品
+话术示例：2-3句引导话术
+
+示例引导策略：
+
+切入点：AI创业月入200万，引发"我也能吗"的思考
+转折点：普通人不会技术，但可以通过投资分享红利
+产品推荐：AI主题基金、科技ETF、券商AI产品
+话术示例：
+  "想参与AI红利？不需要会技术，投资AI基金就能分一杯羹"
+  "开户买AI基金，普通人也能享受AI发展的红利"
+
+4. 原始链接
+保留完整的新闻URL
+方便后续查阅和引用
+输出格式（JSON）
+{
+  "topic_plans": [
+    {
+      "index": 1,
+      "title": "杭州大哥开1人公司靠AI月入200万",
+      "summary": "杭州一创业者通过AI工具运营1人公司，月收入达200万。主要业务是...",
+      "selection_reason": {
+        "investment_relevance": 95,
+        "mass_attention": "高（AI+赚钱话题）",
+        "viral_potential": "极强（月入200万数据冲击）"
+      },
+      "guidance_strategy": {
+        "entry_point": "AI创业月入200万，引发'我也能吗'的思考",
+        "turning_point": "普通人不会技术，但可以通过投资分享AI红利",
+        "product_recommendation": "AI主题基金、科技ETF、券商AI产品",
+        "script_examples": [
+          "想参与AI红利？投资AI基金就能分一杯羹",
+          "开户买AI基金，普通人也能享受AI发展红利"
+        ]
+      },
+      "source_url": "https://..."
+    }
+  ]
+}
+
+
+严格要求：
+
+每个选题都要有完整的4个部分
+引导策略要具体、可操作
+产品推荐要与券商/基金相关
+话术要自然、不生硬
+使用示例
+完整流程
+# Step 1: 数据抓取
+python3 scripts/fetch_hot_topics.py
+
+# Step 2: Agent 智能筛选
+# Agent 读取本文件 Phase 1 提示词并执行
+
+# Step 3: 内容抓取
+python3 scripts/fetch_news_content.py \
+  --input /tmp/hot_topics.json \
+  --indices 1,3,5,7,9
+
+# Step 4: Agent 智能解析
+# Agent 读取本文件 Phase 3 提示词并执行
+
+
+总耗时：约15分钟
+
+脚本说明
+scripts/fetch_hot_topics.py
+
+功能：调用 TrendRadar API，抓取5个平台的热点新闻标题
+
+输出：133个新闻标题（JSON）
+
+scripts/fetch_news_content.py
+
+功能：根据选题索引，抓取新闻详细内容
+
+输入：选题索引（如 1,3,5,7,9）
+
+输出：5篇新闻完整内容（JSON）
+
+参考资料
+references/选题方法论.md
+
+包含财经新媒体大V的选题方法论，包括：
+
+5大核心方法论（痛点驱动、情绪共鸣、数据冲击、故事表达、实用导向）
+选题公式（数字+冲突+结果、痛点+解决方案等）
+评估标准（传播性40%、相关性30%、实用性20%、合规性10%）
+
+Agent 可根据需要参考此文件优化选题策略。
+
+注意事项
+投资关联性为核心：每个选题都必须可以自然转向证券开户或基金投资
+固定输出5个选题：不多不少，确保质量
+投资关联度 ≥80分：低于80分的选题会被排除
+Python 负责数据：Agent 不需要执行数据抓取
+Agent 负责智能：筛选和解析由 Agent 完成
+Weekly Installs
+14
+Repository
+cyhzzz/finance_…c_skills
+GitHub Stars
+3
+First Seen
+Feb 24, 2026

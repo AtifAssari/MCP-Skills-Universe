@@ -1,0 +1,481 @@
+---
+title: debugging-patterns
+url: https://skills.sh/romiluz13/cc10x/debugging-patterns
+---
+
+# debugging-patterns
+
+skills/romiluz13/cc10x/debugging-patterns
+debugging-patterns
+Installation
+$ npx skills add https://github.com/romiluz13/cc10x --skill debugging-patterns
+SKILL.md
+Systematic Debugging
+Overview
+
+Random fixes waste time and create new bugs. Quick patches mask underlying issues.
+
+Core principle: ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
+
+This skill is advisory in v10. It deepens investigation quality. It does not authorize local-only patches, guesswork, or "fix the line that crashed" thinking.
+
+Reference Files
+
+Read only the references needed for the current investigation:
+
+references/root-cause-playbooks.md for build/type failures, flaky tests, runtime crashes, browser errors, git bisect, and boundary tracing
+references/investigation-hygiene.md for context discipline, evidence logging, hypothesis tracking, restart protocol, and architectural escalation
+The Iron Law
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+
+
+If you haven't completed Phase 1, you cannot propose fixes.
+
+Quick Five-Step Process (Reference Pattern)
+
+For rapid debugging, use this concise flow:
+
+1. Capture error message and stack trace
+2. Identify reproduction steps
+3. Isolate the failure location
+4. Implement minimal general fix
+5. Verify solution works
+
+
+Debugging techniques:
+
+Analyze error messages and logs
+Check recent code changes
+Form and test hypotheses
+Add strategic debug logging
+Inspect variable states
+
+Root Cause Tracing Technique:
+
+1. Observe symptom - Where does error manifest?
+2. Find immediate cause - Which code produces the error?
+3. Ask "What called this?" - Map call chain upward
+4. Keep tracing up - Follow invalid data backward
+5. Find original trigger - Where did problem actually start?
+
+
+Never fix solely where errors appear—trace to the original trigger. After root cause is identified, scan for the same signature nearby before declaring success.
+
+LSP-Powered Root Cause Tracing
+
+Use LSP to trace execution flow systematically:
+
+Debugging Need	LSP Tool	Usage
+"Where is this function defined?"	lspGotoDefinition	Jump to source
+"What calls this function?"	lspCallHierarchy(incoming)	Trace callers up
+"What does this function call?"	lspCallHierarchy(outgoing)	Trace callees down
+"All usages of this variable?"	lspFindReferences	Find all access points
+
+Systematic Call Chain Tracing:
+
+1. localSearchCode("errorFunction") → get file + lineHint
+2. lspGotoDefinition(lineHint=N) → see implementation
+3. lspCallHierarchy(incoming, lineHint=N) → who calls this?
+4. For each caller: lspCallHierarchy(incoming) → trace up
+5. Continue until you find the root cause
+
+
+CRITICAL: Always get lineHint from localSearchCode first. Never guess line numbers.
+
+For each issue provide:
+
+Root cause explanation
+Evidence supporting diagnosis
+Specific code fix
+Testing approach
+Prevention recommendations
+Scenario Playbooks
+
+Read references/root-cause-playbooks.md when the failure matches one of these shapes:
+
+build or type breakage
+failing tests
+runtime crashes
+browser or console errors
+intermittent async bugs
+regressions where "it worked before"
+multi-component handoff failures
+
+Keep this SKILL.md focused on the four-phase investigation workflow. Use the reference for concrete commands, boundary tracing patterns, and git-bisect recipes.
+
+When to Use
+
+Use for ANY technical issue:
+
+Test failures
+Bugs in production
+Unexpected behavior
+Performance problems
+Build failures
+Integration issues
+
+Use this ESPECIALLY when:
+
+Under time pressure (emergencies make guessing tempting)
+"Just one quick fix" seems obvious
+You've already tried multiple fixes
+Previous fix didn't work
+You don't fully understand the issue
+
+Don't skip when:
+
+Issue seems simple (simple bugs have root causes too)
+You're in a hurry (rushing guarantees rework)
+Manager wants it fixed NOW (systematic is faster than thrashing)
+The Four Phases
+
+You MUST complete each phase before proceeding to the next.
+
+Phase 1: Root Cause Investigation
+
+BEFORE attempting ANY fix:
+
+Read Error Messages Carefully
+
+Don't skip past errors or warnings
+They often contain the exact solution
+Read stack traces completely
+Note line numbers, file paths, error codes
+
+Reproduce Consistently
+
+Can you trigger it reliably?
+What are the exact steps?
+Does it happen every time?
+If not reproducible → gather more data, don't guess
+
+Check Recent Changes
+
+What changed that could cause this?
+Git diff, recent commits
+New dependencies, config changes
+Environmental differences
+
+Gather Evidence in Multi-Component Systems
+
+WHEN system has multiple components (CI → build → signing, API → service → database):
+
+BEFORE proposing fixes, add diagnostic instrumentation:
+
+For EACH component boundary:
+  - Log what data enters component
+  - Log what data exits component
+  - Verify environment/config propagation
+  - Check state at each layer
+
+Run once to gather evidence showing WHERE it breaks
+THEN analyze evidence to identify failing component
+THEN investigate that specific component
+
+
+For a concrete boundary-tracing recipe, read references/root-cause-playbooks.md.
+
+Trace Data Flow
+
+WHEN error is deep in call stack:
+
+Where does bad value originate?
+What called this with bad value?
+Keep tracing up until you find the source
+Fix at source, not at symptom
+Phase 2: Pattern Analysis
+
+Find the pattern before fixing:
+
+Find Working Examples
+
+Locate similar working code in same codebase
+What works that's similar to what's broken?
+
+Compare Against References
+
+If implementing pattern, read reference implementation COMPLETELY
+Don't skim - read every line
+Understand the pattern fully before applying
+
+Identify Differences
+
+What's different between working and broken?
+List every difference, however small
+Don't assume "that can't matter"
+
+Understand Dependencies
+
+What other components does this need?
+What settings, config, environment?
+What assumptions does it make?
+Phase 3: Hypothesis and Testing
+
+Scientific method:
+
+Form Single Hypothesis
+
+State clearly: "I think X is the root cause because Y"
+Write it down
+Be specific, not vague
+
+Test Minimally
+
+Make the SMALLEST possible change to test hypothesis
+One variable at a time
+Don't fix multiple things at once
+
+Verify Before Continuing
+
+Did it work? Yes → Phase 4
+Didn't work? Form NEW hypothesis
+DON'T add more fixes on top
+
+When You Don't Know
+
+Say "I don't understand X"
+Don't pretend to know
+Ask for help
+Research more
+Hypothesis Quality Criteria
+
+Falsifiability Requirement: A good hypothesis can be proven wrong. If you can't design an experiment to disprove it, it's not useful.
+
+Bad (unfalsifiable):
+
+"Something is wrong with the state"
+"The timing is off"
+"There's a race condition somewhere"
+
+Good (falsifiable):
+
+"User state resets because component remounts when route changes"
+"API call completes after unmount, causing state update on unmounted component"
+"Two async operations modify same array without locking, causing data loss"
+
+The difference: Specificity. Good hypotheses make specific, testable claims.
+
+Hypothesis Confidence Scoring
+
+Track multiple hypotheses with confidence levels:
+
+H1: [hypothesis] — Confidence: [0-100]
+    Evidence for: [what supports this]
+    Evidence against: [what contradicts this]
+    Next test: [what would raise or lower confidence]
+
+H2: [hypothesis] — Confidence: [0-100]
+    Evidence for: [...]
+    Evidence against: [...]
+    Next test: [...]
+
+H3: [hypothesis] — Confidence: [0-100]
+    Evidence for: [...]
+    Evidence against: [...]
+    Next test: [...]
+
+
+Scoring guidance:
+
+Range	Meaning	Action
+80-100	Strong evidence, high certainty	Proceed to fix
+50-79	Circumstantial, needs more data	Run "Next test"
+0-49	Speculation, weak evidence	Deprioritize or discard
+
+Rules:
+
+Always maintain 2-3 hypotheses until one reaches 80+
+Update confidence after EVERY piece of new evidence
+Never proceed to fix with highest hypothesis below 50
+Cognitive Biases in Debugging
+Bias	Trap	Antidote
+Confirmation	Only look for evidence supporting your hypothesis	"What would prove me wrong?"
+Anchoring	First explanation becomes your anchor	Generate 3+ hypotheses before investigating any
+Availability	Recent bugs → assume similar cause	Treat each bug as novel until evidence suggests otherwise
+Sunk Cost	Spent 2 hours on path, keep going despite evidence	Every 30 min: "If fresh, would I take this path?"
+Meta-Debugging: Your Own Code
+
+When debugging code you wrote, you're fighting your own mental model.
+
+Why this is harder:
+
+You made the design decisions - they feel obviously correct
+You remember intent, not what you actually implemented
+Familiarity breeds blindness to bugs
+
+The discipline:
+
+Treat your code as foreign - Read it as if someone else wrote it
+Question your design decisions - Your implementation choices are hypotheses, not facts
+Admit your mental model might be wrong - The code's behavior is truth; your model is a guess
+Prioritize code you touched - If you modified 100 lines and something breaks, those are prime suspects
+
+The hardest admission: "I implemented this wrong." Not "requirements were unclear" - YOU made an error.
+
+When to Restart Investigation
+
+Consider starting over when:
+
+2+ hours with no progress - You're likely tunnel-visioned
+3+ "fixes" that didn't work - Your mental model is wrong
+You can't explain the current behavior - Don't add changes on top of confusion
+You're debugging the debugger - Something fundamental is wrong
+The fix works but you don't know why - This isn't fixed, this is luck
+
+Restart protocol:
+
+Close all files and terminals
+Write down what you know for certain
+Write down what you've ruled out
+List new hypotheses (different from before)
+Begin again from Phase 1
+Phase 4: Implementation
+
+Fix the root cause, not the symptom:
+
+Create Failing Test Case
+
+Simplest possible reproduction
+Automated test if possible
+One-off test script if no framework
+MUST have before fixing
+
+Implement Single Fix
+
+Address the root cause identified
+ONE change at a time
+No "while I'm here" improvements
+No bundled refactoring
+
+Verify Fix
+
+Test passes now?
+No other tests broken?
+Issue actually resolved?
+
+If Fix Doesn't Work
+
+STOP
+Count: How many fixes have you tried?
+If < 3: Return to Phase 1, re-analyze with new information
+If >= 3: STOP and question the architecture (step 5 below)
+DON'T attempt Fix #4 without architectural discussion
+
+If 3+ Fixes Failed: Question Architecture
+
+Pattern indicating architectural problem:
+
+Each fix reveals new shared state/coupling/problem in different place
+Fixes require "massive refactoring" to implement
+Each fix creates new symptoms elsewhere
+
+STOP and question fundamentals:
+
+Is this pattern fundamentally sound?
+Are we "sticking with it through sheer inertia"?
+Should we refactor architecture vs. continue fixing symptoms?
+
+Discuss with your human partner before attempting more fixes
+
+This is NOT a failed hypothesis - this is a wrong architecture.
+
+Red Flags - STOP and Follow Process
+
+If you catch yourself thinking:
+
+"Quick fix for now, investigate later"
+"Just try changing X and see if it works"
+"Add multiple changes, run tests"
+"Skip the test, I'll manually verify"
+"It's probably X, let me fix that"
+"I don't fully understand but this might work"
+"Pattern says X but I'll adapt it differently"
+"Here are the main problems: [lists fixes without investigation]"
+Proposing solutions before tracing data flow
+"One more fix attempt" (when already tried 2+)
+Each fix reveals new problem in different place
+
+ALL of these mean: STOP. Return to Phase 1.
+
+If 3+ fixes failed: Question the architecture (see Phase 4.5)
+
+User's Signals You're Doing It Wrong
+
+Watch for these redirections:
+
+"Is that not happening?" - You assumed without verifying
+"Will it show us...?" - You should have added evidence gathering
+"Stop guessing" - You're proposing fixes without understanding
+"Ultrathink this" - Question fundamentals, not just symptoms
+"We're stuck?" (frustrated) - Your approach isn't working
+
+When you see these: STOP. Return to Phase 1.
+
+Rationalization Prevention
+Excuse	Reality
+"Issue is simple, don't need process"	Simple issues have root causes too. Process is fast for simple bugs.
+"Emergency, no time for process"	Systematic debugging is FASTER than guess-and-check thrashing.
+"Just try this first, then investigate"	First fix sets the pattern. Do it right from the start.
+"I'll write test after confirming fix works"	Untested fixes don't stick. Test first proves it.
+"Multiple fixes at once saves time"	Can't isolate what worked. Causes new bugs.
+"Reference too long, I'll adapt the pattern"	Partial understanding guarantees bugs. Read it completely.
+"I see the problem, let me fix it"	Seeing symptoms ≠ understanding root cause.
+"One more fix attempt" (after 2+ failures)	3+ failures = architectural problem. Question pattern, don't fix again.
+Quick Reference
+Phase	Key Activities	Success Criteria
+1. Root Cause	Read errors, reproduce, check changes, gather evidence	Understand WHAT and WHY
+2. Pattern	Find working examples, compare	Identify differences
+3. Hypothesis	Form theory, test minimally	Confirmed or new hypothesis
+4. Implementation	Create test, fix, verify	Bug resolved, tests pass
+When Process Reveals "No Root Cause"
+
+If systematic investigation reveals issue is truly environmental, timing-dependent, or external:
+
+You've completed the process
+Document what you investigated
+Implement appropriate handling (retry, timeout, error message)
+Add monitoring/logging for future investigation
+
+But: 95% of "no root cause" cases are incomplete investigation.
+
+Output Format
+## Bug Investigation
+
+### Phase 1: Evidence Gathered
+- **Error**: [exact error message]
+- **Stack trace**: [relevant lines]
+- **Reproduction**: [steps to reproduce]
+- **Recent changes**: [commits/changes]
+
+### Phase 2: Pattern Analysis
+- **Working example**: [similar working code]
+- **Key differences**: [what's different]
+
+### Phase 3: Hypothesis
+- **Theory**: [I think X because Y]
+- **Test**: [minimal change made]
+- **Result**: [confirmed/refuted]
+
+### Phase 4: Fix
+- **Root cause**: [actual cause with evidence]
+- **Change**: [summary of fix]
+- **File**: [path:line]
+- **Regression test**: [test added]
+
+### Verification
+- Test command: [command] → exit 0
+- All tests: PASS
+- Functionality: Restored
+
+Weekly Installs
+35
+Repository
+romiluz13/cc10x
+GitHub Stars
+141
+First Seen
+Feb 24, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

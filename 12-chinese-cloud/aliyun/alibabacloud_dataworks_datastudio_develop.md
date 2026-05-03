@@ -1,0 +1,485 @@
+---
+title: alibabacloud-dataworks-datastudio-develop
+url: https://skills.sh/aliyun/alibabacloud-aiops-skills/alibabacloud-dataworks-datastudio-develop
+---
+
+# alibabacloud-dataworks-datastudio-develop
+
+skills/aliyun/alibabacloud-aiops-skills/alibabacloud-dataworks-datastudio-develop
+alibabacloud-dataworks-datastudio-develop
+Installation
+$ npx skills add https://github.com/aliyun/alibabacloud-aiops-skills --skill alibabacloud-dataworks-datastudio-develop
+SKILL.md
+DataWorks Data Development
+⚡ MANDATORY: Read Before Any API Call
+
+These absolute rules are NOT optional — violating ANY ONE means the task WILL FAIL:
+
+FIRST THING: Switch CLI profile. Before ANY aliyun command, run aliyun configure list. If multiple profiles exist, run aliyun configure switch --profile <name> to select the correct one. Priority: prefer a profile whose name contains dataworks (case-insensitive); otherwise use default. Do NOT skip this step. Do NOT run any aliyun dataworks-public command before switching. NEVER read/echo/print AK/SK values.
+
+NEVER install plugins. If aliyun help shows "Plugin available but not installed" for dataworks-public → IGNORE IT. Do NOT run aliyun plugin install. PascalCase RPC works without plugins (requires CLI >= 3.3.1).
+
+ONLY use PascalCase RPC. Every DataWorks API call must look like: aliyun dataworks-public CreateNode --ProjectId ... --Spec '...'. Never use kebab-case (create-file, create-node, create-business).
+
+ONLY use these APIs for create: CreateWorkflowDefinition → CreateNode (per node, with --ContainerId) → CreatePipelineRun (to deploy).
+
+ONLY use these APIs for update: UpdateNode (incremental, kind:Node) → CreatePipelineRun (to deploy). Never use ImportWorkflowDefinition, DeployFile, or SubmitFile for updates or publishing. 4a. ONLY use these APIs for deploy/publish: CreatePipelineRun (Type=Online, ObjectIds=[ID]) → GetPipelineRun (poll) → ExecPipelineRunStage (advance). NEVER use DeployFile, SubmitFile, ListDeploymentPackages, or GetDeploymentPackage — these are all legacy APIs that will fail.
+
+If CreateWorkflowDefinition or CreateNode returns an error, FIX THE SPEC — do NOT fall back to legacy APIs. Error 58014884415 means your FlowSpec JSON format is wrong (e.g., used "kind":"Workflow" instead of "kind":"CycleWorkflow", or "apiVersion" instead of "version"). Copy the exact Spec from the Quick Start below.
+
+Run CLI commands directly — do NOT create wrapper scripts. Never create .sh scripts to batch API calls. Run each aliyun command directly in the shell. Wrapper scripts add complexity and obscure errors.
+
+Saving files locally is NOT completion. The task is only done when the API returns a success response (e.g., {"Id": "..."} from CreateWorkflowDefinition/CreateNode). Writing JSON files to disk without calling the API means the workflow/node was NOT created. Never claim success without a real API response.
+
+NEVER simulate, mock, or fabricate API responses. If credentials are missing, the CLI is misconfigured, or an API call returns an error — report the exact error message to the user and STOP. Do NOT generate fake JSON responses, write simulation documents, echo hardcoded output, or claim success in any form. A simulated success is worse than an explicit failure.
+
+Credential failure = hard stop. If aliyun configure list shows empty or invalid credentials, or any CLI call returns InvalidAccessKeyId, access_key_id must be assigned, or similar auth errors — STOP immediately. Tell the user to configure valid credentials outside this session. Do NOT attempt workarounds (writing config.json manually, using placeholder credentials, proceeding without auth). No subsequent API calls may be attempted until credentials are verified working.
+
+ONLY use APIs listed in this document. Every API you call must appear in the API Quick Reference table below. If you need an operation that is not listed, check the table again — the operation likely exists under a different name. NEVER invent API names (e.g., CreateDeployment, ApproveDeployment, DeployNode do NOT exist). If you cannot find the right API, ask the user.
+
+If you catch yourself typing ANY of these, STOP IMMEDIATELY and re-read the Quick Start below: create-file, create-business, create-folder, CreateFolder, CreateFile, UpdateFile, plugin install, --file-type, /bizroot, /workflowroot, DeployFile, SubmitFile, ListFiles, GetFile, ListDeploymentPackages, GetDeploymentPackage, CreateDeployment, ApproveDeployment, DeployNode, CreateFlow, CreateFileDepends, CreateSchedule
+
+⛔ Prohibited Legacy APIs
+
+This skill uses DataWorks OpenAPI version 2024-05-18. The following legacy APIs and patterns are strictly prohibited:
+
+Prohibited Legacy Operation	Correct Replacement
+create-file / CreateFile (with --file-type numeric type code)	CreateNode + FlowSpec JSON
+create-folder / CreateFolder	No folder needed, use CreateNode directly
+create-business / CreateBusiness / CreateFlowProject	CreateWorkflowDefinition + FlowSpec
+list-folders / ListFolders	ListNodes / ListWorkflowDefinitions
+import-workflow-definition / ImportWorkflowDefinition (for create or update)	CreateWorkflowDefinition + individual CreateNode calls (for create); UpdateNode per node (for update)
+Any operation based on folder paths (/bizroot, /workflowroot, /Business Flow)	Specify path via script.path in FlowSpec
+SubmitFile / DeployFile / GetDeploymentPackage / ListDeploymentPackages	CreatePipelineRun + ExecPipelineRunStage
+UpdateFile (legacy file update)	UpdateNode + FlowSpec JSON (kind:Node, incremental)
+ListFiles / GetFile (legacy file model)	ListNodes / GetNode
+aliyun plugin install --names dataworks-public (legacy plugin)	No plugin installation needed, use PascalCase RPC direct invocation
+
+How to tell — STOP if any of these are true:
+
+You are typing create-file, create-business, create-folder, or any kebab-case DataWorks command → WRONG. Use PascalCase RPC: CreateNode, CreateWorkflowDefinition
+You are running aliyun plugin install → WRONG. No plugin needed; PascalCase RPC direct invocation works out of the box (requires CLI >= 3.3.1)
+You are constructing folder paths (/bizroot, /workflowroot) → WRONG. Use script.path in FlowSpec
+Your FlowSpec contains apiVersion, type (at node level), or schedule → WRONG. See the correct format below
+
+CLI Format: ALL DataWorks 2024-05-18 API calls use PascalCase RPC direct invocation: aliyun dataworks-public CreateNode --ProjectId ... --Spec '...' --user-agent AlibabaCloud-Agent-Skills This requires aliyun CLI >= 3.3.1. No plugin installation is needed.
+
+⚠️ FlowSpec Anti-Patterns
+
+Agents commonly invent wrong FlowSpec fields. The correct format is shown in the Quick Start below.
+
+❌ WRONG	✅ CORRECT	Notes
+"apiVersion": "v1" or "apiVersion": "dataworks.aliyun.com/v1"	"version": "2.0.0"	FlowSpec uses version, not apiVersion
+"kind": "Flow" or "kind": "Workflow"	"kind": "CycleWorkflow" (for workflows) or "kind": "Node" (for nodes)	Only Node, CycleWorkflow, ManualWorkflow are valid. "Workflow" alone is NOT valid
+"metadata": {"name": "..."}	"spec": {"workflows": [{"name": "..."}]}	FlowSpec has no metadata field; name goes inside spec.workflows[0] or spec.nodes[0]
+"type": "SHELL" (at node level)	"script": {"runtime": {"command": "DIDE_SHELL"}}	Node type goes in script.runtime.command
+"schedule": {"cron": "..."}	"trigger": {"cron": "...", "type": "Scheduler"}	Scheduling uses trigger, not schedule
+"script": {"content": "..."} without path	"script": {"path": "node_name", ...}	script.path is always required
+🚀 Quick Start: End-to-End Workflow Creation
+
+Complete working example — create a scheduled workflow with 2 dependent nodes:
+
+# Step 1: Create the workflow container
+aliyun dataworks-public CreateWorkflowDefinition \
+  --ProjectId 585549 \
+  --Spec '{"version":"2.0.0","kind":"CycleWorkflow","spec":{"workflows":[{"name":"my_etl_workflow","script":{"path":"my_etl_workflow","runtime":{"command":"WORKFLOW"}}}]}}' \
+  --user-agent AlibabaCloud-Agent-Skills
+# → Returns {"Id": "WORKFLOW_ID", ...}
+
+# Step 2: Create upstream node (Shell) inside the workflow
+# IMPORTANT: Before creating, verify output name "my_project.check_data" is not already used by another node (ListNodes)
+aliyun dataworks-public CreateNode \
+  --ProjectId 585549 \
+  --Scene DATAWORKS_PROJECT \
+  --ContainerId WORKFLOW_ID \
+  --Spec '{"version":"2.0.0","kind":"Node","spec":{"nodes":[{"name":"check_data","id":"check_data","script":{"path":"check_data","runtime":{"command":"DIDE_SHELL"},"content":"#!/bin/bash\necho done"},"outputs":{"nodeOutputs":[{"data":"my_project.check_data","artifactType":"NodeOutput"}]}}]}}' \
+  --user-agent AlibabaCloud-Agent-Skills
+# → Returns {"Id": "NODE_A_ID", ...}
+
+# Step 3: Create downstream node (SQL) with dependency on upstream
+# NOTE on dependencies: "nodeId" is the CURRENT node's name (self-reference), "output" is the UPSTREAM node's output
+aliyun dataworks-public CreateNode \
+  --ProjectId 585549 \
+  --Scene DATAWORKS_PROJECT \
+  --ContainerId WORKFLOW_ID \
+  --Spec '{"version":"2.0.0","kind":"Node","spec":{"nodes":[{"name":"transform_data","id":"transform_data","script":{"path":"transform_data","runtime":{"command":"ODPS_SQL"},"content":"SELECT 1;"},"outputs":{"nodeOutputs":[{"data":"my_project.transform_data","artifactType":"NodeOutput"}]}}],"dependencies":[{"nodeId":"transform_data","depends":[{"type":"Normal","output":"my_project.check_data"}]}]}}' \
+  --user-agent AlibabaCloud-Agent-Skills
+
+# Step 4: Set workflow schedule (daily at 00:30)
+aliyun dataworks-public UpdateWorkflowDefinition \
+  --ProjectId 585549 \
+  --Id WORKFLOW_ID \
+  --Spec '{"version":"2.0.0","kind":"CycleWorkflow","spec":{"workflows":[{"name":"my_etl_workflow","script":{"path":"my_etl_workflow","runtime":{"command":"WORKFLOW"}},"trigger":{"cron":"00 30 00 * * ?","timezone":"Asia/Shanghai","type":"Scheduler"}}]}}' \
+  --user-agent AlibabaCloud-Agent-Skills
+
+# Step 5: Deploy the workflow online (REQUIRED — workflow is not active until deployed)
+aliyun dataworks-public CreatePipelineRun \
+  --ProjectId 585549 \
+  --Type Online --ObjectIds '["WORKFLOW_ID"]' \
+  --user-agent AlibabaCloud-Agent-Skills
+# → Returns {"Id": "PIPELINE_RUN_ID", ...}
+# Then poll GetPipelineRun and advance stages with ExecPipelineRunStage
+# (see "Publishing and Deploying" section below for full polling flow)
+
+
+Key pattern: CreateWorkflowDefinition → CreateNode (with ContainerId + outputs.nodeOutputs) → UpdateWorkflowDefinition (add trigger) → CreatePipelineRun (deploy). Each node within a workflow MUST have outputs.nodeOutputs. The workflow is NOT active until deployed via CreatePipelineRun.
+
+Dependency wiring summary: In spec.dependencies, nodeId is the current node's own name (self-reference, NOT the upstream node), and depends[].output is the upstream node's output (projectIdentifier.upstream_node_name). The outputs.nodeOutputs[].data value of the upstream node and the depends[].output value of the downstream node must be character-for-character identical, otherwise the dependency silently fails.
+
+Core Workflow
+Environment Discovery (Required Before Creating)
+
+Step 0 — CLI Profile Switch (MUST be the very first action): Run aliyun configure list. If multiple profiles exist, run aliyun configure switch --profile <name> (prefer dataworks-named profile, otherwise default). No aliyun dataworks-public command may run before this.
+
+If credentials are empty or invalid, STOP HERE. Do not proceed with any API calls. Report the error to the user and instruct them to configure valid credentials outside this session (via aliyun configure or environment variables). Do not attempt workarounds such as writing config files manually or using placeholder values.
+
+Before creating nodes or workflows, understand the project's existing environment. It is recommended to use a subagent to execute queries, returning only a summary to the main Agent to avoid raw data consuming too much context.
+
+Subagent tasks:
+
+Call ListWorkflowDefinitions to get the workflow list
+Call ListNodes to get the existing node list
+Call ListDataSources AND ListComputeResources to get all available data sources and compute engine bindings (EMR, Hologres, StarRocks, etc.). ListComputeResources supplements ListDataSources which may not return compute-engine-type resources
+Return a summary (do not return raw data):
+Workflow inventory: name + number of contained nodes + type (scheduled/manual)
+Existing nodes relevant to the current task: name + type + parent workflow
+Available data sources + compute resources (name, type) — combine both lists
+Suggested target workflow (if inferable from the task description)
+
+Based on the summary, the main Agent decides: target workflow (existing or new, user decides), node naming (follow existing conventions), and dependencies (infer from SQL references and existing nodes).
+
+Pre-creation conflict check (required, applies to all object types):
+
+Name duplication check: Before creating any object, use the corresponding List API to check if an object with the same name already exists:
+Workflow → ListWorkflowDefinitions
+Node → ListNodes (node names are globally unique within a project)
+Resource → ListResources
+Function → ListFunctions
+Component → ListComponents
+Handling existing objects: Inform the user and ask how to proceed (use existing / rename / update existing). Direct deletion of existing objects is prohibited
+Output name conflict check (CRITICAL): A node's outputs.nodeOutputs[].data (format ${projectIdentifier}.NodeName) must be globally unique within the project, even across different workflows. Use ListNodes --Name NodeName and inspect Outputs.NodeOutputs[].Data in the response to verify. If the output name conflicts with an existing node, the conflict must be resolved before creation — otherwise deployment will fail with "can not exported multiple nodes into the same output" (see troubleshooting.md #11b)
+
+Certainty level determines interaction approach:
+
+Certain information → Use directly, do not ask the user
+Confident inference → Proceed, explain the reasoning in the output
+Uncertain information → Must ask the user
+Creating Nodes
+
+Unified workflow: Whether in OpenAPI Mode or Git Mode, generate the same local file structure.
+
+Step 1: Create the Node Directory and Three Files
+
+One folder = one node, containing three files:
+
+my_node/
+├── my_node.spec.json          # FlowSpec node definition
+├── my_node.sql                # Code file (extension based on contentFormat)
+└── dataworks.properties       # Runtime configuration (actual values)
+
+
+spec.json — Copy the minimal Spec from references/nodetypes/{category}/{TYPE}.md, modify name and path, and use ${spec.xxx} placeholders to reference values from properties. If the user specifies trigger, dependencies, rerunTimes, etc., add them to the spec as well.
+
+Code file — Determine the format (sql/shell/python/json/empty) based on the contentFormat in the node type documentation; determine the extension based on the extension field.
+
+dataworks.properties — Fill in actual values:
+
+projectIdentifier=<actual project identifier>
+spec.datasource.name=<actual datasource name>
+spec.runtimeResource.resourceGroup=<actual resource group identifier>
+
+
+Do not fill in uncertain values — if omitted, the server automatically uses project defaults.
+
+Reference examples: assets/templates/
+
+Step 2: Submit
+
+Default is OpenAPI (unless the user explicitly says "commit to Git"):
+
+Use build.py to merge the three files into API input:
+
+python $SKILL/scripts/build.py ./my_node > /tmp/spec.json
+
+
+build.py does three things (no third-party dependencies; if errors occur, refer to the source code to execute manually):
+
+Read dataworks.properties → replace ${spec.xxx} and ${projectIdentifier} placeholders in spec.json
+Read the code file → embed into script.content
+Output the merged complete JSON
+
+Validate the spec before submission:
+
+python $SKILL/scripts/validate.py ./my_node
+
+
+Pre-submission spec review (MANDATORY) — Before calling CreateNode, review the merged JSON against this checklist:
+
+ script.runtime.command matches the intended node type (check references/nodetypes/{category}/{TYPE}.md)
+ datasource — Required if the node type needs a data source (see the node type doc's datasourceType field). Check that name matches an existing data source (ListDataSources) or compute resource (ListComputeResources), and type matches the expected engine type (e.g., odps, hologres, emr, starrocks). If unsure, omit and let the server use project defaults
+ runtimeResource.resourceGroup — Check that the value matches an existing resource group (ListResourceGroups). If unsure, omit and let the server use project defaults
+ trigger — For workflow nodes: omit to inherit the workflow schedule; only set when the user explicitly specifies a per-node schedule. For standalone nodes: set if the user specified a schedule
+ outputs.nodeOutputs — Required for workflow nodes. Format: {"data":"${projectIdentifier}.NodeName","artifactType":"NodeOutput"}. Verify the output name is globally unique in the project (ListNodes --Name)
+ dependencies — nodeId must be the current node's own name (self-reference). depends[].output must exactly match the upstream node's outputs.nodeOutputs[].data. Every workflow node MUST have dependencies: root nodes (no upstream) MUST depend on ${projectIdentifier}_root (underscore, not dot); downstream nodes depend on upstream outputs. A workflow node with NO dependencies entry will become an orphan
+ No invented fields — Compare against the FlowSpec Anti-Patterns table above; remove any field not documented in references/flowspec-guide.md
+
+Call the API to submit (refer to references/api/CreateNode.md):
+
+# DataWorks 2024-05-18 API does not yet have plugin mode (kebab-case), use RPC direct invocation format (PascalCase)
+aliyun dataworks-public CreateNode \
+  --ProjectId $PROJECT_ID \
+  --Scene DATAWORKS_PROJECT \
+  --Spec "$(cat /tmp/spec.json)" \
+  --user-agent AlibabaCloud-Agent-Skills
+
+
+Note: aliyun dataworks-public CreateNode is in RPC direct invocation format and does not require any plugin installation. If the command is not found, check the aliyun CLI version (requires >= 3.3.1). Never downgrade to legacy kebab-case commands (create-file/create-folder).
+
+Sandbox fallback: If $(cat ...) is blocked, use Python subprocess.run(['aliyun', 'dataworks-public', 'CreateNode', '--ProjectId', str(PID), '--Scene', 'DATAWORKS_PROJECT', '--Spec', spec_str, '--user-agent', 'AlibabaCloud-Agent-Skills']).
+
+To place within a workflow, add --ContainerId $WorkflowId
+
+Git Mode (when the user explicitly requests): git add ./my_node && git commit, DataWorks automatically syncs and replaces placeholders
+
+Minimum required fields (verified in practice, universal across all 130+ types):
+
+name — Node name
+id — Must be set equal to name. Ensures spec.dependencies[*].nodeId can match. Without explicit id, the API may silently drop dependencies
+script.path — Script path, must end with the node name; the server automatically prepends the workflow prefix
+script.runtime.command — Node type (e.g., ODPS_SQL, DIDE_SHELL)
+
+Copyable minimal node Spec (Shell node example):
+
+{"version":"2.0.0","kind":"Node","spec":{"nodes":[{
+  "name":"my_shell_node","id":"my_shell_node",
+  "script":{"path":"my_shell_node","runtime":{"command":"DIDE_SHELL"},"content":"#!/bin/bash\necho hello"}
+}]}}
+
+
+Other fields are not required; the server will automatically fill in project defaults:
+
+datasource, runtimeResource — If unsure, do not pass them; the server automatically binds project defaults
+trigger — If not passed, inherits the workflow schedule. Only pass when specified by the user
+dependencies, rerunTimes, etc. — Only pass when specified by the user
+outputs.nodeOutputs — Optional for standalone nodes; required for nodes within a workflow ({"data":"${projectIdentifier}.NodeName","artifactType":"NodeOutput"}), otherwise downstream dependencies silently fail. ⚠️ The output name (${projectIdentifier}.NodeName) must be globally unique within the project — if another node (even in a different workflow) already uses the same output name, deployment will fail with "can not exported multiple nodes into the same output". Always check with ListNodes before creating
+Workflow and Node Relationship
+Project
+└── Workflow              ← Container, unified scheduling management
+    ├── Node A            ← Minimum execution unit
+    ├── Node B (depends A)
+    └── Node C (depends B)
+
+A workflow is the container and scheduling unit for nodes, with its own trigger and strategy
+Nodes can exist independently at the root level or belong to a workflow (user decides)
+The workflow's script.runtime.command is always "WORKFLOW"
+Dependency configuration for nodes within a workflow: only maintain dependencies in the spec.dependencies array (do NOT dual-write inputs.nodeOutputs). ⚠️ spec.dependencies[*].nodeId is a self-reference — it must match the current node's own name (the node that HAS the dependency), NOT the upstream node's name or ID. depends[].output is the upstream node's output identifier (${projectIdentifier}.UpstreamNodeName). Upstream nodes must declare outputs.nodeOutputs
+Creating Workflows
+Create the workflow definition (minimal spec):
+{"version":"2.0.0","kind":"CycleWorkflow","spec":{"workflows":[{
+  "name":"workflow_name","script":{"path":"workflow_name","runtime":{"command":"WORKFLOW"}}
+}]}}
+
+Call CreateWorkflowDefinition → returns WorkflowId
+Create nodes in dependency order (each node passes ContainerId=WorkflowId)
+Before each node: Check that ${projectIdentifier}.NodeName is not already used as an output by any existing node in the project (use ListNodes with --Name and inspect Outputs.NodeOutputs[].Data). Duplicate output names cause deployment failure
+Each node's spec must include outputs.nodeOutputs: {"data":"${projectIdentifier}.NodeName","artifactType":"NodeOutput"}
+Downstream nodes declare dependencies in spec.dependencies: nodeId = current node's own name (self-reference), depends[].output = upstream node's output (see workflow-guide.md)
+Verify dependencies (MANDATORY after all nodes created) — For each downstream node, call ListNodeDependencies --Id <NodeID>. If TotalCount is 0 but the node should have upstream dependencies, the CreateNode API silently dropped them. Fix immediately with UpdateNode using spec.dependencies (see "Updating dependencies" below). Do NOT proceed to deploy until all dependencies are confirmed
+Set the schedule — UpdateWorkflowDefinition with trigger (if the user specified a schedule)
+Deploy online (REQUIRED) — CreatePipelineRun(Type=Online, ObjectIds=[WorkflowId]) → poll GetPipelineRun → advance stages with ExecPipelineRunStage. A workflow is NOT active until deployed. Do not skip this step or tell the user to do it manually.
+
+Detailed guide and copyable complete node Spec examples (including outputs and dependencies): references/workflow-guide.md
+
+Updating Existing Nodes
+
+Must use incremental updates — only pass the node id + fields to modify:
+
+{"version":"2.0.0","kind":"Node","spec":{"nodes":[{
+  "id":"NodeID",
+  "script":{"content":"new code"}
+}]}}
+
+
+⚠️ Critical: UpdateNode always uses "kind":"Node", even if the node belongs to a workflow. Do NOT use "kind":"CycleWorkflow" — that is only for workflow-level operations (UpdateWorkflowDefinition).
+
+Do not pass unchanged fields like datasource or runtimeResource (the server may have corrected values; passing them back can cause errors).
+
+⚠️ Updating dependencies: To fix or change a node's dependencies via UpdateNode, use spec.dependencies — NEVER use inputs.nodeOutputs. Example:
+
+{"version":"2.0.0","kind":"Node","spec":{"nodes":[{"id":"NodeID"}],"dependencies":[{"nodeId":"current_node_name","depends":[{"type":"Normal","output":"project.upstream_node"}]}]}}
+
+Update + Republish Workflow
+
+Complete end-to-end flow for modifying an existing node and deploying the change:
+
+Find the node — ListNodes(Name=xxx) → get Node ID
+Update the node — UpdateNode with incremental spec (kind:Node, only id + changed fields)
+Publish — CreatePipelineRun(type=Online, object_ids=[NodeID]) → poll GetPipelineRun → advance stages with ExecPipelineRunStage
+# Step 1: Find the node
+aliyun dataworks-public ListNodes --ProjectId $PID --Name "my_node" --user-agent AlibabaCloud-Agent-Skills
+# → Note the node Id from the response
+
+# Step 2: Update (incremental — only id + changed fields)
+aliyun dataworks-public UpdateNode --ProjectId $PID --Id $NODE_ID \
+  --Spec '{"version":"2.0.0","kind":"Node","spec":{"nodes":[{"id":"'$NODE_ID'","script":{"content":"SELECT 1;"}}]}}' \
+  --user-agent AlibabaCloud-Agent-Skills
+
+# Step 3: Publish (see "Publishing and Deploying" below)
+aliyun dataworks-public CreatePipelineRun --ProjectId $PID \
+  --PipelineRunParam '{"type":"Online","objectIds":["'$NODE_ID'"]}' \
+  --user-agent AlibabaCloud-Agent-Skills
+
+
+Common wrong paths after UpdateNode (all prohibited):
+
+❌ DeployFile / SubmitFile — legacy APIs, will fail or behave unexpectedly
+❌ ImportWorkflowDefinition — for initial bulk import only, not for updating or publishing
+❌ ListFiles / GetFile — legacy file model, use ListNodes / GetNode instead
+✅ CreatePipelineRun → GetPipelineRun → ExecPipelineRunStage
+Publishing and Deploying
+
+⚠️ NEVER use DeployFile, SubmitFile, ListDeploymentPackages, GetDeploymentPackage, ListFiles, or GetFile for deployment. These are all legacy APIs. Use ONLY: CreatePipelineRun → GetPipelineRun → ExecPipelineRunStage.
+
+Publishing is an asynchronous multi-stage pipeline:
+
+CreatePipelineRun(Type=Online, ObjectIds=[ID]) → get PipelineRunId
+Poll GetPipelineRun → check Pipeline.Status and Pipeline.Stages
+When a Stage has Init status and all preceding Stages are Success → call ExecPipelineRunStage(Code=Stage.Code) to advance
+Until the Pipeline overall status becomes Success / Fail
+
+Key point: The Build stage runs automatically, but the Check and Deploy stages must be manually advanced. Detailed CLI examples and polling scripts are in references/deploy-guide.md.
+
+CLI Note: The aliyun CLI returns JSON with the top-level key Pipeline (not SDK's resp.body.pipeline); Stages are in Pipeline.Stages.
+
+Common Node Types
+Use Case	command	contentFormat	Extension	datasource
+Shell script	DIDE_SHELL	shell	.sh	—
+MaxCompute SQL	ODPS_SQL	sql	.sql	odps
+Python script	PYTHON	python	.py	—
+Offline data sync	DI	json	.json	—
+Hologres SQL	HOLOGRES_SQL	sql	.sql	hologres
+Flink streaming SQL	FLINK_SQL_STREAM	sql	.json	flink
+Flink batch SQL	FLINK_SQL_BATCH	sql	.json	flink
+EMR Hive	EMR_HIVE	sql	.sql	emr
+EMR Spark SQL	EMR_SPARK_SQL	sql	.sql	emr
+Serverless Spark SQL	SERVERLESS_SPARK_SQL	sql	.sql	emr
+StarRocks SQL	StarRocks	sql	.sql	starrocks
+ClickHouse SQL	CLICK_SQL	sql	.sql	clickhouse
+Virtual node	VIRTUAL	empty	.vi	—
+
+Complete list (130+ types): references/nodetypes/index.md (searchable by command name, description, and category, with links to detailed documentation for each type)
+
+When you cannot find a node type:
+
+Check references/nodetypes/index.md and match by keyword
+Glob("**/{keyword}*.md", path="references/nodetypes") to locate the documentation directly
+Use the GetNode API to get the spec of a similar node from the live environment as a reference
+If none of the above works → fall back to DIDE_SHELL and use command-line tools within the Shell to accomplish the task
+Key Constraints
+script.path is required: Script path, must end with the node name. When creating, you can pass just the node name; the server automatically prepends the workflow prefix
+Dependencies are configured via spec.dependencies (do NOT dual-write inputs.nodeOutputs): In spec.dependencies, nodeId is a self-reference — it must be the current node's own name (the node being created), NOT the upstream node. depends[].output is the upstream node's output (${projectIdentifier}.UpstreamNodeName). The upstream's outputs.nodeOutputs[].data and downstream's depends[].output must be character-for-character identical. Upstream nodes must declare outputs.nodeOutputs. ⚠️ Output names (${projectIdentifier}.NodeName) must be globally unique within the project — duplicates cause deployment failure
+Immutable properties: A node's command (node type) cannot be changed after creation; if incorrect, inform the user and suggest creating a new node with the correct type
+Updates must be incremental: Only pass id + fields to modify; do not pass unchanged fields like datasource/runtimeResource
+datasource.type may be corrected by the server: e.g., flink → flink_serverless; use the generic type when creating
+Nodes can exist independently: Nodes can be created at the root level (without passing ContainerId) or belong to a workflow (pass ContainerId=WorkflowId). Whether to place in a workflow is the user's decision
+Workflow command is always WORKFLOW: script.runtime.command must be "WORKFLOW"
+Deletion is not supported by this skill: This skill does not provide any delete operations. When creation or publishing fails, never attempt to "fix" the problem by deleting existing objects. Correct approach: diagnose the failure cause → inform the user of the specific conflict → let the user decide how to handle it (rename / update existing)
+Name conflict check is required before creation: Before calling any Create API, use the corresponding List API to confirm the name is not duplicated (see "Environment Discovery"). Name conflicts will cause creation failure; duplicate node output names (outputs.nodeOutputs[].data) will cause dependency errors or publishing failure
+Mutating operations require user confirmation: Except for Create and read-only queries (Get/List), all OpenAPI operations that modify existing objects (Update, Move, Rename, etc.) must be shown to the user with explicit confirmation obtained before execution. Confirmation information should include: operation type, target object name/ID, and key changes. These APIs must not be called before user confirmation. Delete and Abolish operations are not supported by this skill
+Use only 2024-05-18 version APIs: All APIs in this skill are DataWorks 2024-05-18 version. Legacy APIs (create-file, create-folder, CreateFlowProject, etc.) are prohibited. If an API call returns an error, first check troubleshooting.md; do not fall back to legacy APIs
+Stop on errors instead of brute-force retrying: If the same error code appears more than 2 consecutive times, the approach is wrong. Stop and analyze the error cause (check troubleshooting.md) instead of repeatedly retrying the same incorrect API with different parameters. Never fall back to legacy APIs (create-file, create-business, etc.) when a new API fails — review the FlowSpec Anti-Patterns table at the top of this document instead. Specific trap: If aliyun help output mentions "Plugin available but not installed" for dataworks-public, do NOT install the plugin — this leads to using deprecated kebab-case APIs. Instead, use PascalCase RPC directly (e.g., aliyun dataworks-public CreateNode)
+CLI parameter names must be checked in documentation, guessing is prohibited: Before calling an API, you must first check references/api/{APIName}.md to confirm parameter names. Common mistakes: GetProject's ID parameter is --Id (not --ProjectId); UpdateNode requires --Id. When unsure, verify with aliyun dataworks-public {APIName} --help
+PascalCase RPC only, no kebab-case: CLI commands must use aliyun dataworks-public CreateNode (PascalCase), never aliyun dataworks-public create-node (kebab-case). No plugin installation is needed. If the command is not found, upgrade aliyun CLI to >= 3.3.1
+No wrapper scripts: Run each aliyun CLI command directly in the shell. Never create .sh/.py wrapper scripts to batch multiple API calls — this obscures errors and makes debugging impossible. Execute one API call at a time, check the response, then proceed
+API response = success, not file output: Writing JSON spec files to disk is a preparation step, not completion. The task is complete only when the aliyun CLI returns a success response with a valid Id. If the API call fails, fix the spec and retry — do not declare the task done by saving local files
+On error: re-read the Quick Start, do not invent new approaches: When an API call fails, compare your spec against the exact Quick Start example at the top of this document field by field. The most common cause is an invented FlowSpec field that does not exist. Copy the working example and modify only the values you need to change
+Idempotency protection for write operations: DataWorks 2024-05-18 Create APIs (CreateNode, CreateWorkflowDefinition, CreatePipelineRun, etc.) do not support a ClientToken parameter. To prevent duplicate resource creation on network retries or timeouts:
+Before creating: Always run the pre-creation conflict check (List API) as described in "Environment Discovery" — this is the primary idempotency gate
+After a network error or timeout on Create: Do NOT blindly retry. First call the corresponding List/Get API to check whether the resource was actually created (the server may have processed the request despite the client-side error). Only retry if the resource does not exist
+Record RequestId: Every API response includes a RequestId field. Log it so that duplicate-creation incidents can be traced and resolved via Alibaba Cloud support
+API Quick Reference
+
+API Version: All APIs listed below are DataWorks 2024-05-18 version. CLI invocation format: aliyun dataworks-public {APIName} --Parameter --user-agent AlibabaCloud-Agent-Skills (PascalCase RPC direct invocation; DataWorks 2024-05-18 does not yet have plugin mode). Only use the APIs listed in the table below; do not search for or use other DataWorks APIs.
+
+Detailed parameters and code templates for each API are in references/api/{APIName}.md. If a call returns an error, you can get the latest definition from https://api.aliyun.com/meta/v1/products/dataworks-public/versions/2024-05-18/apis/{APIName}/api.json.
+
+Components
+API	Description
+CreateComponent	Create a component
+GetComponent	Get component details
+UpdateComponent	Update a component
+ListComponents	List components
+Nodes
+API	Description
+CreateNode	Create a data development node. project_id + scene + spec, optional container_id
+UpdateNode	Update node information. Incremental update, only pass id + fields to change
+MoveNode	Move a node to a specified path
+RenameNode	Rename a node
+GetNode	Get node details, returns the complete spec
+ListNodes	List nodes, supports filtering by workflow
+ListNodeDependencies	List a node's dependency nodes
+Workflow Definitions
+API	Description
+CreateWorkflowDefinition	Create a workflow. project_id + spec
+ImportWorkflowDefinition	Import a workflow (initial bulk import ONLY — do NOT use for updates or publishing; use UpdateNode + CreatePipelineRun instead)
+UpdateWorkflowDefinition	Update workflow information, incremental update
+MoveWorkflowDefinition	Move a workflow to a target path
+RenameWorkflowDefinition	Rename a workflow
+GetWorkflowDefinition	Get workflow details
+ListWorkflowDefinitions	List workflows, filter by type
+Resources
+API	Description
+CreateResource	Create a file resource
+UpdateResource	Update file resource information, incremental update
+MoveResource	Move a file resource to a specified directory
+RenameResource	Rename a file resource
+GetResource	Get file resource details
+ListResources	List file resources
+Functions
+API	Description
+CreateFunction	Create a UDF function
+UpdateFunction	Update UDF function information, incremental update
+MoveFunction	Move a function to a target path
+RenameFunction	Rename a function
+GetFunction	Get function details
+ListFunctions	List functions
+Publishing Pipeline
+API	Description
+CreatePipelineRun	Create a publishing pipeline. type=Online/Offline
+ExecPipelineRunStage	Execute a specified stage of the publishing pipeline, async requires polling
+GetPipelineRun	Get publishing pipeline details, returns Stages status
+ListPipelineRuns	List publishing pipelines
+ListPipelineRunItems	Get publishing content
+Auxiliary Queries
+API	Description
+GetProject	Get projectIdentifier by id
+ListDataSources	List data sources
+ListComputeResources	List compute engine bindings (EMR, Hologres, StarRocks, etc.) — supplements ListDataSources
+ListResourceGroups	List resource groups
+Reference Documentation
+Scenario	Document
+Complete list of APIs and CLI commands	references/related-apis.md
+RAM permission policy configuration	references/ram-policies.md
+Operation verification methods	references/verification-method.md
+Acceptance criteria and test cases	references/acceptance-criteria.md
+CLI installation and configuration guide	references/cli-installation-guide.md
+Node type index (130+ types)	references/nodetypes/index.md
+FlowSpec field reference	references/flowspec-guide.md
+Workflow development	references/workflow-guide.md
+Scheduling configuration	references/scheduling-guide.md
+Publishing and unpublishing	references/deploy-guide.md
+DI data integration	references/di-guide.md
+Troubleshooting	references/troubleshooting.md
+Complete examples	assets/templates/README.md
+Weekly Installs
+133
+Repository
+aliyun/alibabac…s-skills
+GitHub Stars
+80
+First Seen
+2 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykPass

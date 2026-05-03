@@ -1,0 +1,115 @@
+---
+rating: ⭐⭐
+title: fw-ai-actions-app
+url: https://skills.sh/freshworks-developers/fw-dev-tools/fw-ai-actions-app
+---
+
+# fw-ai-actions-app
+
+skills/freshworks-developers/fw-dev-tools/fw-ai-actions-app
+fw-ai-actions-app
+Installation
+$ npx skills add https://github.com/freshworks-developers/fw-dev-tools --skill fw-ai-actions-app
+SKILL.md
+AI Actions Skill for Freshworks Platform 3.0
+
+You are an AI Actions specialist for Freshworks Platform 3.0. This file is the orchestrator: keep it short; load detail from rules/ and references/ below instead of restating long guides here.
+
+Core Rules
+NEVER assume API endpoints — confirm third-party API documentation before request templates (rules/ai-actions-api-docs.mdc).
+Request parameters MUST stay flat — no nested objects; arrays of primitives allowed when needed; no arrays of objects (references/ai-actions-core.md).
+Response schemas CAN be nested — include only essential fields.
+Function names MUST match exactly — case-sensitive between actions.json and server.js.
+Construct nested structures in server.js — not in request schemas.
+Use request templates — $request.invokeTemplate for external HTTP (rules/ai-actions-requests.mdc).
+Credentials — never hardcode secrets; iparams (secure: true) or OAuth only (rules/ai-actions-api-docs.mdc).
+Validate before finalizing — fdk validate and FDK test server (rules/ai-actions-validation.mdc).
+Toolchain order — same gate as ../fw-app-dev/SKILL.md (Manifest + toolchain gate): run fw-setup when Node 24.x + FDK 10.x is missing; run /fdk-migrate (or manual 2.x -> 3.0) before validate on legacy apps; on engines mismatch, align manifest.json engines upward instead of downgrading to FDK 9 / Node 18.
+App Architecture
+
+AI actions apps do not need the app folder. Use only:
+
+fw-ai-actions-app/
+├── actions.json
+├── server/server.js
+├── server/test_data/actionName.json
+├── config/requests.json
+├── config/iparams.json
+└── manifest.json
+
+
+Manifest: Declare common (requests, functions) plus supported product modules as empty objects (e.g. "support_ticket": {}). Do not strip module keys. Engines: "node": "24.11.0", "fdk": "10.0.0" unless the project specifies otherwise (rules/ai-actions-platform.mdc).
+
+Modules / supported-modules source (when provided by the project)
+
+The project may supply a CSV/spec listing Modules Supported per app. Use it when scoping, building, or validating: declare exactly those modules in manifest.json (no location / url / icon for AI-only apps). If missing, infer from product category (ITSM/ESM) and confirm with the user.
+
+Instructions
+Docs first — Search and fetch official API documentation before implementing (rules/ai-actions-api-docs.mdc).
+Schemas — Flat parameters, pragmatic response (rules/ai-actions-schemas.mdc, references/ai-actions-quick-reference.md).
+Server — renderData, $request.invokeTemplate, map flat args to API payloads in code (rules/ai-actions-server.mdc).
+Config — requests.json, iparams.json, manifest (rules/ai-actions-requests.mdc, rules/ai-actions-platform.mdc).
+Test data — Realistic payloads under server/test_data/; no secrets (rules/ai-actions-test-data.mdc).
+Checklists & debugging — Failure cases, broken endpoints, integration and scoping flows (references/ai-actions-guide.md).
+Concepts — Short primer (references/ai-actions-core.md).
+Output Format
+
+Deliverables follow this layout:
+
+app-root/
+├── actions.json
+├── manifest.json
+├── server/server.js
+├── server/test_data/<functionName>.json
+├── config/requests.json
+├── config/iparams.json
+└── README.md   (when documenting the app — `rules/ai-actions-readme.mdc`)
+
+
+Flat request excerpt:
+
+"properties": {
+  "ticket_subject": { "type": "string", "description": "Subject line" },
+  "priority_id": { "type": "integer", "description": "Vendor priority id" }
+}
+
+
+Handler contract: exports keys match actions.json keys; success renderData(null, data); errors renderData({ status, message }, null); sanitize user-visible errors when APIs return noisy payloads (rules/ai-actions-server.mdc).
+
+Example
+
+Prompt: “Add escalateTicket for our ITSM API with ticket_id and team_id.”
+
+Flow: Obtain API docs → flat ticket_id, team_id in parameters → implement handler and request template → test data → fdk validate. Do not nest request parameters to mimic vendor JSON.
+
+Skeleton templates
+scripts/ai-actions-skeleton/ — minimal starter (actions, config, server stub).
+assets/templates/ai-actions-skeleton/ — fuller example (e.g. manifest, sample actions).
+When to use / not use
+
+Use for AI Actions, SMI, templates, integrations, validation, and scoping.
+
+Do not use for general Freshworks app UI-only work — use the fw-app-dev skill (skills/fw-app-dev/ in this repo).
+
+References
+Location	Role
+rules/ai-actions-*.mdc	Scoped rules (platform, schemas, server, requests, validation, test data, README, API docs)
+references/ai-actions-guide.md	Long-form guide, mistakes, debugging
+references/ai-actions-quick-reference.md	One-page patterns
+references/ai-actions-core.md	Core constraints (also glob-scoped)
+Summary
+
+Flat requests; nested responses where needed; matching names; templates for HTTP; iparams/OAuth for secrets; validate and test before handoff.
+
+Weekly Installs
+9
+Repository
+freshworks-deve…ev-tools
+GitHub Stars
+3
+First Seen
+3 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

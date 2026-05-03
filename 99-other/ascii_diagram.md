@@ -1,0 +1,148 @@
+---
+title: ascii-diagram
+url: https://skills.sh/lwlee2608/agent-skills/ascii-diagram
+---
+
+# ascii-diagram
+
+skills/lwlee2608/agent-skills/ascii-diagram
+ascii-diagram
+Installation
+$ npx skills add https://github.com/lwlee2608/agent-skills --skill ascii-diagram
+SKILL.md
+Validate ASCII Diagram
+
+ASCII diagrams produced by agents frequently have alignment issues — misaligned corners, uneven borders, broken connectors. LLMs cannot reliably count characters in their head. This skill uses a print-and-inspect loop to catch and fix alignment bugs.
+
+Rules
+Prefer Unicode box-drawing characters. Use ┌, ┐, └, ┘ for corners, ─ for horizontal borders, │ for vertical borders, and ┬, ┴, ├, ┤, ┼ for junctions. Only fall back to plain ASCII (+, -, |) if the user explicitly requests it or the target format cannot render Unicode. Never mix styles in the same diagram.
+Every row of a box must be the exact same width — top border, content rows, and bottom border.
+Pad short content lines with spaces so the right border │ lands in the same column on every row.
+Connectors and arrows should clearly connect to the box borders they relate to. Verify gaps are intentional.
+No tab characters. Tabs render at unpredictable widths and silently break alignment. Use spaces only.
+No trailing whitespace. Invisible trailing spaces cause width mismatches that look correct but aren't.
+Verification procedure
+
+Do NOT try to validate by counting characters in your head. Instead, use the print-and-inspect loop below.
+
+Step 0: Decide whether to delegate to a subagent
+
+Delegate the entire verification loop to a subagent (via the Agent tool) when the diagram is both (a) >6 lines AND (b) has multiple boxes or nested/connected layouts. The loop produces a lot of ruler output and iteration churn that is not useful to keep in the main context.
+
+For smaller diagrams (a single box, a short table, ≤6 lines), run the loop inline — spawning a subagent is slower than just doing it.
+
+When delegating, hand off with this template (the subagent does not have this skill loaded):
+
+File: <absolute path>
+Lines: <start>-<end>
+Task: Run the verification loop in skills/ascii-diagram/SKILL.md steps 1-5. Edit the source file in place.
+Report: PASS or FAIL, iteration count, and a one-line summary of fixes. Do not paste the diagram back.
+
+
+After the subagent returns:
+
+Re-read the edited lines to confirm the summary matches what actually changed — subagent reports describe intent, not necessarily the diff.
+On FAIL (subagent hit the 3-iteration cap with issues remaining), decide whether to accept the partial fix, re-delegate with specific guidance, or finish inline. Do not silently treat FAIL as done.
+Step 1: Write the diagram to a temp file
+
+Write the diagram to a temp file using the Write tool. Use a unique path like /tmp/diagram-<context>.txt (replace <context> with something specific to this session, e.g., /tmp/diagram-auth-flow.txt) to avoid clobbering other sessions. Use that same path in every command below.
+
+Step 2: Print with a column ruler
+
+Run this Bash command to display the diagram with column numbers (replace <path> with your temp file path):
+
+awk 'BEGIN{
+  ruler1=""; ruler2=""
+  for(i=0;i<120;i++){
+    ruler1=ruler1 sprintf("%d", int(i/10)%10)
+    ruler2=ruler2 sprintf("%d", i%10)
+  }
+  print "     " ruler1
+  print "     " ruler2
+}
+{printf "%3d: %s\n", NR, $0}' <path>
+
+
+This prints every line with its row number and a two-row column ruler (tens digit, ones digit) across the top, making it trivial to check whether corners, borders, and connectors land in the right columns. If your diagram is wider than 120 columns, bump the 120 in the loop.
+
+Step 3: Check for invisible problems
+
+Run these checks to catch issues that are invisible in normal output (replace <path> with your temp file path):
+
+# Tabs (will break alignment silently)
+grep -F $'\t' <path> && echo "FAIL: tabs found" || echo "OK: no tabs"
+# Trailing whitespace
+grep ' $' <path> && echo "FAIL: trailing spaces found" || echo "OK: no trailing whitespace"
+
+
+Fix any findings before proceeding.
+
+Step 4: Visually inspect the ruler output
+
+Look at the printed output and check:
+
+Box width consistency: For each box, does the right border (│ or ┐/┘) appear in the same column on every row? Read the column number off the ruler.
+Top/bottom border match: Does the bottom corner (└/┘) sit in the same column as the top corner (┌/┐)?
+Side-by-side alignment: Do adjacent boxes share consistent column positions?
+Connectors: Do arrows actually touch the border characters?
+Step 5: Fix and repeat
+
+If any issue is found:
+
+Fix the diagram in the file where it lives (not the temp file).
+Write the updated diagram to the same temp file again.
+Print with the ruler again.
+Repeat until every check passes or you hit 3 iterations — whichever comes first. If issues remain after 3 iterations, move on.
+Common mistakes to watch for
+
+Right border off by one. An extra or missing space before │ shifts the right border to a different column than the top/bottom corner. Use the ruler to verify every row ends at the same column.
+
+WRONG:                                  CORRECT:
+┌──────────┐                            ┌──────────┐
+│ hello    │                            │ hello    │
+│ world     │  ← col 13                 │ world    │
+└──────────┘   ← col 12                 └──────────┘
+
+
+Bottom border width mismatch. The bottom border has fewer or more ─ than the top, so the closing corner lands in the wrong column. Count with the ruler, not by eye.
+
+WRONG:                                  CORRECT:
+┌──────────┐  ← col 12                  ┌──────────┐
+│ content  │                            │ content  │
+└─────────┘   ← col 11                  └──────────┘
+
+
+Side-by-side boxes with ragged gap. The gap between adjacent boxes varies across rows, causing the second box to shift. Verify that the second box's corner is in the same column on every row.
+
+WRONG:                                  CORRECT:
+┌───────┐   ┌───────┐                   ┌───────┐   ┌───────┐
+│ box 1 │   │ box 2 │                   │ box 1 │   │ box 2 │
+└───────┘    └───────┘  ← extra         └───────┘   └───────┘
+
+
+Mixed box-drawing styles. Mixing ASCII (+, -, |) and Unicode (┌, ─, ┐) characters in the same diagram. Pick one style and use it consistently.
+
+WRONG:                                  CORRECT:
+┌──────────+  ← ASCII +                 ┌──────────┐
+│ content  │                            │ content  │
+└──────────┘                            └──────────┘
+
+
+Connector not touching box border. Arrows or lines that float with a gap between them and the box they should connect to. Every connector must start and end at a border character.
+
+WRONG:                                  CORRECT:
+┌───────┐     ┌───────┐                 ┌───────┐   ┌───────┐
+│ box 1 │  -> │ box 2 │                 │ box 1 │──>│ box 2 │
+└───────┘     └───────┘                 └───────┘   └───────┘
+     gap ^  ^ gap                             no gaps
+
+Weekly Installs
+24
+Repository
+lwlee2608/agent-skills
+First Seen
+4 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

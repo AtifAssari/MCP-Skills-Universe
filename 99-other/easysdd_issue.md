@@ -1,0 +1,119 @@
+---
+title: easysdd-issue
+url: https://skills.sh/liuzhengdongfortest/easysdd/easysdd-issue
+---
+
+# easysdd-issue
+
+skills/liuzhengdongfortest/easysdd/easysdd-issue
+easysdd-issue
+Installation
+$ npx skills add https://github.com/liuzhengdongfortest/easysdd --skill easysdd-issue
+SKILL.md
+easysdd-issue
+
+修 bug 直觉上是"找到错的地方改了就完事"，但这个直觉路径反复制造同样的麻烦：
+
+问题描述只在脑子里，改完就忘了——三个月后同样的 bug 再现，没有任何复现步骤留存
+根因没分析就动手——改了表面现象，深层问题还在等下次爆发
+修复范围扩散——发现一个 bug 顺手改了五处，引入新问题，无法追溯到底是哪一改引入的
+没有验收闭环——怎么判断改好了？改好了什么？没有记录
+
+issue 工作流在"看到问题"和"动手改代码"之间塞了一道缓冲：
+
+发现问题 → 清晰记录（report）→ 根因分析（analyze）→ 定点修复 + 验证（fix）
+
+
+本技能本身不写任何东西，只看一下当前 issue 走到哪一步、决定该触发哪个子技能。
+
+文件放哪儿
+
+整套 issue 流程的产物聚在 easysdd/issues/ 下，每个 issue 一个独立目录：
+
+easysdd/
+└── issues/
+    └── {issue}/
+        ├── {slug}-report.md           ← 阶段 1 的问题报告
+        ├── {slug}-analysis.md         ← 阶段 2 的根因分析
+        └── {slug}-fix-note.md         ← 阶段 3 的修复记录（必出产物）
+
+
+目录命名是 YYYY-MM-DD-{英文 slug}：
+
+日期取发现 / 提报问题当天，定了不动
+slug 用小写字母、数字、连字符，能一眼看出是什么问题（auth-token-leak、null-pointer-on-empty-list 这种）
+
+为什么所有产物聚在一起？跟 feature 一样的逻辑——后人查"上次那个 bug 当时怎么定位的"，三份文件都在一处不用东找。issue 和 feature 的目录分别在 easysdd/issues/ 和 easysdd/features/，别交叉。
+
+{slug}-fix-note.md 是阶段 3 的必出产物——无论修复简单还是复杂都要写。修复记录不是仪式，是回溯凭证：没有它，下次类似问题来了你只能从 git log 里反推当时改了什么。
+
+所有 issue 文档都要带 YAML frontmatter（doc_type 分别为 issue-report / issue-analysis / issue-fix），便于 search-yaml.py 按 severity、tags、status 检索。
+
+两条路径
+标准路径（问题复杂或根因不明时）
+阶段	子技能	主导者	产出
+1 问题报告	easysdd-issue-report	用户描述，AI 引导结构化	{slug}-report.md
+2 根因分析	easysdd-issue-analyze	AI 读代码分析，用户确认	{slug}-analysis.md
+3 修复验证	easysdd-issue-fix	AI 按分析定点修复，用户验证	代码修复 + {slug}-fix-note.md + 收尾提交确认
+
+阶段间有人工 checkpoint，理由跟 feature 一样：让用户在每个阶段结束有一次明确把关，防止 AI 一口气从问题跑到代码、跑出来用户才发现走偏。
+
+快速通道（问题简单、根因一眼确定时）
+
+下面三条同时满足才进快速通道：
+
+AI 读完代码后对根因高度有把握（能明确指出文件:行号 + 原因）
+修复改动范围很小（只涉及 1-2 处）
+没有跨模块影响风险
+
+流程压缩成：
+
+AI 读代码 → 直接告知根因 + 修复方案 → 用户确认 → AI 修复 → 用户验证通过 → AI 写 {slug}-fix-note.md
+
+
+只产出一份 {slug}-fix-note.md，省掉 {slug}-report.md 和 {slug}-analysis.md。
+
+判定口径：是否进快速通道由 easysdd-issue-report 的启动检查做唯一正式判定。一旦进入标准路径并确认 {slug}-report.md，后续阶段默认不再二次改判——避免 report / analyze / fix 三个阶段对路径各说各话。
+
+什么时候不能走快速通道：
+
+根因有多个候选，需要排查
+修复范围不确定或涉及多个模块
+需要先复现问题才能定位
+用户希望留下完整的分析存档
+路由：用户现在该走哪个子技能
+
+进入本技能后先 Glob easysdd/issues/，看有没有相关的 issue 目录。不要只听用户口头描述——自己读已有文件才有数。
+
+当前状态	触发哪个子技能
+刚发现问题，还没有任何文件	easysdd-issue-report（在那里判断走标准还是快速）
+{slug}-report.md 已存在，没有 {slug}-analysis.md	easysdd-issue-analyze
+{slug}-analysis.md 已存在，代码还没改	easysdd-issue-fix
+代码已改，还没修复验证记录	easysdd-issue-fix（走验证环节）
+不确定	自己读已有文件，按上表对号入座
+
+如果用户描述的是新功能需求而不是 bug，告诉用户走 easysdd-feature 工作流，本工作流不适用。
+
+与 feature 工作流的边界
+issue 处理"本来应该好的东西坏了"——已有代码里的 bug、异常行为、文档错误、性能问题
+feature 处理"从来没有的东西要加进来"——新功能、新能力
+
+灰色地带：修 issue 的过程中发现需要新增能力才能真正解决问题——先用 issue 工作流把问题记录和分析做完，再视情况开 feature 工作流。不要在 issue 里偷偷做新功能，理由跟 feature 不在 PR 里偷偷修 bug 一样：混着改让人分不清这次到底改了什么范围。
+
+相关文档
+easysdd-core/SKILL.md — easysdd 家族根技能，场景路由在那里
+easysdd/reference/shared-conventions.md — 跨阶段共享口径、目录结构、收尾提交规则
+AGENTS.md — 全项目代码规范，issue 修复时同样遵守
+easysdd/architecture/DESIGN.md — 架构总入口，做根因分析时可能要查
+Weekly Installs
+96
+Repository
+liuzhengdongfor…/easysdd
+GitHub Stars
+147
+First Seen
+10 days ago
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

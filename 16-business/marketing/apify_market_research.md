@@ -1,0 +1,137 @@
+---
+rating: ⭐⭐
+title: apify-market-research
+url: https://skills.sh/apify/agent-skills/apify-market-research
+---
+
+# apify-market-research
+
+skills/apify/agent-skills/apify-market-research
+apify-market-research
+Installation
+$ npx skills add https://github.com/apify/agent-skills --skill apify-market-research
+Summary
+
+Multi-platform market research data extraction via Apify Actors across Google Maps, Facebook, Instagram, Booking.com, and TripAdvisor.
+
+Supports 16+ specialized Actors covering location density, pricing, consumer behavior, hashtag trends, hospitality data, and review analysis
+Workflow guides users through Actor selection, schema fetching, preference configuration, and result export in CSV or JSON formats
+Requires Apify token authentication and Node.js 20.6+; includes error handling for common setup and execution issues
+Outputs can be displayed inline for quick answers or saved as structured files for deeper analysis
+SKILL.md
+Market Research
+
+Conduct market research using Apify Actors to extract data from multiple platforms.
+
+Prerequisites
+
+(No need to check it upfront)
+
+.env file with APIFY_TOKEN
+Node.js 20.6+ (for native --env-file support)
+mcpc CLI tool: npm install -g @apify/mcpc
+Workflow
+
+Copy this checklist and track progress:
+
+Task Progress:
+- [ ] Step 1: Identify market research type (select Actor)
+- [ ] Step 2: Fetch Actor schema via mcpc
+- [ ] Step 3: Ask user preferences (format, filename)
+- [ ] Step 4: Run the analysis script
+- [ ] Step 5: Summarize findings
+
+Step 1: Identify Market Research Type
+
+Select the appropriate Actor based on research needs:
+
+User Need	Actor ID	Best For
+Market density	compass/crawler-google-places	Location analysis
+Geospatial analysis	compass/google-maps-extractor	Business mapping
+Regional interest	apify/google-trends-scraper	Trend data
+Pricing and demand	apify/facebook-marketplace-scraper	Market pricing
+Event market	apify/facebook-events-scraper	Event analysis
+Consumer needs	apify/facebook-groups-scraper	Group research
+Market landscape	apify/facebook-pages-scraper	Business pages
+Business density	apify/facebook-page-contact-information	Contact data
+Cultural insights	apify/facebook-photos-scraper	Visual research
+Niche targeting	apify/instagram-hashtag-scraper	Hashtag research
+Hashtag stats	apify/instagram-hashtag-stats	Market sizing
+Market activity	apify/instagram-reel-scraper	Activity analysis
+Market intelligence	apify/instagram-scraper	Full data
+Product launch research	apify/instagram-api-scraper	API access
+Hospitality market	voyager/booking-scraper	Hotel data
+Tourism insights	maxcopell/tripadvisor-reviews	Review analysis
+Step 2: Fetch Actor Schema
+
+Fetch the Actor's input schema and details dynamically using mcpc:
+
+export $(grep APIFY_TOKEN .env | xargs) && mcpc --json mcp.apify.com --header "Authorization: Bearer $APIFY_TOKEN" tools-call fetch-actor-details actor:="ACTOR_ID" | jq -r ".content"
+
+
+Replace ACTOR_ID with the selected Actor (e.g., compass/crawler-google-places).
+
+This returns:
+
+Actor description and README
+Required and optional input parameters
+Output fields (if available)
+Step 3: Ask User Preferences
+
+Before running, ask:
+
+Output format:
+Quick answer - Display top few results in chat (no file saved)
+CSV - Full export with all fields
+JSON - Full export in JSON format
+Number of results: Based on character of use case
+Step 4: Run the Script
+
+Quick answer (display in chat, no file):
+
+node --env-file=.env ${CLAUDE_PLUGIN_ROOT}/reference/scripts/run_actor.js \
+  --actor "ACTOR_ID" \
+  --input 'JSON_INPUT'
+
+
+CSV:
+
+node --env-file=.env ${CLAUDE_PLUGIN_ROOT}/reference/scripts/run_actor.js \
+  --actor "ACTOR_ID" \
+  --input 'JSON_INPUT' \
+  --output YYYY-MM-DD_OUTPUT_FILE.csv \
+  --format csv
+
+
+JSON:
+
+node --env-file=.env ${CLAUDE_PLUGIN_ROOT}/reference/scripts/run_actor.js \
+  --actor "ACTOR_ID" \
+  --input 'JSON_INPUT' \
+  --output YYYY-MM-DD_OUTPUT_FILE.json \
+  --format json
+
+Step 5: Summarize Findings
+
+After completion, report:
+
+Number of results found
+File location and name
+Key market insights
+Suggested next steps (deeper analysis, validation)
+Error Handling
+
+APIFY_TOKEN not found - Ask user to create .env with APIFY_TOKEN=your_token mcpc not found - Ask user to install npm install -g @apify/mcpc Actor not found - Check Actor ID spelling Run FAILED - Ask user to check Apify console link in error output Timeout - Reduce input size or increase --timeout
+
+Weekly Installs
+3.4K
+Repository
+apify/agent-skills
+GitHub Stars
+2.0K
+First Seen
+Jan 28, 2026
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykWarn

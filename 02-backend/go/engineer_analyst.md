@@ -1,0 +1,903 @@
+---
+title: engineer-analyst
+url: https://skills.sh/rysweet/amplihack/engineer-analyst
+---
+
+# engineer-analyst
+
+skills/rysweet/amplihack/engineer-analyst
+engineer-analyst
+Installation
+$ npx skills add https://github.com/rysweet/amplihack --skill engineer-analyst
+SKILL.md
+Engineer Analyst Skill
+Purpose
+
+Analyze technical systems, problems, and designs through the disciplinary lens of engineering, applying established frameworks (systems engineering, design thinking, optimization theory), multiple methodological approaches (first principles analysis, failure mode analysis, design of experiments), and evidence-based practices to understand how systems work, why they fail, and how to design reliable, efficient, and scalable solutions.
+
+When to Use This Skill
+System Design: Architect new systems, subsystems, or components with clear requirements
+Technical Feasibility: Assess whether proposed solutions are technically viable
+Performance Optimization: Improve speed, efficiency, throughput, or resource utilization
+Failure Analysis: Diagnose why systems fail and prevent recurrence
+Trade-off Analysis: Evaluate competing design options with multiple constraints
+Scalability Assessment: Determine whether systems can grow to meet future demands
+Requirements Engineering: Clarify, decompose, and validate technical requirements
+Reliability Engineering: Design for high availability, fault tolerance, and resilience
+Core Philosophy: Engineering Thinking
+
+Engineering analysis rests on several fundamental principles:
+
+First Principles Reasoning: Break complex problems down to fundamental truths and reason up from there. Don't rely on analogy or convention when fundamentals matter.
+
+Constraints Are Fundamental: Every engineering problem involves constraints (physics, budget, time, materials). Design happens within constraints, not despite them.
+
+Trade-offs Are Inevitable: No design optimizes everything. Engineering is the art of choosing which trade-offs to make based on priorities and constraints.
+
+Quantification Matters: "Better" and "faster" are meaningless without numbers. Engineering requires measurable objectives and quantifiable performance.
+
+Systems Thinking: Components interact in complex ways. Local optimization can harm global performance. Always consider the whole system.
+
+Failure Modes Define Design: Anticipating how things can fail is as important as designing how they should work. Robust systems account for failure modes explicitly.
+
+Iterative Refinement: Perfect designs rarely emerge fully formed. Engineering involves prototyping, testing, learning, and iterating toward better solutions.
+
+Documentation Enables Maintenance: Systems that cannot be understood cannot be maintained. Clear documentation is engineering deliverable, not afterthought.
+
+Theoretical Foundations (Expandable)
+Foundation 1: First Principles Analysis
+
+Core Principles:
+
+Break problems down to fundamental physical laws, constraints, and truths
+Reason up from foundations rather than by analogy or precedent
+Question assumptions and conventional wisdom
+Rebuild understanding from ground up
+Identify true constraints vs. artificial limitations
+
+Key Insights:
+
+Analogies can mislead when contexts differ fundamentally
+Conventional approaches may be path-dependent, not optimal
+True constraints (physics, mathematics) vs. historical constraints (how things have been done)
+First principles enable breakthrough innovations by questioning inherited assumptions
+Computational limits, thermodynamic limits, information-theoretic limits are real boundaries
+
+Famous Practitioner: Elon Musk
+
+Approach: "Boil things down to their fundamental truths and reason up from there"
+Example: Rocket cost analysis - question inherited aerospace pricing assumptions, rebuild from material costs
+Application: Battery costs, rocket reusability, tunneling costs
+
+When to Apply:
+
+Novel problems without clear precedents
+When existing solutions seem unnecessarily expensive or complex
+Challenging conventional wisdom or industry norms
+Fundamental redesigns or paradigm shifts
+Assessing theoretical limits on performance
+
+Sources:
+
+First Principles Thinking - Farnam Street
+Elon Musk's Problem-Solving Framework
+Foundation 2: Systems Engineering and V-Model
+
+Core Principles:
+
+Structured approach to designing complex systems
+Requirements flow down; verification flows up
+Left side: Decomposition (requirements → architecture → detailed design)
+Right side: Integration (components → subsystems → system → validation)
+Each decomposition level has corresponding integration/test level
+Traceability from requirements through implementation to testing
+
+Key Insights:
+
+Early requirements errors are exponentially expensive to fix later
+Integration problems arise from interface mismatches, not component failures
+System validation requires end-to-end testing, not just component tests
+Iterative refinement within V-model improves quality
+Agile approaches can be integrated into V-model framework
+
+Process Stages:
+
+Concept of Operations: What should system do? For whom?
+Requirements Analysis: Functional, performance, interface, constraint requirements
+System Architecture: High-level structure, subsystem boundaries, interfaces
+Detailed Design: Component-level specifications
+Implementation: Build/code components
+Integration: Assemble components into subsystems, subsystems into system
+Verification: Does system meet requirements? (testing)
+Validation: Does system solve user's problem? (acceptance)
+
+When to Apply:
+
+Complex systems with many interacting components
+Safety-critical or high-reliability systems
+Multi-disciplinary engineering projects (hardware + software + human)
+Large teams requiring coordination
+Long development timelines
+
+Sources:
+
+NASA Systems Engineering Handbook
+INCOSE Systems Engineering Handbook
+Foundation 3: Design Optimization and Trade-off Analysis
+
+Core Principles:
+
+Every design involves multiple objectives (cost, performance, reliability, size, weight)
+Objectives often conflict (faster vs. cheaper, lighter vs. stronger)
+Pareto frontier: Set of designs where improving one objective requires degrading another
+Optimal design depends on relative priorities and weights
+Sensitivity analysis reveals which parameters matter most
+
+Key Insights:
+
+No single "best" design without specifying priorities
+Designs on Pareto frontier are non-dominated; all others are suboptimal
+Constraints reduce feasible space; relaxing constraints enables better designs
+Robustness (performance despite variability) vs. optimality trade-off
+Multi-objective optimization requires either weighted objectives or Pareto analysis
+
+Optimization Methods:
+
+Linear Programming: Linear objectives and constraints, efficient algorithms
+Nonlinear Optimization: Gradient-based methods (interior point, SQP), global methods (genetic algorithms, simulated annealing)
+Multi-Objective Optimization: Pareto front calculation, weighted sum method, ε-constraint method
+Design of Experiments (DOE): Systematically explore design space, identify important factors
+Response Surface Methods: Build surrogate models from expensive simulations
+
+When to Apply:
+
+Design choices with competing objectives
+Performance tuning of complex systems
+Resource allocation under constraints
+Assessing sensitivity to parameter variations
+Exploring large design spaces systematically
+
+Sources:
+
+Convex Optimization - Boyd & Vandenberghe
+Engineering Design Optimization - Papalambros & Wilde
+Foundation 4: Failure Modes and Effects Analysis (FMEA)
+
+Core Principles:
+
+Systematically identify potential failure modes for each component/function
+Assess severity, occurrence likelihood, and detectability of each failure
+Prioritize failures by Risk Priority Number (RPN) = Severity × Occurrence × Detection
+Implement design changes or controls to mitigate high-priority risks
+Document rationale for accepting residual risks
+
+Key Insights:
+
+Failures at component level propagate to system level
+Single points of failure (SPOF) are critical vulnerabilities
+Redundancy, fault tolerance, and graceful degradation mitigate failures
+Detection mechanisms (alarms, monitors, diagnostics) reduce failure impact
+Human factors failures (operator error) often dominate
+Common cause failures violate independence assumptions
+
+FMEA Process:
+
+Identify functions: What does system/component do?
+Identify failure modes: How can each function fail?
+Assess effects: What happens if this failure occurs?
+Assign severity: How bad is the effect? (1-10 scale)
+Assess occurrence: How likely is this failure? (1-10 scale)
+Assess detectability: Can we detect before consequences? (1-10 scale)
+Calculate RPN: Severity × Occurrence × Detection
+Prioritize: Address highest RPN failures first
+Implement controls: Design changes, testing, redundancy, alarms
+Recalculate: Verify RPN reduced to acceptable level
+
+When to Apply:
+
+Safety-critical systems (medical, aerospace, automotive)
+High-reliability requirements (data centers, infrastructure)
+Complex systems with many potential failure modes
+New designs without operational history
+Root cause analysis after failures occur
+
+Sources:
+
+FMEA - ASQ (American Society for Quality)
+Reliability Engineering - NASA
+Foundation 5: Scalability Analysis and Performance Engineering
+
+Core Principles:
+
+Scalability: System's ability to handle growth (users, data, traffic, complexity)
+Vertical scaling (bigger machines) vs. horizontal scaling (more machines)
+Amdahl's Law: Speedup limited by serial fraction of workload
+Bottlenecks shift as systems scale (CPU → memory → I/O → network)
+Performance requires measurement, not guessing
+
+Key Insights:
+
+Premature optimization is wasteful; measure first, optimize bottlenecks
+Algorithmic complexity (Big-O) determines scalability at large scale
+Caching, replication, partitioning are fundamental scaling strategies
+Coordination overhead increases with parallelism (network calls, locks, consensus)
+Load balancing, auto-scaling, and elastic resources enable horizontal scaling
+CAP theorem: Can't have consistency, availability, partition-tolerance simultaneously
+
+Scalability Patterns:
+
+Stateless services: Enable horizontal scaling without coordination
+Database sharding: Partition data across multiple databases
+Caching layers: Reduce load on backend systems (CDN, Redis, memcached)
+Async processing: Decouple request handling from heavy work (message queues)
+Read replicas: Scale read-heavy workloads
+Microservices: Independently scalable components
+
+When to Apply:
+
+Systems expecting high growth
+Performance problems with existing systems
+Capacity planning and infrastructure sizing
+Choosing architectures for new systems
+Evaluating whether design will scale
+
+Sources:
+
+Designing Data-Intensive Applications - Kleppmann
+Systems Performance - Gregg
+Analytical Frameworks (Expandable)
+Framework 1: Requirements Engineering (MoSCoW Prioritization)
+
+Overview: Systematic approach to eliciting, documenting, and validating requirements.
+
+MoSCoW Method:
+
+Must Have: Non-negotiable requirements; system fails without them
+Should Have: Important but not critical; workarounds possible
+Could Have: Desirable if time/budget permits
+Won't Have (this time): Explicitly deferred to future versions
+
+Requirements Types:
+
+Functional: What system must do (features, capabilities)
+Performance: How fast, how much, how many
+Interface: How system interacts with users, other systems
+Operational: Deployment, maintenance, monitoring requirements
+Constraint: Limits on technology, budget, schedule
+
+Validation Techniques:
+
+Prototyping and mockups
+Use cases and scenarios
+Requirements reviews with stakeholders
+Traceability matrices
+Acceptance criteria definition
+
+When to Use: Beginning of any project, clarifying feature requests, evaluating feasibility
+
+Sources:
+
+Requirements Engineering - Sommerville & Sawyer
+MoSCoW Prioritization
+Framework 2: Design Thinking (Double Diamond)
+
+Overview: Human-centered iterative design process with divergent and convergent phases.
+
+Four Phases:
+
+Discover (Diverge): Research users, context, problem space
+Define (Converge): Synthesize insights, frame problem clearly
+Develop (Diverge): Ideate many solutions, prototype concepts
+Deliver (Converge): Test, refine, implement best solution
+
+Key Principles:
+
+Empathy with users drives design
+Rapid prototyping and iteration
+Divergent thinking generates options; convergent thinking selects
+Fail fast and learn from failures
+Multidisciplinary collaboration
+
+Tools and Techniques:
+
+User interviews and observation
+Persona development
+Journey mapping
+Brainstorming and sketching
+Rapid prototyping (paper, digital, physical)
+Usability testing
+
+When to Use: User-facing products, unclear requirements, innovation projects, interdisciplinary teams
+
+Sources:
+
+Design Thinking - IDEO
+Double Diamond - Design Council
+Framework 3: Root Cause Analysis (5 Whys and Fishbone Diagrams)
+
+Overview: Systematic techniques for identifying underlying causes of problems.
+
+5 Whys Method:
+
+Ask "Why?" five times (or until reaching root cause)
+Each answer becomes input to next "Why?"
+Reveals chain of causation from symptom to root
+Simple but effective for relatively straightforward problems
+
+Example:
+
+Why did server crash? → Ran out of memory
+Why out of memory? → Memory leak in application
+Why memory leak? → Objects not properly deallocated
+Why not deallocated? → Missing cleanup in error handling path
+Why missing? → Error path not adequately tested
+
+Fishbone (Ishikawa) Diagram:
+
+Visual tool organizing potential causes into categories
+Common categories: People, Process, Technology, Environment, Materials, Measurement
+Brainstorm causes in each category
+Reveals multiple contributing factors
+
+When to Use: Production incidents, recurring failures, quality problems, process breakdowns
+
+Sources:
+
+Root Cause Analysis - ASQ
+The Toyota Way - Liker
+Framework 4: Load and Stress Testing
+
+Overview: Systematic testing of system behavior under various load conditions.
+
+Testing Types:
+
+Load Testing: Performance at expected load (normal operating conditions)
+Stress Testing: Performance at or beyond maximum capacity (breaking point)
+Spike Testing: Response to sudden large increases in load
+Soak Testing: Sustained operation over long periods (memory leaks, degradation)
+Scalability Testing: Performance as load increases incrementally
+
+Key Metrics:
+
+Throughput: Requests per second, transactions per second
+Latency: Response time (mean, median, p95, p99, max)
+Error Rate: Failed requests as percentage of total
+Resource Utilization: CPU, memory, disk, network usage
+Saturation Point: Load level where performance degrades significantly
+
+Tools:
+
+JMeter, Gatling, Locust (application load testing)
+wrk, Apache Bench (HTTP benchmarking)
+fio (storage I/O testing)
+iperf (network throughput testing)
+
+When to Use: Before production launch, capacity planning, performance regression detection, SLA validation
+
+Sources:
+
+Performance Testing Guidance - Microsoft
+The Art of Capacity Planning - Allspaw
+Framework 5: Cost-Benefit Analysis for Technical Decisions
+
+Overview: Quantifying costs and benefits of technical alternatives to guide decisions.
+
+Components:
+
+Development Cost: Engineering time, tools, licenses
+Infrastructure Cost: Servers, bandwidth, storage (ongoing)
+Maintenance Cost: Bug fixes, updates, monitoring
+Opportunity Cost: Other features not built
+Benefits: Revenue, cost savings, risk reduction, user value
+
+Analysis Steps:
+
+Enumerate alternatives: Include status quo as baseline
+Estimate costs: One-time and recurring for each alternative
+Estimate benefits: Quantify value created (revenue, time saved, errors prevented)
+Time horizon: Choose analysis period (1 year, 3 years, 5 years)
+Discount rate: Account for time value of money
+Calculate NPV: Net Present Value = Benefits - Costs (discounted)
+Sensitivity analysis: How do conclusions change if estimates vary?
+
+When to Use: Build vs. buy decisions, infrastructure choices, major refactoring decisions, technology selection
+
+Sources:
+
+Software Engineering Economics - Boehm
+Technical Debt - Martin Fowler
+Methodologies (Expandable)
+Methodology 1: Prototyping and Iterative Development
+
+Description: Build simplified versions early to validate concepts and gather feedback.
+
+Types of Prototypes:
+
+Proof of Concept: Demonstrates technical feasibility of key risk
+Throwaway Prototype: Quick mockup to explore ideas (discard afterward)
+Evolutionary Prototype: Iteratively refined into final system
+Horizontal Prototype: Broad but shallow (UI mockup without backend)
+Vertical Prototype: Narrow but deep (end-to-end single feature)
+
+Benefits:
+
+Validates assumptions before heavy investment
+Uncovers hidden requirements and edge cases
+Enables user feedback early when changes are cheap
+Reduces risk of building wrong thing
+
+When to Apply: High uncertainty, unclear requirements, new technology exploration
+
+Methodology 2: Design of Experiments (DOE)
+
+Description: Systematic approach to understanding how input variables affect outputs.
+
+Process:
+
+Identify factors: Which variables might affect outcomes?
+Choose levels: What values will we test for each factor?
+Select design: Full factorial (test all combinations) vs. fractional factorial (test subset)
+Randomize runs: Prevent confounding with uncontrolled factors
+Collect data: Measure outputs for each configuration
+Analyze: Determine which factors matter, interaction effects
+Validate: Test predictions on new data
+
+Applications: Performance tuning, A/B testing, optimization, understanding complex systems
+
+Sources: Design and Analysis of Experiments - Montgomery
+
+Methodology 3: Capacity Planning with Queueing Theory
+
+Description: Mathematical modeling of systems with arrival processes and service times.
+
+Key Concepts:
+
+Arrival rate (λ): Requests per unit time
+Service rate (μ): Requests handled per unit time
+Utilization (ρ): λ/μ (must be < 1 for stability)
+Queue length: Average number waiting
+Response time: Wait time + service time
+
+Little's Law: L = λW (average queue length = arrival rate × average wait time)
+
+Insights:
+
+As utilization approaches 100%, response time explodes
+Safe operating range typically 60-70% utilization
+Variability in arrivals or service time increases queuing
+Parallel servers reduce response time sublinearly
+
+When to Apply: Capacity planning, performance modeling, resource sizing
+
+Sources: Queueing Systems - Kleinrock
+
+Methodology 4: Fault Tree Analysis (FTA)
+
+Description: Top-down deductive analysis of system failures.
+
+Process:
+
+Define top event: Undesired system failure
+Identify immediate causes: What directly causes top event?
+Use logic gates: AND (all must occur), OR (any can cause)
+Decompose recursively: Break causes into sub-causes
+Identify basic events: Atomic failures (component fails, human error)
+Calculate probabilities: If component failure rates known
+
+Insights:
+
+Reveals combinations of failures that cause system failure
+AND gates create redundancy (both must fail)
+OR gates create single points of failure (either fails)
+Minimal cut sets: Smallest combinations causing top event
+
+When to Apply: Safety analysis, reliability engineering, risk assessment
+
+Sources: Fault Tree Analysis - NASA
+
+Methodology 5: Benchmarking and Performance Profiling
+
+Description: Measuring actual system performance to identify bottlenecks.
+
+Profiling Types:
+
+CPU Profiling: Which functions consume CPU time?
+Memory Profiling: Memory allocation patterns, leaks
+I/O Profiling: Disk and network operations
+Lock Profiling: Contention on synchronization primitives
+
+Process:
+
+Establish baseline: Measure current performance
+Identify bottleneck: Where is most time spent?
+Hypothesize fix: What change might improve bottleneck?
+Implement and measure: Did performance improve?
+Iterate: Move to next bottleneck
+
+Profiling Tools:
+
+perf, flamegraphs (Linux CPU profiling)
+Valgrind, heaptrack (memory profiling)
+strace, ltrace (system call tracing)
+Chrome DevTools, Firefox Profiler (web performance)
+
+When to Apply: Performance problems, optimization efforts, understanding system behavior
+
+Sources: Systems Performance - Gregg
+
+Detailed Examples (Expandable)
+Example 1: Microservice Architecture vs. Monolith Trade-off Analysis
+
+Situation: Company with monolithic application considering microservices migration. CTO asks for technical analysis.
+
+Engineering Analysis:
+
+System Context:
+
+Current: Monolith serving 10K users, 3 engineers, 2-week release cycle
+Growth: Expecting 10x growth over 2 years
+Team: Plans to hire to 15 engineers
+
+Monolith Characteristics:
+
+Pros: Simple deployment, easier debugging, no network latency between modules, single database transactions
+Cons: All-or-nothing deploys, scaling requires scaling entire app, merge conflicts increase with team size, technology lock-in
+
+Microservices Characteristics:
+
+Pros: Independent deployment and scaling, technology flexibility, team autonomy, fault isolation
+Cons: Distributed system complexity (eventual consistency, partial failures), operational overhead (more services to monitor), network latency, more difficult debugging
+
+Trade-off Analysis:
+
+Criterion	Monolith	Microservices	Weight	Score M	Score MS
+Dev Velocity (small team)	High	Low	0.3	9	4
+Dev Velocity (large team)	Low	High	0.25	4	8
+Scalability	Poor	Excellent	0.2	3	9
+Operational Complexity	Low	High	0.15	8	3
+Reliability	Medium	Medium	0.1	6	6
+Weighted Score (today)				6.75	5.5
+Weighted Score (2 yrs)				5.35	6.85
+
+First Principles Analysis:
+
+Conway's Law: System structure mirrors communication structure
+Network calls are orders of magnitude slower than in-process calls
+Distributed transactions are hard; eventual consistency is complex but scales
+Coordination overhead grows with team size
+
+Recommendation:
+
+Stay monolith short-term (next 6-12 months)
+Prepare for transition:
+Enforce module boundaries within monolith
+Design for async communication patterns
+Build monitoring and observability infrastructure
+Document domain boundaries
+Extract strategically (12-24 months):
+Start with independently scalable components (e.g., image processing)
+Keep core business logic together initially
+Avoid premature decomposition
+Criteria for extraction: Extract when (a) clear domain boundary, (b) different scaling needs, (c) team wants autonomy, (d) release independence valuable
+
+Key Insight: Microservices are optimization for organizational scaling, not just technical scaling. Premature microservices slow small teams; delayed microservices bottleneck large teams.
+
+Sources:
+
+Monolith First - Martin Fowler
+Building Microservices - Newman
+Example 2: Database Index Design for Query Performance
+
+Situation: E-commerce application has slow product search queries. Need to optimize without over-indexing.
+
+Engineering Analysis:
+
+Query Patterns (from application logs):
+
+40%: Search by category + price range
+25%: Search by brand + availability
+20%: Full-text search on product name/description
+10%: Filter by multiple attributes (color, size, rating)
+5%: Sort by popularity or recency
+
+Current Schema:
+
+products (id, name, description, brand, category, price, stock, created_at, popularity_score)
+
+
+Current Indexes:
+
+Primary key on id
+No other indexes (table scan for all queries!)
+
+Performance Measurements:
+
+Category + price query: 2.3 seconds (unacceptable)
+Brand + availability: 1.8 seconds
+Full-text search: 4.1 seconds
+
+First Principles Analysis:
+
+Index trade-offs: Faster reads vs. slower writes and storage overhead
+Composite index can serve queries on prefixes (index on [A, B] helps "A" and "A+B" queries, not "B")
+Covering index includes all query columns (no table lookup needed)
+Write amplification: Each insert/update must update all indexes
+
+Index Design:
+
+High-Priority Indexes (cover 65% of queries):
+
+Composite: (category, price)
+
+Serves most common query pattern
+Enables range scans on price within category
+~5 MB size (acceptable)
+
+Composite: (brand, stock)
+
+Covers second most common pattern
+Stock column for availability filter
+~3 MB size
+
+Medium-Priority: 3. Full-text index: (name, description)
+
+Specialized index type for text search
+Larger (20 MB) but essential for search functionality
+
+Deferred:
+
+Multi-attribute filter queries (10% traffic) - acceptable to be slower
+Can add later if specific combinations prove common
+
+Optimization Strategy:
+
+Add indexes 1 and 2 immediately (biggest impact)
+Monitor query performance for 1 week
+Add full-text index if search traffic grows
+Use query explain plans to verify index usage
+
+Expected Results:
+
+Category + price: 2.3s → 0.05s (46x faster)
+Brand + availability: 1.8s → 0.04s (45x faster)
+Write throughput: -10% (acceptable trade-off)
+Storage overhead: +8 MB (+0.8%)
+
+Validation:
+
+Load test with production traffic distribution
+Monitor p95/p99 latencies, not just averages
+Set up alerting for slow queries
+
+Key Insight: Index design requires understanding query patterns from actual usage, not guessing. Composite indexes are powerful but order matters. Write amplification means you can't index everything.
+
+Sources:
+
+Use The Index, Luke
+High Performance MySQL - Schwartz et al.
+Example 3: Failure Analysis of Cloud Service Outage
+
+Situation: SaaS application experienced 4-hour outage affecting 30% of customers. Conduct root cause analysis and recommend preventions.
+
+Timeline (simplified):
+
+02:00 - Deploy new API version to production
+02:15 - Monitoring shows elevated error rates (5% → 12%)
+02:20 - Error rate continues climbing (20%)
+02:30 - Pager alerts wake on-call engineer
+02:45 - Investigation begins: Errors in payment processing service
+03:15 - Attempted rollback fails (database migration ran, incompatible)
+04:00 - Emergency fix deployed
+05:30 - System fully recovered
+06:00 - Post-incident review begins
+
+Root Cause Analysis (5 Whys):
+
+Why did payment processing fail? → New code made database queries incompatible with schema
+
+Why were incompatible queries deployed? → Integration tests didn't catch schema incompatibility
+
+Why didn't tests catch it? → Test database had new schema; production had old schema
+
+Why did schema differ? → Migration ran immediately on deploy; gradual rollout not possible
+
+Why couldn't we roll back? → Migration was irreversible (dropped column); no rollback procedure tested
+
+Root Causes Identified:
+
+Tight coupling: Code deploy coupled to database migration
+Test environment drift: Test database not representative of production
+Irreversible migration: No rollback plan
+Slow detection: 30 minutes to page engineer
+Insufficient monitoring: Error rates not broken down by service
+
+Failure Mode Analysis:
+
+Contributing Factors:
+
+Process: No staged rollout (deployed to 100% immediately)
+Technology: No feature flags to disable problematic code path
+People: Deployment at 2am with minimal staffing
+Monitoring: Alerts tuned too high (12% errors before alerting)
+
+Single Points of Failure:
+
+Single payment processing service (no fallback)
+Database schema migration in critical path
+One on-call engineer (no backup)
+
+Recommended Mitigations:
+
+Immediate (1 week):
+
+Decouple migrations: Separate schema changes from code deploys
+
+Deploy backward-compatible schema first
+Deploy code using new schema
+Remove old schema in later migration (if needed)
+
+Canary deployments: Deploy to 5% of traffic, monitor 30min, proceed gradually
+
+Automated rollback if error rate threshold exceeded
+
+Feature flags: Wrap new code paths in flags for instant disable
+
+Alert tuning: Page at 5% error rate increase, not 12%
+
+Medium-term (1 month): 5. Chaos engineering: Regularly test failure scenarios in staging
+
+Rollback procedures tested weekly
+Database restoration drills
+
+Improved monitoring:
+
+Service-level dashboards
+Distributed tracing for request flows
+Synthetic monitoring of critical paths
+
+Runbooks: Document response procedures for common incidents
+
+Long-term (3 months): 8. Circuit breakers: Graceful degradation when downstream services fail 9. Multi-region redundancy: Failover capability for major outages 10. Blameless post-mortems: Culture of learning from failures
+
+FMEA Re-assessment:
+
+Failure Mode	Severity	Occurrence (Before)	Detection (Before)	RPN (Before)	Occurrence (After)	Detection (After)	RPN (After)
+Incompatible code/schema	9	6	5	270	2	2	36
+Failed rollback	10	7	8	560	3	2	60
+
+Key Insight: Most outages result from combinations of small failures, not single catastrophic errors. Defense in depth (staged rollout, feature flags, decoupled migrations, fast detection) prevents cascading failures. Practicing failure scenarios is as important as preventing them.
+
+Sources:
+
+Site Reliability Engineering - Google
+The Phoenix Project - Kim et al.
+Analysis Process
+
+When using the engineer-analyst skill, follow this systematic 9-step process:
+
+Step 1: Clarify Requirements and Constraints
+What is the technical objective? (Performance? Reliability? Cost? Scale?)
+What are hard constraints? (Physics, budget, timeline, compatibility)
+What are priorities when trade-offs inevitable?
+Step 2: Gather System Context
+How does current system work? (Architecture, technologies, interfaces)
+What are usage patterns? (Load profiles, user behaviors, edge cases)
+What are existing performance characteristics and bottlenecks?
+Step 3: First Principles Analysis
+Break problem down to fundamental truths
+Question assumptions and conventional approaches
+Identify true constraints vs. inherited limitations
+Calculate theoretical limits where applicable
+Step 4: Enumerate Alternatives
+What design options exist?
+Include status quo as baseline for comparison
+Consider both incremental improvements and radical redesigns
+Note which alternatives violate hard constraints (discard those)
+Step 5: Model and Estimate
+Quantify expected performance of alternatives
+Use back-of-envelope calculations, queueing theory, prototypes
+Identify uncertainties and sensitivity to assumptions
+Build simplified models before complex simulations
+Step 6: Trade-off Analysis
+Score alternatives against multiple objectives
+Identify Pareto-optimal designs
+Assess sensitivity to priorities (what if weights change?)
+Consider robustness vs. optimality trade-off
+Step 7: Failure Mode Analysis
+How can each alternative fail?
+What are consequences of failures?
+Can failures be detected quickly?
+What mitigation strategies exist?
+Step 8: Prototype and Validate
+Build minimal prototypes to test key assumptions
+Measure actual performance (don't rely solely on estimates)
+Validate with realistic data and usage patterns
+Iterate based on learnings
+Step 9: Document and Communicate
+State recommendation with clear justification
+Present trade-offs transparently
+Document assumptions and sensitivities
+Provide fallback options if recommendation proves infeasible
+Quality Standards
+
+A thorough engineering analysis includes:
+
+✓ Clear requirements: Objectives, constraints, and priorities specified quantitatively ✓ Baseline measurements: Current system performance documented with numbers ✓ Multiple alternatives: At least 3 options considered, including status quo ✓ Quantified estimates: Performance, cost, and reliability estimated numerically ✓ Trade-off analysis: Multi-objective scoring with explicit priorities ✓ Failure analysis: FMEA or similar systematic failure mode identification ✓ Validation plan: How will we verify design meets requirements? ✓ Assumptions documented: Sensitivities to key assumptions noted ✓ Scalability considered: Will design work at 10x scale? ✓ Maintainability assessed: Can others understand and modify this design?
+
+Common Pitfalls to Avoid
+
+Premature optimization: Optimizing before measuring creates complexity without benefit. Measure first, optimize bottlenecks.
+
+Over-engineering: Designing for scale you'll never reach wastes resources. Start simple, scale when needed.
+
+Under-engineering: Ignoring known future requirements creates costly rewrites. Balance current simplicity with anticipated needs.
+
+Analysis paralysis: Endless analysis without building delays learning. Prototype early to validate assumptions.
+
+Not invented here: Rejecting existing solutions in favor of custom builds. Prefer boring proven technology.
+
+Resume-driven development: Choosing technologies for career benefit rather than project fit. Choose right tool for job.
+
+Ignoring operational costs: Focusing on development cost while ignoring ongoing infrastructure, maintenance, and support costs.
+
+Cargo culting: Copying approaches without understanding context. What works for Google may not work for your startup.
+
+Assuming zero failure rate: All systems fail. Design for graceful degradation, not perfection.
+
+Ignoring human factors: Systems will be operated by humans. Design for usability and operability, not just technical elegance.
+
+Key Resources
+Engineering Fundamentals
+MIT OpenCourseWare - Engineering
+Khan Academy - Engineering
+Systems Engineering
+NASA Systems Engineering Handbook
+INCOSE - Systems Engineering Resources
+Stevens Institute - Systems Engineering
+Software Engineering
+Awesome Software Engineering
+The Architecture of Open Source Applications
+System Design Primer
+Performance Engineering
+Brendan Gregg's Blog - Performance and observability
+High Scalability - Architecture case studies
+Reliability Engineering
+Google SRE Books - Site Reliability Engineering
+Resilience Engineering Association
+Professional Organizations
+IEEE - Electrical and Electronics Engineers
+ACM - Association for Computing Machinery
+ASME - American Society of Mechanical Engineers
+Integration with Amplihack Principles
+Ruthless Simplicity
+Start with simplest design that could work
+Add complexity only when justified by measurements
+Prefer boring, proven technology over exciting novelty
+Modular Design
+Clear interfaces between components
+Independent testability and deployability
+Loose coupling, high cohesion
+Zero-BS Implementation
+No premature abstraction
+Every component must serve clear purpose
+Delete dead code aggressively
+Evidence-Based Practice
+Measure, don't guess
+Prototype to validate assumptions
+Benchmark before and after optimizations
+Version
+
+Current Version: 1.0.0 Status: Production Ready Last Updated: 2025-11-16
+
+Weekly Installs
+210
+Repository
+rysweet/amplihack
+GitHub Stars
+55
+First Seen
+Jan 21, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

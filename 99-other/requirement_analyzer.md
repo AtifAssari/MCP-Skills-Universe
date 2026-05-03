@@ -1,0 +1,529 @@
+---
+title: requirement-analyzer
+url: https://skills.sh/masanao-ohba/claude-manifests/requirement-analyzer
+---
+
+# requirement-analyzer
+
+skills/masanao-ohba/claude-manifests/requirement-analyzer
+requirement-analyzer
+Installation
+$ npx skills add https://github.com/masanao-ohba/claude-manifests --skill requirement-analyzer
+SKILL.md
+Generic Requirement Analyzer
+
+A technology-agnostic skill for analyzing, categorizing, and documenting software requirements for any type of project.
+
+Core Responsibilities
+1. Requirement Decomposition
+
+Break down requirements into universal categories:
+
+Requirement Categories:
+  Functional:
+    - What the system must do
+    - User interactions
+    - Business logic
+    - Data processing
+
+  Non-Functional:
+    - Performance targets
+    - Security requirements
+    - Usability standards
+    - Reliability metrics
+
+  Constraints:
+    - Technical limitations
+    - Business rules
+    - Regulatory compliance
+    - Resource boundaries
+
+2. Requirement Analysis Framework
+
+Universal User Story Format:
+
+User Story:
+  as_a: [user role/persona]
+  i_want: [feature/capability]
+  so_that: [business value/benefit]
+
+Acceptance Criteria:
+  given: [initial context/state]
+  when: [action/trigger]
+  then: [expected outcome/result]
+
+
+Requirement Specification Template:
+
+Requirement:
+  id: REQ-[number]
+  title: [brief description]
+  type: functional|non-functional|constraint
+  priority: must|should|could|wont
+  description: [detailed description]
+  rationale: [why this is needed]
+  source: [stakeholder/document]
+  acceptance_criteria:
+    - [measurable criterion 1]
+    - [measurable criterion 2]
+  dependencies:
+    - [related requirement ids]
+  risks:
+    - [potential risks]
+  assumptions:
+    - [underlying assumptions]
+
+3. Priority Frameworks
+
+MoSCoW Method:
+
+Must Have:
+  - Critical for launch
+  - System fails without it
+  - Legal/regulatory requirement
+
+Should Have:
+  - Important but not vital
+  - Workaround exists
+  - High value for users
+
+Could Have:
+  - Desirable but not necessary
+  - Nice to have
+  - Can be postponed
+
+Won't Have (this time):
+  - Out of scope
+  - Future consideration
+  - Explicitly excluded
+
+
+Kano Model:
+
+Basic Needs:
+  - Expected by users
+  - Causes dissatisfaction if missing
+
+Performance Needs:
+  - More is better
+  - Linear satisfaction
+
+Excitement Needs:
+  - Delighters
+  - Unexpected features
+  - Competitive advantage
+
+4. Requirement Quality Criteria
+
+SMART Requirements:
+
+Specific:
+  - Clear and unambiguous
+  - Well-defined scope
+
+Measurable:
+  - Quantifiable success criteria
+  - Testable conditions
+
+Achievable:
+  - Technically feasible
+  - Resource realistic
+
+Relevant:
+  - Aligns with business goals
+  - Provides value
+
+Time-bound:
+  - Has deadline/milestone
+  - Time constraints defined
+
+
+Completeness Checklist:
+
+Requirement Completeness:
+  - [ ] Clear description
+  - [ ] Defined acceptance criteria
+  - [ ] Identified stakeholder
+  - [ ] Priority assigned
+  - [ ] Dependencies mapped
+  - [ ] Risks assessed
+  - [ ] Assumptions documented
+  - [ ] Traceability established
+
+5. Stakeholder Analysis
+
+Stakeholder Mapping:
+
+Stakeholder Analysis:
+  identification:
+    - End users
+    - Business owners
+    - Technical team
+    - Regulatory bodies
+    - External partners
+
+  influence_interest_matrix:
+    high_influence_high_interest:
+      - Key players
+      - Manage closely
+
+    high_influence_low_interest:
+      - Keep satisfied
+      - Regular updates
+
+    low_influence_high_interest:
+      - Keep informed
+      - Regular communication
+
+    low_influence_low_interest:
+      - Monitor
+      - Minimal effort
+
+6. Requirement Validation
+
+Validation Techniques:
+
+Review Methods:
+  walkthrough:
+    - Informal review
+    - Author-led
+    - Educational focus
+
+  inspection:
+    - Formal review
+    - Defined roles
+    - Defect detection
+
+  prototype_validation:
+    - Visual representation
+    - User feedback
+    - Early validation
+
+7. Achievement Indicators Framework
+
+Achievement Indicators Generation:
+
+Achievement Indicator Structure:
+  functional_completeness:
+    - indicator: "All user stories completed"
+      measurable: "Story points delivered"
+      threshold: "100% of committed stories"
+      priority: high
+
+    - indicator: "API contracts fulfilled"
+      measurable: "Endpoint tests pass"
+      threshold: "All endpoints return expected data"
+      priority: high
+
+  quality_standards:
+    - indicator: "Code quality maintained"
+      measurable: "Lint score"
+      threshold: "> 90/100"
+      priority: medium
+
+    - indicator: "Test coverage adequate"
+      measurable: "Coverage percentage"
+      threshold: ">= 80%"
+      priority: high
+
+  performance_criteria:
+    - indicator: "Response time acceptable"
+      measurable: "95th percentile latency"
+      threshold: "< 200ms"
+      priority: medium
+
+    - indicator: "Throughput sufficient"
+      measurable: "Requests per second"
+      threshold: "> 1000 RPS"
+      priority: low
+
+  security_requirements:
+    - indicator: "Authentication secure"
+      measurable: "Security audit pass"
+      threshold: "No critical vulnerabilities"
+      priority: high
+
+
+Success Criteria (Achievement Objectives) Generation:
+
+Success Criteria Structure:
+  implementation_goals:
+    - objective: "Deliver core functionality"
+      success_criteria: "User can complete primary workflow"
+      measurement: "End-to-end test passes"
+
+    - objective: "Maintain system stability"
+      success_criteria: "No regression in existing features"
+      measurement: "Regression test suite passes"
+
+  quality_goals:
+    - objective: "Ensure maintainability"
+      success_criteria: "Code follows standards"
+      measurement: "Code review approval"
+
+    - objective: "Document adequately"
+      success_criteria: "All public APIs documented"
+      measurement: "Documentation coverage 100%"
+
+  business_goals:
+    - objective: "Meet user expectations"
+      success_criteria: "User acceptance criteria met"
+      measurement: "UAT sign-off received"
+
+    - objective: "Enable future growth"
+      success_criteria: "Architecture supports scaling"
+      measurement: "Load test validates 10x capacity"
+
+
+Acceptance Criteria Document Generation Template:
+
+# Acceptance Criteria Document
+# Generated: {timestamp}
+# Project: {project_name}
+# Task: {task_description}
+# Size: {trivial|small|medium|large}
+
+acceptance_criteria:
+  task_classification:
+    size: {estimated_size}
+    complexity: {low|medium|high}
+    risk_level: {low|medium|high}
+
+  indicators: # Achievement Indicators - What we measure
+    completeness:
+      - id: "AI-COMP-001"
+        indicator: {description}
+        measurement_method: {how_to_measure}
+        pass_threshold: {specific_value}
+        priority: {must|should|could}
+        verification_agent: {which_agent_verifies}
+
+    quality:
+      - id: "AI-QUAL-001"
+        indicator: {description}
+        measurement_method: {automated|manual}
+        pass_threshold: {metric_value}
+        priority: {level}
+        verification_agent: {agent_name}
+
+    performance:
+      - id: "AI-PERF-001"
+        indicator: {description}
+        measurement_method: {tool_or_process}
+        pass_threshold: {numeric_threshold}
+        priority: {level}
+        verification_agent: {agent_name}
+
+  objectives: # Success Criteria - What we aim to achieve
+    primary:
+      - id: "SC-PRIM-001"
+        objective: {clear_goal}
+        success_definition: {when_considered_achieved}
+        responsible_agent: {implementation_agent}
+        deadline: {if_applicable}
+
+    secondary:
+      - id: "SC-SEC-001"
+        objective: {supporting_goal}
+        success_definition: {criteria}
+        responsible_agent: {agent_name}
+
+  evaluation_protocol:
+    stage_1_pre_implementation:
+      - action: "Generate acceptance criteria document"
+        responsible: "goal-clarifier"
+
+    stage_2_implementation:
+      - action: "Use acceptance criteria as implementation guide"
+        responsible: "code-developer"
+
+    stage_3_evaluation:
+      - action: "Evaluate against achievement indicators"
+        responsible: "deliverable-evaluator"
+        input: "Acceptance criteria document"
+
+    stage_4_iteration:
+      - action: "If FAIL, return to stage 2 with feedback"
+      - max_iterations: 3
+
+  output_location: ".work/requirements/acceptance-criteria-{timestamp}.yaml"
+
+
+Validation Criteria:
+
+Quality Attributes:
+  correctness:
+    - Accurately represents need
+    - Factually correct
+
+  consistency:
+    - No conflicts
+    - Uniform terminology
+
+  completeness:
+    - All aspects covered
+    - No gaps
+
+  feasibility:
+    - Technically possible
+    - Resource available
+
+  testability:
+    - Verifiable criteria
+    - Measurable outcomes
+
+Analysis Process
+Step 1: Requirement Gathering
+Sources:
+  - Stakeholder interviews
+  - Existing documentation
+  - Market research
+  - Competitive analysis
+  - User feedback
+  - Regulatory requirements
+
+Step 2: Categorization
+Classification:
+  1. Parse raw requirements
+  2. Identify requirement type
+  3. Assign categories
+  4. Group related items
+  5. Identify patterns
+
+Step 3: Analysis
+Analysis Activities:
+  1. Ambiguity resolution
+  2. Conflict identification
+  3. Gap analysis
+  4. Dependency mapping
+  5. Risk assessment
+
+Step 4: Documentation
+Documentation Outputs:
+  - Requirement specification
+  - Traceability matrix
+  - Stakeholder matrix
+  - Risk register
+  - Assumption log
+
+Output Formats
+Requirement Specification Document
+# Requirement Specification
+
+## Executive Summary
+[High-level overview of requirements]
+
+## Functional Requirements
+### FR-001: [Title]
+- **Description**: [Detail]
+- **Priority**: Must Have
+- **Acceptance Criteria**:
+  1. [Criterion 1]
+  2. [Criterion 2]
+
+## Non-Functional Requirements
+### NFR-001: [Title]
+- **Category**: Performance
+- **Metric**: Response time < 2 seconds
+- **Validation**: Load testing
+
+## Constraints
+### CON-001: [Title]
+- **Type**: Technical
+- **Description**: [Limitation details]
+- **Impact**: [How it affects design]
+
+## Dependencies
+[Requirement dependency diagram]
+
+## Risks and Assumptions
+### Risks
+- [Risk 1]: [Mitigation strategy]
+
+### Assumptions
+- [Assumption 1]: [Validation plan]
+
+Traceability Matrix
+Traceability:
+  REQ-001:
+    source: "User Interview #3"
+    design_element: "Component A"
+    test_case: "TC-001, TC-002"
+    implementation: "Module X"
+
+  REQ-002:
+    source: "Regulatory Doc Section 4.2"
+    design_element: "Security Layer"
+    test_case: "TC-010"
+    implementation: "Auth Module"
+
+Integration Points
+With Project Configuration
+# Project-specific configuration
+requirement_config:
+  project_type: "web_application|mobile_app|api|system"
+
+  priority_framework: "moscow|kano|numerical"
+
+  requirement_categories:
+    - functional
+    - non-functional
+    - business
+    - technical
+
+  validation_requirements:
+    review_type: "formal|informal"
+    approval_levels: 2
+
+  compliance_standards:
+    - "ISO 27001"
+    - "GDPR"
+
+With Technology-Specific Skills
+# Technology-specific extensions
+tech_specific:
+  framework: "[Framework name]"
+
+  requirement_patterns:
+    - "[Framework-specific pattern]"
+
+  validation_rules:
+    - "[Technology-specific rule]"
+
+Best Practices
+Stakeholder Engagement: Involve all stakeholders early
+Clear Communication: Use unambiguous language
+Measurable Criteria: Define quantifiable success metrics
+Iterative Refinement: Requirements evolve, plan for changes
+Traceability: Maintain links from requirements to implementation
+Risk-Based Focus: Prioritize based on risk and value
+Documentation: Keep requirements current and accessible
+Universal Application
+
+This skill can be applied to:
+
+Web applications
+Mobile applications
+Desktop software
+Embedded systems
+APIs and services
+Cloud platforms
+IoT solutions
+Enterprise systems
+Machine learning projects
+Any software development project
+
+The skill adapts to project needs through configuration rather than modification, ensuring reusability across different technology stacks and domains.
+
+Weekly Installs
+36
+Repository
+masanao-ohba/cl…anifests
+GitHub Stars
+2
+First Seen
+Jan 29, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykPass

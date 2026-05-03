@@ -1,0 +1,423 @@
+---
+title: using-cmux
+url: https://skills.sh/hummer98/using-cmux/using-cmux
+---
+
+# using-cmux
+
+skills/hummer98/using-cmux/using-cmux
+using-cmux
+Installation
+$ npx skills add https://github.com/hummer98/using-cmux --skill using-cmux
+SKILL.md
+Using cmux
+
+cmux はターミナルマルチプレクサ。ペイン分割、コマンド送信、画面読み取りを CLI 経由で操作する。 CMUX_SOCKET_PATH 環境変数が存在すれば cmux 内で動作している。
+
+Quick Orientation
+cmux identify                    # 自分のワークスペース・サーフェスを確認
+cmux list-workspaces             # 全ワークスペース一覧
+cmux tree                        # トポロジー表示（階層構造）
+
+
+リソースは短縮 refs で参照する: window:1, workspace:2, pane:3, surface:4。 --id-format uuids で UUID 形式の出力も可能。
+
+注意: cmux-send で複数行を送る場合は cmux-send-key return が必須。詳細は「send の改行ルール」を参照。
+
+基本操作
+操作	コマンド
+ペイン分割	cmux new-split right (left/up/down も可)
+新ワークスペース	cmux new-workspace --cwd $(pwd)
+コマンド送信	cmux-send --surface surface:N "command\n"
+キー送信	cmux-send-key --surface surface:N return / ctrl+c / ctrl+d
+画面読み取り	cmux-read --surface surface:N [--scrollback]
+サーフェス/WS 終了	cmux close-surface / cmux close-workspace
+一覧表示	cmux list-panes / cmux list-pane-surfaces
+send の改行ルール
+
+これは最も重要なルールである。
+
+単一行コマンド: \n で OK
+cmux-send --surface surface:1 "echo hello\n"
+
+
+末尾の \n が Enter キーとして機能する。
+
+複数行テキスト: cmux-send-key return が必須
+
+\n は改行として送信されない。各行を個別に送り、行間で cmux-send-key return を使う。
+
+# ✅ 正しい方法
+cmux-send --surface surface:1 "line 1"
+cmux-send-key --surface surface:1 return
+cmux-send --surface surface:1 "line 2"
+cmux-send-key --surface surface:1 return
+
+# ❌ 間違い — \n は途中改行にならない
+cmux-send --surface surface:1 "line 1\nline 2\n"
+
+
+ルール: 末尾の \n 1個だけは Enter として機能する。文字列の途中に \n を入れても改行にはならない。
+
+制御キーの送信
+
+プロセス中断（Ctrl+C）などの制御キーは cmux-send-key で送る。cmux-send では送れない。
+
+# ✅ 正しい方法
+cmux-send-key --surface surface:N ctrl+c
+
+# ❌ 間違い — リテラルテキストが送られるだけ
+cmux-send --surface surface:N "C-c"
+cmux-send --surface surface:N "\x03"
+cmux-send-key --surface surface:N "C-c"   # → Unknown key エラー
+
+
+キー名は ctrl+c, ctrl+d, ctrl+z, return, tab, escape 等。cmux send-key --help で確認可能。
+
+ラッパー使用の原則（重要）
+
+cmux-read / cmux-send / cmux-send-key ラッパーを使う。 surface:N を渡すと自動的に正しいワークスペースを解決するため、別 workspace/window のサーフェスでも --surface だけで動く。
+
+# ✅ 正しい方法 — surface ref から自動解決（window をまたいでも OK）
+cmux-read --surface surface:N
+cmux-send --surface surface:N "command\n"
+cmux-send-key --surface surface:N return
+
+# ❌ 間違い — 生の cmux コマンドは別 workspace/window のサーフェスで失敗
+cmux read-screen --surface surface:S    # → "Surface is not a terminal" エラー
+cmux send --surface surface:S "..."     # → 同上
+
+
+理由: 生の cmux read-screen / cmux send / cmux send-key の --surface は caller と同一ワークスペース内のサーフェスのみ有効。ラッパーは内部で cmux tree --all --json から workspace を解決し --workspace 経由で呼び直すため、cross-window でも動作する。--workspace 形式はそのまま通過するので、new-workspace フロー（後述）でも統一して使える。
+
+新しい surface をデフォルトで作る
+
+別文脈での実行が必要なら、既存の surface を再利用せず cmux new-split で新規作成する。既存ペインの状態（実行中プロセス、未保存の作業）を破壊するリスクがあるため、再利用は危険。
+
+トリガー: ユーザーが「別 surface で」「新しい surface で」「別ペインで」「split で」と指示した場合は、必ず new-split で新規作成する。現在の surface でそのまま実行してはいけない。
+
+SURF=$(cmux new-split right | awk '{print $2}')
+cmux-send --surface $SURF "command\n"
+# 不要になったら閉じる
+cmux close-surface --surface $SURF
+
+サブエージェント操作パターン
+
+サブエージェントを起動し、タスクを委任し、結果を回収する一連の手順。
+
+配置方式の選択
+方式	利点	注意
+同一ワークスペース (new-split)	PTY 遅延初期化問題を回避	レイアウトが崩れたら cmux-grid で修復
+別ワークスペース (new-workspace)	close-workspace で一括終了、rename-workspace で識別しやすい	PTY 遅延初期化問題の影響あり（後述）
+Step 1a: 同一ワークスペースに配置（推奨）
+SURF=$(cmux new-split right | awk '{print $2}')
+cmux rename-tab --surface $SURF "Researcher-1"
+
+Step 1b: 別ワークスペースに配置
+WS=$(cmux new-workspace --cwd $(pwd) | awk '{print $2}')
+cmux rename-workspace --workspace $WS "Researcher-1"
+
+
+注意: PTY 遅延初期化問題（後述）により、ワークスペースを GUI 上で一度表示する必要がある場合がある。
+
+Step 2: Claude Code 起動
+cmux-send --workspace $WS "claude --dangerously-skip-permissions\n"
+
+
+--dangerously-skip-permissions は信頼できるタスクにのみ使うこと。
+
+Step 3: Trust 検出 → 承認
+
+起動直後に Trust 確認プロンプトが表示される場合がある。cmux-read でポーリングし、"trust" や "Yes, I trust" を検出したら承認:
+
+screen=$(cmux-read --workspace $WS)
+# "trust" 検出 → 承認
+cmux-send-key --workspace $WS return
+
+Step 4: 起動完了の検出
+
+❯ プロンプトが表示されるまで cmux-read --workspace $WS でポーリング。
+
+Step 5: プロンプト送信
+# 単一行
+cmux-send --workspace $WS "指示テキスト\n"
+cmux set-status $WS "調査中" --icon hammer  # ステータスを設定
+
+# 複数行（cmux-send-key return で改行）
+cmux-send --workspace $WS "1行目の指示"
+cmux-send-key --workspace $WS return
+cmux-send --workspace $WS "2行目の指示"
+cmux-send-key --workspace $WS return
+
+Step 6: 完了検出
+
+❯ プロンプトの再表示を cmux-read --workspace $WS でポーリングして検出。
+
+Step 7: 結果回収 & クリーンアップ
+cmux clear-status $WS                                      # ステータスをクリア
+result=$(cmux-read --workspace $WS --scrollback)  # 全出力取得
+
+# クリーンアップ: Claude 終了 → ペイン閉じ
+cmux-send --workspace $WS "/exit\n"
+sleep 2
+cmux close-workspace --workspace $WS                      # ワークスペースごと閉じる
+
+
+重要: /exit だけでは Claude プロセスが終了するだけでペイン（surface）は残る。必ず close-workspace（または close-surface）でペインも閉じること。sleep 2 は /exit の処理完了を待つため。
+
+new-workspace の PTY 遅延初期化問題（Issue #1472）
+
+cmux new-workspace で作成したワークスペースのターミナル PTY は、GUI 上で一度表示されるまで起動しない。 select-workspace API だけでは不十分で、GUI 描画（SwiftUI レンダリング）が必要。
+
+症状
+cmux-send --surface surface:N → OK を返すがコマンドは実行されない（キューに留まる）
+cmux-read --surface surface:N → Surface is not a terminal エラー
+ソケット API surface.send_text → queued: true だが未配信
+ソケット API surface.read_text → Terminal surface not found
+ワークアラウンド: AppleScript メニュークリック
+
+macOS アクセシビリティ許可が必要（システム設定 → プライバシーとセキュリティ → アクセシビリティ）。
+
+# ワークスペース作成後に GUI 表示を強制する
+WS=$(cmux new-workspace --cwd $(pwd) | awk '{print $2}')
+
+# ワークスペースのインデックスを取得
+WS_INDEX=$(cmux tree --json | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for w in data['windows']:
+    for ws in w['workspaces']:
+        if ws['ref'] == '$WS':
+            print(ws['index'] + 1)")
+
+# AppleScript でメニュークリック → PTY 初期化
+osascript -e "
+tell application \"System Events\"
+    tell process \"cmux\"
+        click menu item \"ワークスペース $WS_INDEX\" of menu 1 of menu bar item \"表示\" of menu bar 1
+    end tell
+end tell"
+sleep 2
+
+# 元のワークスペースに戻る
+ORIG_INDEX=1  # 元のワークスペースの index+1
+osascript -e "
+tell application \"System Events\"
+    tell process \"cmux\"
+        click menu item \"ワークスペース $ORIG_INDEX\" of menu 1 of menu bar item \"表示\" of menu bar 1
+    end tell
+end tell"
+
+注意: ソケット API のフォールバック
+
+ソケット API surface.send_text / surface.read_text は、ターゲット surface の PTY が未初期化の場合、caller の surface にサイレントにフォールバックすることがある。レスポンスの surface_ref を確認して意図した surface に送信されたか必ず検証すること。
+
+cmux-read トラブルシューティング
+問題	対処
+出力が空 / 古い	cmux refresh-surfaces してから再読み取り
+長い出力が切れる	--scrollback を追加
+特定行数だけ欲しい	--lines N で行数指定
+surface が見つからない	cmux list-pane-surfaces で refs を再確認
+Surface is not a terminal	生の cmux read-screen を使っている → cmux-read ラッパーに置き換える。または PTY 遅延初期化問題（上記ワークアラウンド参照）
+
+cmux-read の結果がおかしい場合は cmux refresh-surfaces → 再読み取りの順で試す。
+
+ロングラン実行の監視
+
+dev server やビルドなど長時間プロセスは専用ペインに分離し、cmux-read で定期的に監視する。
+
+cmux new-split right              # → surface:N
+cmux-send --surface surface:N "npm run dev\n"
+# ポーリングで "ready" 等のキーワードを検出
+screen=$(cmux-read --surface surface:N)
+
+通知
+# アプリ内通知（ペインハイライト、サイドバーバッジ。Cmd+Shift+U で移動）
+cmux notify --title "完了" --body "ビルドが成功しました"
+
+# macOS 通知センター（サウンド付き、別アプリ使用中でも表示）
+osascript -e 'display notification "ビルド完了" with title "Claude" sound name "Glass"'
+
+
+使い分け: cmux 内で注意を引く → cmux notify、ユーザーが別アプリにいる → osascript。
+
+ステータス・プログレス表示
+cmux set-status mykey "作業中" --icon hammer --color "#0099ff"  # サイドバーに表示
+cmux clear-status mykey
+cmux set-progress 0.5 --label "ビルド中..."                     # プログレスバー（0.0〜1.0）
+cmux clear-progress
+
+ブラウザ自動化
+開く・ナビゲーション
+BSURF=$(cmux browser open https://example.com | awk '{print $2}')  # ブラウザを開く
+cmux browser $BSURF goto https://google.com   # 移動
+cmux browser $BSURF back / forward / reload   # 戻る・進む・リロード
+cmux browser $BSURF url                        # 現在の URL を取得
+cmux browser $BSURF focus-webview              # ブラウザにフォーカス
+
+スナップショットと要素参照
+cmux browser $BSURF snapshot --interactive   # [ref=eN] マーカー付きで取得（操作前に必須）
+
+
+出力例（eN が CSS セレクタとして機能する）:
+
+heading "Welcome" [ref=e1]
+button "Submit" [ref=e2]
+textbox [ref=e3]
+
+オプション	説明
+--interactive / -i	[ref=eN] マーカーを付与
+--compact	コンパクト表示
+--max-depth N	DOM 深度制限
+--selector css	特定要素のみ
+--cursor	カーソル位置情報を含む
+snapshot vs screenshot の使い分け
+
+原則: screenshot は視覚レイアウトのバグ調査でしか使わない。 PNG はトークンを大量消費する。値・状態・テキスト・構造の確認はすべてテキストベースのコマンドで行う。
+
+確認したいこと	使うコマンド
+入力フィールドの値	get value eN
+要素のテキスト内容	get text eN
+要素の属性（href, src 等）	get attr eN <name>
+チェックボックスの状態	is checked eN
+表示・有効状態	is visible eN / is enabled eN
+ページ上の要素を探して操作する	snapshot --interactive
+DOM 構造・階層を確認する	snapshot
+視覚レイアウトのバグ調査	screenshot（最終手段）
+
+判断基準: 「目で確認したい」と思っても、その情報が DOM から取れるなら snapshot / get 系を使う。screenshot を選ぶ前に「これは get value / get text / snapshot で取れないか？」を必ず自問する。フォーム送信前の値確認、入力結果の検証、要素の存在確認はすべて DOM から取れる。
+
+要素の操作
+
+セレクタには CSS セレクタまたはスナップショットの ref（e2 等）を使う。--snapshot-after で操作後に自動でスナップショットを取得できる。
+
+cmux browser $BSURF click e2              # クリック
+cmux browser $BSURF dblclick e5           # ダブルクリック
+cmux browser $BSURF hover e3              # ホバー
+cmux browser $BSURF focus e3             # フォーカス
+cmux browser $BSURF scroll-into-view e4  # ビューにスクロール
+cmux browser $BSURF check e8 / uncheck e8 # チェック・解除
+
+フォーム操作
+cmux browser $BSURF fill e3 "hello"         # 入力（既存をクリアして入力）
+cmux browser $BSURF type e3 "world"         # 追記入力
+cmux browser $BSURF select e7 "option-val"  # ドロップダウン選択
+cmux browser $BSURF press Enter             # キー押下（Return, Tab, Escape 等）
+
+要素の検索・状態確認
+# find: ARIA ロール / テキスト / ラベル / プレースホルダー / alt / title / testid / first / last / nth
+cmux browser $BSURF find role button
+cmux browser $BSURF find text "Submit"
+cmux browser $BSURF find nth 3 --selector "li"
+
+# is: 要素の状態確認
+cmux browser $BSURF is visible e3    # 表示されているか
+cmux browser $BSURF is enabled e3   # 有効か
+cmux browser $BSURF is checked e8   # チェック済みか
+
+データ取得
+cmux browser $BSURF get url / title               # URL・タイトル
+cmux browser $BSURF get text e3                   # テキスト
+cmux browser $BSURF get html e3                   # HTML
+cmux browser $BSURF get value e3                  # 入力値
+cmux browser $BSURF get attr e3 href              # 属性
+cmux browser $BSURF get count "button"            # 要素数
+cmux browser $BSURF get box e3                    # バウンディングボックス
+
+待機
+cmux browser $BSURF wait --selector "#loaded" --timeout-ms 10000
+cmux browser $BSURF wait --text "Success"
+cmux browser $BSURF wait --url-contains "/dashboard"
+cmux browser $BSURF wait --load-state complete          # または interactive
+cmux browser $BSURF wait --function "document.readyState === 'complete'"
+
+JavaScript・DOM 注入
+cmux browser $BSURF eval 'document.querySelector("h1").innerText'
+cmux browser $BSURF addinitscript 'window.myFlag = true'  # ページ読み込み前に注入
+cmux browser $BSURF addstyle 'body { background: red }'   # CSS 注入
+
+iframe・ダイアログ
+cmux browser $BSURF frame selector "#iframe1"   # iframe に切り替え
+cmux browser $BSURF frame main                   # メインフレームに戻る
+
+cmux browser $BSURF dialog accept               # confirm/alert を OK
+cmux browser $BSURF dialog dismiss              # キャンセル
+cmux browser $BSURF dialog accept "入力テキスト" # prompt に入力
+
+スクロール・スクリーンショット・デバッグ
+cmux browser $BSURF scroll --dy 500                    # 下に 500px
+cmux browser $BSURF scroll --selector "#list" --dy 200 # 要素内スクロール
+cmux browser $BSURF screenshot --out ~/Desktop/cap.png  # ⚠️ トークン大消費。snapshot / get 系で代替できないか必ず検討
+cmux browser $BSURF highlight e3                        # 要素をハイライト
+cmux browser $BSURF console list                        # コンソールメッセージ
+cmux browser $BSURF errors list                         # JavaScript エラー
+
+セッション・状態管理
+cmux browser $BSURF cookies get / set / clear
+cmux browser $BSURF storage local get --key "user"
+cmux browser $BSURF storage session set --key "token" --value "xyz"
+cmux browser $BSURF state save ~/.browser-state/session.json   # 認証状態を保存
+cmux browser $BSURF state load ~/.browser-state/session.json   # 復元
+cmux browser $BSURF tab list / new / switch 2 / close 2        # タブ管理
+
+WKWebView の制限（コマンドは存在するが not_supported エラー）
+
+以下のコマンドは cmux browser --help に表示されるが、現在の WKWebView では動作しない:
+
+コマンド	エラー
+viewport <w> <h>	browser.viewport.set is not supported on WKWebView
+geo <lat> <lon>	browser.geolocation.set is not supported on WKWebView
+offline true/false	browser.offline.set is not supported on WKWebView
+trace start/stop	browser.trace.start is not supported on WKWebView
+network route/unroute	browser.network.route is not supported on WKWebView
+screencast start/stop	browser.screencast.start is not supported on WKWebView
+input mouse/keyboard/touch	browser.input_mouse is not supported on WKWebView
+ブラウザ操作のよくあるミス
+ミス	正しい方法
+スナップショットなしで ref を使う	操作前に snapshot --interactive で ref を取得
+ナビゲーション後に古い ref を使う	遷移後は再スナップショット（ref は DOM 変更で無効化）
+dialog を無視してハングする	クリック前後に dialog accept/dismiss を仕込む
+iframe 内の要素が見つからない	frame selector で切り替えてから操作する
+フォーム値や DOM 状態を screenshot で確認する	get value / get attr / get text / is checked / snapshot で取得する。screenshot は視覚レイアウトのバグ調査限定
+環境変数
+変数	説明
+CMUX_SOCKET_PATH	cmux ソケットのパス。存在すれば cmux 内で動作中
+CMUX_WORKSPACE_ID	現在のワークスペース ID
+CMUX_SURFACE_ID	現在のサーフェス ID
+よくあるミス
+ミス	正しい方法
+cmux-send "line1\nline2\n" で複数行を送る	各行を個別に cmux-send し、行間で cmux-send-key return を使う
+UUID でサーフェスを指定する	短縮 refs を使う: surface:1, pane:2
+同一ワークスペースのレイアウト崩れを放置	cmux-grid で整列するか、別ワークスペースに配置する
+cmux-read の結果が空で諦める	refresh-surfaces を実行してからリトライ
+Trust プロンプトを見逃してハングする	起動後に cmux-read でポーリングして検出する
+cmux read-screen / cmux send / cmux send-key を直接呼ぶ	cmux-read / cmux-send / cmux-send-key ラッパーを使う（surface→workspace 自動解決）
+cmux-send "C-c" や cmux-send "\x03" で Ctrl+C を送る	cmux-send-key ctrl+c を使う（制御キーの送信 参照）
+「別 surface で」と言われたのに現在の surface で実行する	cmux new-split で新規 surface を作ってからそこで実行する
+既存 surface を再利用する	実行中プロセスや状態を破壊するリスクがあるため、原則 new-split で新規作成する
+ワークスペースに名前を付けない	rename-workspace で用途を示す名前を付ける
+/exit だけでクリーンアップ完了と思う	/exit → sleep 2 → close-workspace / close-surface でペインも閉じる
+コマンドクイックリファレンス
+コマンド	説明
+identify / tree	環境情報 / トポロジー表示
+list-workspaces / list-panes / list-pane-surfaces	一覧表示
+new-workspace / new-split <dir>	ワークスペース・ペイン作成
+cmux-send / cmux-send-key / cmux-read	入出力操作（surface→workspace 自動解決ラッパー）
+refresh-surfaces	画面バッファ強制更新
+close-surface / close-workspace	リソース終了
+select-workspace / rename-workspace / rename-tab	選択・名前変更
+cmux-grid / cmux-grid 2x3	ペインをグリッドレイアウトに整列
+notify / set-status / set-progress	通知・ステータス・進捗
+wait-for	シグナル待機
+Weekly Installs
+64
+Repository
+hummer98/using-cmux
+GitHub Stars
+33
+First Seen
+Mar 22, 2026
+Security Audits
+Gen Agent Trust HubFail
+SocketPass
+SnykWarn

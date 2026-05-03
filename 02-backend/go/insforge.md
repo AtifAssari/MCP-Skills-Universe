@@ -1,0 +1,265 @@
+---
+rating: ⭐⭐
+title: insforge
+url: https://skills.sh/insforge/agent-skills/insforge
+---
+
+# insforge
+
+skills/insforge/agent-skills/insforge
+insforge
+Installation
+$ npx skills add https://github.com/insforge/agent-skills --skill insforge
+Summary
+
+Client-side SDK for database queries, authentication, file uploads, AI features, real-time messaging, and edge function invocation.
+
+Six core modules: Database (CRUD, filters, RPC), Auth (sign up/in, OAuth, sessions), Storage (upload/download/delete), Functions (edge function invoke), AI (chat, image generation, embeddings), and Real-time (WebSocket channels, publish/subscribe)
+All SDK methods return { data, error } objects; database inserts require array format and storage operations need both url and key saved to database
+Real-time channels use SQL triggers to auto-publish database changes; RLS policies control subscribe and publish access via realtime.channels and realtime.messages tables
+Includes RLS policy patterns for common scenarios (order access, chat membership) and best practices for channel pattern creation and trigger configuration
+SKILL.md
+InsForge SDK Skill
+
+This skill covers client-side SDK integration using @insforge/sdk. For backend infrastructure operations (creating tables, inspecting schema, deploying functions, secrets, managing storage buckets, configuring Stripe keys/catalog, website deployments, cron job and schedules, logs, etc.), use the insforge-cli skill.
+
+Quick Setup
+1. Install the SDK
+npm install @insforge/sdk@latest
+
+2. Set up environment variables
+
+Before using the SDK, create a .env file (or .env.local for Next.js) in your project root with your InsForge URL and anon key.
+
+How to get your URL and anon key
+
+Ensure the project is linked. Check for .insforge/project.json in the project root.
+
+If it doesn't exist, run npx @insforge/cli link (existing project) or npx @insforge/cli create (new project) to generate it.
+
+Get the anon key via the CLI:
+
+npx @insforge/cli secrets get ANON_KEY
+
+
+Get the URL from the oss_host field in .insforge/project.json (e.g., https://myapp.us-east.insforge.app).
+
+Write both values to the .env file using the correct framework prefix (see table below).
+
+Important: Use the anon key for SDK clients, including SSR. Use the API key only for privileged backend operations that need admin/service access; it is a full-access admin key, equivalent to a service role key on other platforms.
+
+Use the correct environment variable prefix and access pattern for your framework:
+
+Framework	.env file	Variables	Access Pattern
+Next.js	.env.local	NEXT_PUBLIC_INSFORGE_URL, NEXT_PUBLIC_INSFORGE_ANON_KEY	process.env.NEXT_PUBLIC_*
+Vite (React, Vue, Svelte)	.env	VITE_INSFORGE_URL, VITE_INSFORGE_ANON_KEY	import.meta.env.VITE_*
+Astro	.env	PUBLIC_INSFORGE_URL, PUBLIC_INSFORGE_ANON_KEY	import.meta.env.PUBLIC_*
+SvelteKit	.env	PUBLIC_INSFORGE_URL, PUBLIC_INSFORGE_ANON_KEY	import { env } from '$env/dynamic/public'
+Create React App	.env	REACT_APP_INSFORGE_URL, REACT_APP_INSFORGE_ANON_KEY	process.env.REACT_APP_*
+Node.js / Server	.env	INSFORGE_URL, INSFORGE_ANON_KEY	process.env.*
+
+Example .env.local for Next.js:
+
+NEXT_PUBLIC_INSFORGE_URL=https://your-appkey.us-east.insforge.app
+NEXT_PUBLIC_INSFORGE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
+
+
+Important: Never commit .env files to version control. Add .env, .env.local, and .env*.local to your .gitignore (keep .env.example for documenting required variables).
+
+3. Initialize the client
+import { createClient } from '@insforge/sdk'
+
+// Next.js / CRA: use process.env
+const insforge = createClient({
+  baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL,
+  anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY
+})
+
+// Vite / Astro: use import.meta.env
+const insforge = createClient({
+  baseUrl: import.meta.env.VITE_INSFORGE_URL,
+  anonKey: import.meta.env.VITE_INSFORGE_ANON_KEY
+})
+
+Module Reference
+Module	SDK Integration
+Database	database/sdk-integration.md
+Auth	auth/sdk-integration.md
+Storage	storage/sdk-integration.md
+Functions	functions/sdk-integration.md
+AI	ai/sdk-integration.md
+Real-time	realtime/sdk-integration.md
+Email	email/sdk-integration.md
+Payments	payments/sdk-integration.md
+What Each Module Covers
+Module	Content
+Database	CRUD operations, filters, pagination, RPC calls
+Auth	Sign up/in, OAuth, sessions, profiles, password reset
+Storage	Upload, download, delete files; write RLS policies for buckets
+Functions	Invoke edge functions
+AI	Chat completions, image generation, embeddings
+Email	Send custom transactional HTML emails (welcome, newsletter, notifications)
+Payments	Stripe Checkout Sessions, subscriptions, and Billing Portal redirects
+Real-time	Connect, subscribe, publish events, and track presence snapshots plus join/leave deltas
+Guides
+Guide	When to Use
+database/postgres-rls.md	Writing or reviewing RLS policies — covers infinite recursion prevention, SECURITY DEFINER patterns, performance tips, and common InsForge RLS patterns
+storage/postgres-rls.md	Writing RLS policies for storage.objects — owner-only, public-read, path-scoped, team-shared, and the NULL uploaded_by caveat for mixed REST + S3 buckets
+database/pgvector.md	Building semantic search, recommendations, or RAG — covers the vector extension, schema/dimensions, distance operators, HNSW/IVFFlat indexes, and RPC similarity search
+ai/embeddings-and-rag.md	Generating embeddings through the InsForge AI gateway, storing them in pgvector, and wiring up a basic RAG pipeline with chat completions
+payments/backend-configuration.md	Configuring Stripe keys, syncing catalog, creating products/prices, webhooks, and portal RLS before app integration
+Real-time Configuration
+
+For real-time channels and database triggers, use SQL migrations or database admin tooling to configure channels, triggers, and policies. The real-time SDK is for frontend event handling and messaging, not backend configuration.
+
+Create Database Triggers
+
+Automatically publish events when database records change.
+
+-- Create trigger function
+CREATE OR REPLACE FUNCTION notify_order_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM realtime.publish(
+    'order:' || NEW.id::text,    -- channel
+    TG_OP || '_order',           -- event: INSERT_order, UPDATE_order
+    jsonb_build_object(
+      'id', NEW.id,
+      'status', NEW.status,
+      'total', NEW.total
+    )
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Attach to table
+CREATE TRIGGER order_realtime
+  AFTER INSERT OR UPDATE ON orders
+  FOR EACH ROW
+  EXECUTE FUNCTION notify_order_changes();
+
+Conditional Trigger (Status Changes Only)
+CREATE OR REPLACE FUNCTION notify_order_status()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM realtime.publish(
+    'order:' || NEW.id::text,
+    'status_changed',
+    jsonb_build_object('id', NEW.id, 'status', NEW.status)
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER order_status_trigger
+  AFTER UPDATE ON orders
+  FOR EACH ROW
+  WHEN (OLD.status IS DISTINCT FROM NEW.status)
+  EXECUTE FUNCTION notify_order_status();
+
+Access Control (RLS)
+
+RLS is disabled by default. To restrict channel access:
+
+Enable RLS
+ALTER TABLE realtime.channels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+
+Restrict Subscribe (SELECT on channels)
+CREATE POLICY "users_subscribe_own_orders"
+ON realtime.channels FOR SELECT
+TO authenticated
+USING (
+  pattern = 'order:%'
+  AND EXISTS (
+    SELECT 1 FROM orders
+    WHERE id = NULLIF(split_part(realtime.channel_name(), ':', 2), '')::uuid
+      AND user_id = auth.uid()
+  )
+);
+
+Restrict Publish (INSERT on messages)
+CREATE POLICY "members_publish_chat"
+ON realtime.messages FOR INSERT
+TO authenticated
+WITH CHECK (
+  channel_name LIKE 'chat:%'
+  AND EXISTS (
+    SELECT 1 FROM chat_members
+    WHERE room_id = NULLIF(split_part(channel_name, ':', 2), '')::uuid
+      AND user_id = auth.uid()
+  )
+);
+
+Quick Reference
+Task	SQL
+Create channel	INSERT INTO realtime.channels (pattern, description, enabled) VALUES (...)
+Create trigger	CREATE TRIGGER ... EXECUTE FUNCTION ...
+Publish from SQL	PERFORM realtime.publish(channel, event, payload)
+Enable RLS	ALTER TABLE realtime.channels ENABLE ROW LEVEL SECURITY
+Best Practices
+
+Create channel patterns first before subscribing from frontend
+
+Insert channel patterns into realtime.channels table
+Ensure enabled is set to true
+
+Use specific channel patterns
+
+Use wildcard % patterns for dynamic channels (e.g., order:% for order:123)
+Use exact patterns for global channels (e.g., notifications)
+Common Mistakes
+Mistake	Solution
+Subscribing to undefined channel pattern	Create channel pattern in realtime.channels first
+Channel not receiving messages	Ensure channel enabled is true
+Publishing without trigger	Create database trigger to auto-publish on changes
+Recommended Workflow
+1. Create channel patterns   → INSERT INTO realtime.channels
+2. Ensure enabled = true     → Set enabled to true
+3. Create triggers if needed → Auto-publish on database changes
+4. Proceed with SDK subscribe → Use channel name matching pattern
+
+Backend Configuration (Not Yet in CLI)
+
+These modules still require HTTP API calls because the CLI does not yet support them:
+
+Module	Backend Configuration
+Auth	auth/backend-configuration.md
+AI	ai/backend-configuration.md
+SDK Quick Reference
+
+All SDK methods return { data, error }.
+
+Module	Methods
+insforge.database	.from().select(), .insert(), .update(), .delete(), .rpc()
+insforge.auth	.signUp(), .signInWithPassword(), .signInWithOAuth(), .signOut(), .getCurrentUser()
+insforge.storage	.from().upload(), .uploadAuto(), .download(), .remove()
+insforge.functions	.invoke()
+insforge.ai	.chat.completions.create(), .images.generate(), .embeddings.create()
+insforge.realtime	.connect(), .subscribe(), .publish(), .on(), .disconnect()
+insforge.emails	.send({ to, subject, html, cc?, bcc?, from?, replyTo? })
+insforge.payments	.createCheckoutSession(), .createCustomerPortalSession()
+Important Notes
+Database inserts require array format: insert([{...}]) not insert({...})
+Next.js / SSR auth: Use createClient({ isServerMode: true }), keep tokens in httpOnly cookies, and perform auth flows on the server. See auth/sdk-integration.md
+Storage: Save both url AND key to database for download/delete operations
+Functions invoke URL: /functions/{slug} (without /api prefix)
+Payments: Configure Stripe keys/catalog with npx @insforge/cli payments ... first; frontend code only creates Checkout/Portal sessions.
+Payment RLS: Before subscription checkout or Billing Portal UI, add app-specific RLS on payments.checkout_sessions and payments.customer_portal_sessions.
+Use Tailwind CSS v3.4 (do not upgrade to v4)
+Always local build before deploy: Prevents wasted build resources and faster debugging
+Deprecated packages: @insforge/react, @insforge/nextjs, and @insforge/react-router are deprecated. Do NOT install or use them. Use @insforge/sdk directly for all features including authentication.
+Deployment: Include a vercel.json in the project root for SPA routing (React, React Router apps). The download-template tool includes this automatically.
+Weekly Installs
+7.0K
+Repository
+insforge/agent-skills
+GitHub Stars
+14
+First Seen
+Today
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

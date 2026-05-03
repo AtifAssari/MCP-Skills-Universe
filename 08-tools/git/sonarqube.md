@@ -1,0 +1,27 @@
+---
+title: sonarqube
+url: https://skills.sh/php-workx/skill-sonarqube/sonarqube
+---
+
+# sonarqube
+
+skills/php-workx/skill-sonarqube/sonarqube
+sonarqube
+Installation
+$ npx skills add https://github.com/php-workx/skill-sonarqube --skill sonarqube
+SKILL.md
+
+skills/sonarqube/SKILL.md
+
+Weekly Installs
+15
+Repository
+php-workx/skill…onarqube
+GitHub Stars
+3
+First Seen
+Mar 8, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketWarn
+SnykWarn

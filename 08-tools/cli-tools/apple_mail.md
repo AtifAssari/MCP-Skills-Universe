@@ -1,0 +1,122 @@
+---
+title: apple-mail
+url: https://skills.sh/eins78/skills/apple-mail
+---
+
+# apple-mail
+
+skills/eins78/skills/apple-mail
+apple-mail
+Installation
+$ npx skills add https://github.com/eins78/skills --skill apple-mail
+SKILL.md
+Apple Mail (Read Only)
+
+Read email via Mail.app AppleScript. No sending or modifying emails.
+
+Prerequisites
+Mail.app running and logged in
+Automation permissions granted (System Settings → Privacy & Security → Automation → Terminal/Claude Code → Mail)
+If first access attempt times out, ask user to check for macOS permission dialog
+Reliability: always wrap osascript with timeout + retry
+
+Apple Mail's AppleScript bridge hangs intermittently — sometimes for minutes — even on simple queries. The AppleScript-internal with timeout of N seconds does NOT kill a wedged osascript process. Always wrap calls with shell-level timeout and retry on failure.
+
+Pattern:
+
+# Run osascript with 15s shell timeout, retry up to 3 times with 2s backoff.
+mail_query() {
+  local script="$1" attempt
+  for attempt in 1 2 3; do
+    result=$(timeout 15 osascript -e "$script" 2>&1) && { echo "$result"; return 0; }
+    sleep 2
+  done
+  echo "ERROR: Mail query failed after 3 attempts" >&2
+  return 1
+}
+
+# Usage:
+mail_query 'tell application "Mail" to count (messages of inbox whose read status is false)'
+
+
+Reasonable defaults: 15s timeout, 3 retries, 2s sleep. Bump the timeout for messages of every mailbox (cross-account searches) to 60s. If all 3 retries fail, report the failure and move on — never block a briefing on Mail.
+
+Account & Machine Context
+
+See docs/email-accounts.md for which accounts are configured on which machines.
+
+Commands
+List accounts
+osascript -e 'tell application "Mail" to get name of every account'
+
+Count unread messages
+osascript -e 'tell application "Mail" to count (messages of inbox whose read status is false)'
+
+Recent inbox messages (last 10)
+osascript -e 'tell application "Mail"
+  set recentMsgs to messages 1 thru 10 of inbox
+  repeat with msg in recentMsgs
+    set msgInfo to "From: " & (sender of msg) & " | Subject: " & (subject of msg) & " | Date: " & (date sent of msg)
+    log msgInfo
+  end repeat
+end tell'
+
+Get message content by index
+osascript -e 'tell application "Mail"
+  set msg to message 1 of inbox
+  return "From: " & (sender of msg) & "\nSubject: " & (subject of msg) & "\nDate: " & (date sent of msg) & "\n\n" & (content of msg)
+end tell'
+
+Search messages by subject
+osascript -e 'tell application "Mail"
+  set foundMsgs to (messages of inbox whose subject contains "keyword")
+  count foundMsgs
+end tell'
+
+Search and read first match
+osascript -e 'tell application "Mail"
+  set foundMsgs to (messages of inbox whose subject contains "keyword")
+  if (count foundMsgs) > 0 then
+    set msg to item 1 of foundMsgs
+    return "From: " & (sender of msg) & "\nSubject: " & (subject of msg) & "\nDate: " & (date sent of msg) & "\n\n" & (content of msg)
+  else
+    return "No messages found"
+  end if
+end tell'
+
+Search across all mailboxes
+osascript -e 'tell application "Mail"
+  set foundMsgs to (messages of every mailbox of every account whose subject contains "keyword")
+  -- Note: this can be slow across many accounts
+end tell'
+
+List mailboxes for an account
+osascript -e 'tell application "Mail" to get name of every mailbox of account "Gmail"'
+
+Notes
+AppleScript messages of inbox returns a unified inbox across all accounts
+Messages are indexed newest-first (message 1 = most recent)
+content of msg returns plain text body; source of msg returns raw MIME
+Large mailboxes can be slow — use whose clauses to filter
+Timeout: use with timeout of 60 seconds for slow queries
+Self-Improvement
+
+If you encounter an AppleScript pattern that fails, a macOS behavior change, or missing guidance in this skill, don't just work around it — fix the skill:
+
+Create a PR from a fresh worktree of https://github.com/eins78/agent-skills on a new branch, fixing the issue directly
+Or file an issue on https://github.com/eins78/agent-skills with: what failed, the actual behavior, and the suggested fix
+
+Never silently work around a skill gap. The fix benefits all future sessions.
+
+Weekly Installs
+10
+Repository
+eins78/skills
+GitHub Stars
+2
+First Seen
+Mar 5, 2026
+Security Audits
+Gen Agent Trust HubPass
+SocketPass
+SnykWarn

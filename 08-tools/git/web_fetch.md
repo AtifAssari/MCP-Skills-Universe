@@ -1,0 +1,63 @@
+---
+title: web-fetch
+url: https://skills.sh/zhayujie/chatgpt-on-wechat/web-fetch
+---
+
+# web-fetch
+
+skills/zhayujie/chatgpt-on-wechat/web-fetch
+web-fetch
+Installation
+$ npx skills add https://github.com/zhayujie/chatgpt-on-wechat --skill web-fetch
+SKILL.md
+Web Fetch
+
+Fetch and extract readable content from web pages using curl and basic text processing.
+
+Usage
+
+Important: Scripts are located relative to this skill's base directory.
+
+When you see this skill in <available_skills>, note the <base_dir> path.
+
+# General pattern:
+bash "<base_dir>/scripts/fetch.sh" <url> [output_file]
+
+# Example (replace <base_dir> with actual path from skill listing):
+bash "~/chatgpt-on-wechat/skills/web-fetch/scripts/fetch.sh" "https://example.com"
+
+
+Parameters:
+
+url: The HTTP/HTTPS URL to fetch (required)
+output_file: Optional file to save the output (default: stdout)
+
+Returns:
+
+Extracted page content with title and text
+Examples
+Fetch a web page
+bash "<base_dir>/scripts/fetch.sh" "https://example.com"
+
+Save to file
+bash "<base_dir>/scripts/fetch.sh" "https://example.com" output.txt
+cat output.txt
+
+Notes
+Uses curl for HTTP requests (timeout: 10s)
+Extracts title and basic text content
+Removes HTML tags and scripts
+Works with any standard web page
+No external dependencies beyond curl
+Weekly Installs
+57
+Repository
+zhayujie/chatgp…n-wechat
+GitHub Stars
+42.8K
+First Seen
+Feb 16, 2026
+Security Audits
+Gen Agent Trust HubWarn
+SocketPass
+SnykWarn
