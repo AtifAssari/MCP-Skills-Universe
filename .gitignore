@@ -1,0 +1,6 @@
+node_modules/
+skills_library/
+processed_urls.json
+.DS_Store
+__pycache__/
+*.pyc
